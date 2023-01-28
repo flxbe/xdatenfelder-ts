@@ -1,8 +1,15 @@
-import { DataFieldMetaData, CodeListMetaData } from "./base";
+import { DataFieldMetaData, CodeListMetaData, BaseEnumDataField } from "./base";
 
 type GeschlechtValue = "d" | "m" | "w" | "x";
 
-export class Geschlecht {
+export class Geschlecht extends BaseEnumDataField<GeschlechtValue> {
+  public static Variants: Record<GeschlechtValue, string> = {
+    d: "divers",
+    m: "männlich",
+    w: "weiblich",
+    x: "Keine Angabe",
+  };
+
   public static Meta: DataFieldMetaData = {
     id: "F60000332",
     version: "1.2",
@@ -21,25 +28,8 @@ export class Geschlecht {
     kennung: "urn:xpersonenstand:schluesseltabelle:geschlecht",
   };
 
-  public static Variants: Record<GeschlechtValue, string> = {
-    d: "divers",
-    m: "männlich",
-    w: "weiblich",
-    x: "Keine Angabe",
-  };
-
-  private _value: GeschlechtValue;
-
-  private constructor(value: GeschlechtValue) {
-    this._value = value;
-  }
-
-  public get value(): GeschlechtValue {
-    return this.value;
-  }
-
-  public get label(): string {
-    return Geschlecht.Variants[this._value];
+  constructor(value: GeschlechtValue) {
+    super(value, Geschlecht.Variants);
   }
 
   public static fromString(value: string): Geschlecht {

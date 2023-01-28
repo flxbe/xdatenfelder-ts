@@ -1,7 +1,7 @@
 export interface DataFieldMetaData {
   id: string;
   version: string;
-  definition: string;
+  definition?: string;
   bezeichnungEingabe: string;
   bezeichnungAusgabe: string;
   hilfetextEingabe?: string;
@@ -12,4 +12,22 @@ export interface CodeListMetaData {
   id: string;
   version: string;
   kennung: string;
+}
+
+export abstract class BaseEnumDataField<T extends string> {
+  private _value: T;
+  private _variants: Record<T, string>;
+
+  constructor(value: T, variants: Record<T, string>) {
+    this._value = value;
+    this._variants = variants;
+  }
+
+  public get value(): T {
+    return this.value;
+  }
+
+  public get label(): string {
+    return this._variants[this._value];
+  }
 }
