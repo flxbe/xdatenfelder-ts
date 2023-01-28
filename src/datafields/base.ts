@@ -1,6 +1,7 @@
 export interface DataFieldMetaData {
   id: string;
   version: string;
+  name: string;
   definition?: string;
   bezeichnungEingabe: string;
   bezeichnungAusgabe: string;

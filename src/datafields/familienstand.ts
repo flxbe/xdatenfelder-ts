@@ -29,6 +29,7 @@ export class Familienstand extends BaseEnumDataField<FamilienstandValue> {
   public static Meta: DataFieldMetaData = {
     id: "F60000275",
     version: "1.2",
+    name: "Familienstand",
     definition: undefined,
     bezeichnungEingabe: "Familienstand",
     bezeichnungAusgabe: "Familienstand",

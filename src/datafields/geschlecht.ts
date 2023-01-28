@@ -13,6 +13,7 @@ export class Geschlecht extends BaseEnumDataField<GeschlechtValue> {
   public static Meta: DataFieldMetaData = {
     id: "F60000332",
     version: "1.2",
+    name: "Geschlecht",
     definition:
       "Beschreibt das Geschlecht einer Person. Folgende Angaben sind möglich: divers, männlich, weiblich, keine Angabe",
     bezeichnungEingabe: "Geschlecht",
