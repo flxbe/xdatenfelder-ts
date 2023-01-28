@@ -1,14 +1,24 @@
-interface DataFieldMetaData {
-  id: string;
-  version: string;
-}
+import { DataFieldMetaData, CodeListMetaData } from "./base";
 
 type GeschlechtValue = "d" | "m" | "w" | "x";
 
 export class Geschlecht {
-  public static MetaData: DataFieldMetaData = {
+  public static Meta: DataFieldMetaData = {
     id: "F60000332",
     version: "1.2",
+    definition:
+      "Beschreibt das Geschlecht einer Person. Folgende Angaben sind möglich: divers, männlich, weiblich, keine Angabe",
+    bezeichnungEingabe: "Geschlecht",
+    bezeichnungAusgabe: "Geschlecht",
+    hilfetextEingabe:
+      "Geben Sie das Geschlecht an, das auch beim Personenstandsregister oder Standesamt hinterlegt ist.",
+    hilfetextAusgabe: undefined,
+  };
+
+  public static CodeListMeta: CodeListMetaData = {
+    id: "C60000018",
+    version: "3",
+    kennung: "urn:xpersonenstand:schluesseltabelle:geschlecht",
   };
 
   public static Variants: Record<GeschlechtValue, string> = {
