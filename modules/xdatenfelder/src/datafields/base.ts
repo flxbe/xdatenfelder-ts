@@ -12,7 +12,10 @@ export interface DataFieldMetaData {
 export interface CodeListMetaData {
   id: string;
   version: string;
-  kennung: string;
+  canonicalUri: string;
+  canonicalVersionUri: string;
+  shortName: string;
+  longName: string;
 }
 
 export abstract class BaseEnumDataField<T extends string> {

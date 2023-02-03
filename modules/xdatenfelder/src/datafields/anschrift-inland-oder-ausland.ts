@@ -1,12 +1,12 @@
 import { DataFieldMetaData, CodeListMetaData, BaseEnumDataField } from "./base";
+import {
+  Value,
+  Variants,
+  MetaData,
+} from "../codelists/anschrift-inland-oder-ausland";
 
-type AnschriftInlandOderAuslandValue = "001" | "002";
-
-export class AnschriftInlandOderAusland extends BaseEnumDataField<AnschriftInlandOderAuslandValue> {
-  public static Variants: Record<AnschriftInlandOderAuslandValue, string> = {
-    "001": "Ehe aufgehoben",
-    "002": "außerhalb von Deutschland",
-  };
+export class AnschriftInlandOderAusland extends BaseEnumDataField<Value> {
+  public static Variants = Variants;
 
   public static Meta: DataFieldMetaData = {
     id: "F60000263",
@@ -21,13 +21,9 @@ export class AnschriftInlandOderAusland extends BaseEnumDataField<AnschriftInlan
     hilfetextAusgabe: undefined,
   };
 
-  public static CodeListMeta: CodeListMetaData = {
-    id: "C60000006",
-    version: "2020-08-18",
-    kennung: "urn:de:fim:codeliste:anschriftinlandoderausland",
-  };
+  public static CodeListMeta: CodeListMetaData = MetaData;
 
-  constructor(value: AnschriftInlandOderAuslandValue) {
+  constructor(value: Value) {
     super(value, AnschriftInlandOderAusland.Variants);
   }
 
@@ -39,9 +35,7 @@ export class AnschriftInlandOderAusland extends BaseEnumDataField<AnschriftInlan
     throw "Wrong value";
   }
 
-  public static isValid(
-    value: string
-  ): value is AnschriftInlandOderAuslandValue {
+  public static isValid(value: string): value is Value {
     return value in AnschriftInlandOderAusland.Variants;
   }
 }

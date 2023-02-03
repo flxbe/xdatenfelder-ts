@@ -228,18 +228,18 @@ for (const list of codeLists) {
 
   raw += `export const MetaData = {
     id: "${list.identifier}",
-    version: ${list.version},
+    version: "${list.version}",
     canonicalUri: "${list.canonicalUri}",
     canonicalVersionUri: "${list.canonicalVersionUri}",
     longName: "${list.longName}",
     shortName: "${list.shortName}",
   }\n\n`;
 
-  raw += `export type ${label}Values = ${list.items
+  raw += `export type Value = ${list.items
     .map((item) => `"${item.code}"`)
     .join(" | ")};\n\n`;
 
-  raw += `export const ${label}Variants: Record<string, string> = {\n ${list.items
+  raw += `export const Variants: Record<Value, string> = {\n ${list.items
     .map((item) => `"${item.code}": "${item.label}"`)
     .join(",")} };\n\n`;
 

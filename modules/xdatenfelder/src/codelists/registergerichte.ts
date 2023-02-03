@@ -1,13 +1,13 @@
 export const MetaData = {
   id: "C60000027",
-  version: 12,
+  version: "12",
   canonicalUri: "urn:xoev-de:xunternehmen:codeliste:registergerichte",
   canonicalVersionUri: "urn:xoev-de:xunternehmen:codeliste:registergerichte_12",
   longName: "Handels-, Genossenschafts-, Vereins- und Partnerschaftsregister",
   shortName: "Registergerichte",
 };
 
-export type RegistergerichteValues =
+export type Value =
   | "B8534"
   | "B8535"
   | "B8536"
@@ -211,7 +211,7 @@ export type RegistergerichteValues =
   | "Y1307"
   | "Y1308";
 
-export const RegistergerichteVariants: Record<string, string> = {
+export const Variants: Record<Value, string> = {
   B8534: "Amtsgericht Stuttgart",
   B8535: "Amtsgericht Mannheim",
   B8536: "Amtsgericht Freiburg",

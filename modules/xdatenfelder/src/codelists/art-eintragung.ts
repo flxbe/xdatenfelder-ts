@@ -1,24 +1,15 @@
 export const MetaData = {
   id: "C60000038",
-  version: 2,
+  version: "2",
   canonicalUri: "urn:xoev-de:xunternehmen:codeliste:artdereintragung",
   canonicalVersionUri: "urn:xoev-de:xunternehmen:codeliste:artdereintragung_2",
   longName: "Art der Eintragung",
   shortName: "artdereintragung",
 };
 
-export type ArtEintragungValues =
-  | "A"
-  | "B"
-  | "G"
-  | "GesR"
-  | "K"
-  | "P"
-  | "S"
-  | "V"
-  | "X";
+export type Value = "A" | "B" | "G" | "GesR" | "K" | "P" | "S" | "V" | "X";
 
-export const ArtEintragungVariants: Record<string, string> = {
+export const Variants: Record<Value, string> = {
   A: "Eintragung im Handelsregister A",
   B: "Eintragung im Handelsregister B",
   G: "Eintragung im Genossenschaftsregister",

@@ -1,6 +1,6 @@
 export const MetaData = {
   id: "C60000020",
-  version: 2021,
+  version: "2021",
   canonicalUri: "urn:de:bund:destatis:bevoelkerungsstatistik:schluessel:staat",
   canonicalVersionUri:
     "urn:de:bund:destatis:bevoelkerungsstatistik:schluessel:staat_2021-02-19",
@@ -9,7 +9,7 @@ export const MetaData = {
   shortName: "Staat",
 };
 
-export type StaatValues =
+export type Value =
   | "000"
   | "121"
   | "122"
@@ -208,7 +208,7 @@ export type StaatValues =
   | "544"
   | "545";
 
-export const StaatVariants: Record<string, string> = {
+export const Variants: Record<Value, string> = {
   "000": "Deutschland",
   "121": "Albanien",
   "122": "Bosnien und Herzegowina",

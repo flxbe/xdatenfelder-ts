@@ -1,13 +1,13 @@
 export const MetaData = {
   id: "C60000025",
-  version: 2021,
+  version: "2021",
   canonicalUri: "urn:de:fim:codeliste:rechtsformen-gaengig",
   canonicalVersionUri: "urn:de:fim:codeliste:rechtsformen-gaengig_2021-06-18",
   longName: "",
   shortName: "",
 };
 
-export type RechtsformGaengigValues =
+export type Value =
   | "170"
   | "180"
   | "210"
@@ -23,7 +23,7 @@ export type RechtsformGaengigValues =
   | "590"
   | "611";
 
-export const RechtsformGaengigVariants: Record<string, string> = {
+export const Variants: Record<Value, string> = {
   "170": "eingetragenes Einzelunternehmen (e.K.; e.Kfm.; e.Kfr.)",
   "180": "nicht eingetragenes Einzelunternehmen",
   "210": "Offene Handelsgesellschaft (OHG)",

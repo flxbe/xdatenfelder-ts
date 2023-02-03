@@ -1,6 +1,6 @@
 export const MetaData = {
   id: "C60000037",
-  version: 1,
+  version: "1",
   canonicalUri:
     "urn:xoev-de:xunternehmen:codeliste:klassifikationkommunikation",
   canonicalVersionUri:
@@ -9,9 +9,9 @@ export const MetaData = {
   shortName: "klassifikationkommunikation",
 };
 
-export type klassifikationKommunikationValues = "01" | "02" | "03";
+export type Value = "01" | "02" | "03";
 
-export const klassifikationKommunikationVariants: Record<string, string> = {
+export const Variants: Record<Value, string> = {
   "01": "allgemein",
   "02": "privat",
   "03": "geschäftlich",

@@ -1,30 +1,9 @@
 import { DataFieldMetaData, CodeListMetaData, BaseEnumDataField } from "./base";
 
-type FamilienstandValue =
-  | "EA"
-  | "GS"
-  | "LA"
-  | "LD"
-  | "LE"
-  | "LP"
-  | "LV"
-  | "NB"
-  | "VH"
-  | "VW";
+import { Value, Variants, MetaData } from "../codelists/familienstand";
 
-export class Familienstand extends BaseEnumDataField<FamilienstandValue> {
-  public static Variants: Record<FamilienstandValue, string> = {
-    EA: "Ehe aufgehoben",
-    GS: "geschieden",
-    LA: "aufgehobene Lebenspartnerschaft",
-    LD: "ledig",
-    LE: "durch Todeserklärung aufgelöste Lebenspartnerschaft",
-    LP: "in eingetragener Lebenspartnerschaft",
-    LV: "durch Tod aufgelöste Lebenspartnerschaft",
-    NB: "nicht bekannt",
-    VH: "verheiratet",
-    VW: "verwitwet",
-  };
+export class Familienstand extends BaseEnumDataField<Value> {
+  public static Variants = Variants;
 
   public static Meta: DataFieldMetaData = {
     id: "F60000275",
@@ -37,13 +16,9 @@ export class Familienstand extends BaseEnumDataField<FamilienstandValue> {
     hilfetextAusgabe: undefined,
   };
 
-  public static CodeListMeta: CodeListMetaData = {
-    id: "C60000001",
-    version: "2",
-    kennung: "urn:de:dsmeld:schluesseltabelle:familienstand",
-  };
+  public static CodeListMeta: CodeListMetaData = MetaData;
 
-  constructor(value: FamilienstandValue) {
+  constructor(value: Value) {
     super(value, Familienstand.Variants);
   }
 
@@ -55,7 +30,7 @@ export class Familienstand extends BaseEnumDataField<FamilienstandValue> {
     throw "Wrong value";
   }
 
-  public static isValid(value: string): value is FamilienstandValue {
+  public static isValid(value: string): value is Value {
     return value in Familienstand.Variants;
   }
 }

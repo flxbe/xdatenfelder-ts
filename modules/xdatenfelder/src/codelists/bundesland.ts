@@ -1,6 +1,6 @@
 export const MetaData = {
   id: "C60000014",
-  version: 2010,
+  version: "2010",
   canonicalUri:
     "urn:de:bund:destatis:bevoelkerungsstatistik:schluessel:bundesland",
   canonicalVersionUri:
@@ -10,7 +10,7 @@ export const MetaData = {
   shortName: "Bundesland",
 };
 
-export type BundeslandValues =
+export type Value =
   | "01"
   | "02"
   | "03"
@@ -28,7 +28,7 @@ export type BundeslandValues =
   | "15"
   | "16";
 
-export const BundeslandVariants: Record<string, string> = {
+export const Variants: Record<Value, string> = {
   "01": "Schleswig-Holstein",
   "02": "Hamburg",
   "03": "Niedersachsen",

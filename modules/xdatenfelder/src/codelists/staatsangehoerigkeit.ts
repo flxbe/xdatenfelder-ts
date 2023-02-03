@@ -1,6 +1,6 @@
 export const MetaData = {
   id: "C60000019",
-  version: 2021,
+  version: "2021",
   canonicalUri:
     "urn:de:bund:destatis:bevoelkerungsstatistik:schluessel:staatsangehoerigkeit",
   canonicalVersionUri:
@@ -10,7 +10,7 @@ export const MetaData = {
   shortName: "Staatsangehoerigkeit",
 };
 
-export type StaatsangehoerigkeitValues =
+export type Value =
   | "000"
   | "120"
   | "121"
@@ -223,7 +223,7 @@ export type StaatsangehoerigkeitValues =
   | "998"
   | "999";
 
-export const StaatsangehoerigkeitVariants: Record<string, string> = {
+export const Variants: Record<Value, string> = {
   "000": "Deutschland",
   "120": "Jugoslawien",
   "121": "Albanien",

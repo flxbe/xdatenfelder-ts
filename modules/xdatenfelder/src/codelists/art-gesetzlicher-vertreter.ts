@@ -1,6 +1,6 @@
 export const MetaData = {
   id: "C60000040",
-  version: 1,
+  version: "1",
   canonicalUri: "urn:xoev-de:xunternehmen:codeliste:artgesetzlichervertreter",
   canonicalVersionUri:
     "urn:xoev-de:xunternehmen:codeliste:artgesetzlichervertreter_1",
@@ -8,7 +8,7 @@ export const MetaData = {
   shortName: "artgesetzlichervertreter",
 };
 
-export type ArtGesetzlicherVertreterValues =
+export type Value =
   | "1"
   | "101"
   | "102"
@@ -24,7 +24,7 @@ export type ArtGesetzlicherVertreterValues =
   | "3"
   | "4";
 
-export const ArtGesetzlicherVertreterVariants: Record<string, string> = {
+export const Variants: Record<Value, string> = {
   "1": "Sonstiger oder nicht näher spezifizierter gesetzlicher Vertreter",
   "101": "Liquidator",
   "102": "Insolvenzverwalter / Konkursverwalter",

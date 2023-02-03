@@ -1,13 +1,13 @@
 export const MetaData = {
   id: "C60000029",
-  version: 5,
+  version: "5",
   canonicalUri: "urn:xoev-de:xunternehmen:codeliste:handwerkskammern",
   canonicalVersionUri: "urn:xoev-de:xunternehmen:codeliste:handwerkskammern_5",
   longName: "Handwerkskammern",
   shortName: "Handwerkskammern",
 };
 
-export type HandwerkskammerValues =
+export type Value =
   | "00001"
   | "00002"
   | "00003"
@@ -62,7 +62,7 @@ export type HandwerkskammerValues =
   | "00092"
   | "00093";
 
-export const HandwerkskammerVariants: Record<string, string> = {
+export const Variants: Record<Value, string> = {
   "00001": "Handwerkskammer Chemnitz",
   "00002": "Handwerkskammer Dresden",
   "00003": "Handwerkskammer zu Leipzig",

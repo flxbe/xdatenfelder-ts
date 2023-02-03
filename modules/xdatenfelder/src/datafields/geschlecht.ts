@@ -1,14 +1,8 @@
 import { DataFieldMetaData, CodeListMetaData, BaseEnumDataField } from "./base";
+import { Value, Variants, MetaData } from "../codelists/geschlecht";
 
-type GeschlechtValue = "d" | "m" | "w" | "x";
-
-export class Geschlecht extends BaseEnumDataField<GeschlechtValue> {
-  public static Variants: Record<GeschlechtValue, string> = {
-    d: "divers",
-    m: "männlich",
-    w: "weiblich",
-    x: "Keine Angabe",
-  };
+export class Geschlecht extends BaseEnumDataField<Value> {
+  public static Variants = Variants;
 
   public static Meta: DataFieldMetaData = {
     id: "F60000332",
@@ -23,13 +17,9 @@ export class Geschlecht extends BaseEnumDataField<GeschlechtValue> {
     hilfetextAusgabe: undefined,
   };
 
-  public static CodeListMeta: CodeListMetaData = {
-    id: "C60000018",
-    version: "3",
-    kennung: "urn:xpersonenstand:schluesseltabelle:geschlecht",
-  };
+  public static CodeListMeta: CodeListMetaData = MetaData;
 
-  constructor(value: GeschlechtValue) {
+  constructor(value: Value) {
     super(value, Geschlecht.Variants);
   }
 
@@ -41,7 +31,7 @@ export class Geschlecht extends BaseEnumDataField<GeschlechtValue> {
     throw "Wrong value";
   }
 
-  public static isValid(value: string): value is GeschlechtValue {
+  public static isValid(value: string): value is Value {
     return value in Geschlecht.Variants;
   }
 }
