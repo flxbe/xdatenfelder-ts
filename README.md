@@ -1,6 +1,6 @@
 # xdatenfelder-ts
 
-A simple and fully type-safe implementation of the data-fields defined in `xDatenfelder`.
+An experimental and type-safe implementation of the data-fields defined in [xDatenfelder](https://www.xrepository.de/details/urn:xoev-de:fim:standard:xdatenfelder).
 
 ## Getting Started
 
@@ -46,43 +46,15 @@ VW verwitwet
 
 ## Example: React Select
 
+See `./modules/xdatenfelder-react` for the source code of the `Select` component.
+
 ```ts
 import * as React from "react";
 
-import { SelectDataField, Augenfarbe, Familienstand } from "xdatenfelder";
+import { Augenfarbe, Familienstand } from "xdatenfelder";
+import { Select } from "xdatenfelder-react";
 
-type SelectProps<V extends string, T extends SelectDataField<V>> = {
-  Type: {
-    new (value: V): T;
-    Variants: Record<V, string>;
-    fromString: (value: string) => T;
-  };
-  value: T;
-  onChange: (value: T) => void;
-};
-
-export default function Select<V extends string, T extends SelectDataField<V>>({
-  Type,
-  value,
-  onChange,
-}: SelectProps<V, T>) {
-  return (
-    <select
-      value={value.value}
-      onChange={(event) => onChange(Type.fromString(event.target.value))}
-    >
-      {Object.entries<string>(Type.Variants).map(([value, label]) => {
-        return (
-          <option key={value} value={value}>
-            {label}
-          </option>
-        );
-      })}
-    </select>
-  );
-}
-
-export function Application() {
+export function Example() {
   const [familienstand, setFamilienstand] = React.useState<Familienstand>(
     new Familienstand("LD")
   );

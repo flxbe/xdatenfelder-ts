@@ -12,7 +12,7 @@ type SelectProps<V extends string, T extends SelectDataField<V>> = {
   onChange: (value: T) => void;
 };
 
-export default function Select<V extends string, T extends SelectDataField<V>>({
+export function Select<V extends string, T extends SelectDataField<V>>({
   Type,
   value,
   onChange,
