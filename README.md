@@ -1,6 +1,6 @@
 # xdatenfelder-ts
 
-An experimental and type-safe implementation of the data-fields defined in [xDatenfelder](https://www.xrepository.de/details/urn:xoev-de:fim:standard:xdatenfelder).
+An experimental and type-safe implementation of the data-fields defined by [harmonisierte Baukastenelemente Version 2.1](https://fimportal.de/fim-haus) ([xDatenfelder](https://www.xrepository.de/details/urn:xoev-de:fim:standard:xdatenfelder)).
 
 ## Modules
 
