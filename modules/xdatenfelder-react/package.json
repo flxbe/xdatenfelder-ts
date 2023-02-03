@@ -1,14 +1,14 @@
 {
   "name": "xdatenfelder-react",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "build": "webpack",
     "watch": "webpack --watch"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Felix Bernhardt",
+  "license": "EUPL-1.2",
   "devDependencies": {
     "@types/react": "^18.0.27",
     "@types/react-dom": "^18.0.10",
