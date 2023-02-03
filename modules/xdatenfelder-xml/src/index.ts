@@ -106,7 +106,7 @@ const IDENTIFIER_TO_LABEL: Record<string, string> = {
   C60000023: "ArtGesellschafterPersonengesellschaft",
   C60000025: "RechtsformGaengig",
   C60000027: "Registergerichte",
-  C60000028: "IndustrieUndHandelsKammer",
+  C60000028: "IndustrieUndHandelskammer",
   C60000029: "Handwerkskammer",
   C60000030: "GesetzlicherVertreterBevollmaechtigter",
   C60000031: "Augenfarbe",
@@ -226,17 +226,39 @@ for (const list of codeLists) {
 
   let raw = "";
 
+  raw += `export const MetaData = {
+    id: "${list.identifier}",
+    version: ${list.version},
+    canonicalUri: "${list.canonicalUri}",
+    canonicalVersionUri: "${list.canonicalVersionUri}",
+    longName: "${list.longName}",
+    shortName: "${list.shortName}",
+  }\n\n`;
+
   raw += `export type ${label}Values = ${list.items
     .map((item) => `"${item.code}"`)
-    .join(" | ")};\n`;
-  raw += "\n\n";
+    .join(" | ")};\n\n`;
+
   raw += `export const ${label}Variants: Record<string, string> = {\n ${list.items
     .map((item) => `"${item.code}": "${item.label}"`)
-    .join(",")} };`;
+    .join(",")} };\n\n`;
 
   const formatted = prettier.format(raw, { parser: "typescript" });
 
-  const file = await open(`./generated/${list.identifier}.ts`, "w");
+  const filename = `${toKebabCase(label)}.ts`;
+  const file = await open(`../xdatenfelder/src/codelists/${filename}`, "w");
   await file.write(formatted);
   file.close();
+}
+
+function toKebabCase(value: string): string {
+  return (
+    value
+      .trim()
+      .replace(/([a-z])([A-Z])/g, "$1-$2")
+      .replace(/\W/g, (m) => (/[À-ž]/.test(m) ? m : "-"))
+      .replace(/^-+|-+$/g, "")
+      // .replace(/-{2,}/g, m => options && options.condense ? '-' : m)
+      .toLowerCase()
+  );
 }
