@@ -73,11 +73,6 @@ class XmlData {
     }
   }
 
-  public getInt(key: string): number {
-    const child = this.data[key];
-    return parseInt(child);
-  }
-
   public getArray(key: string): XmlArray {
     const child = this.data[key];
 
@@ -133,7 +128,7 @@ class CodeList {
 
   public shortName: string;
   public longName: string;
-  public version: number;
+  public version: string;
   public canonicalUri: string;
   public canonicalVersionUri: string;
 
@@ -143,7 +138,7 @@ class CodeList {
     identifier: string,
     shortName: string,
     longName: string,
-    version: number,
+    version: string,
     canonicalUri: string,
     canonicalVersionUri: string,
     items: Array<CodeListItem>
@@ -169,7 +164,7 @@ class CodeList {
     const identification = codeList.getChild("Identification");
     const shortName = identification.getString("ShortName");
     const longName = identification.getString("LongName");
-    const version = identification.getInt("Version");
+    const version = identification.getString("Version");
     const canonicalUri = identification.getString("CanonicalUri");
     const canonicalVersionUri = identification.getString("CanonicalVersionUri");
 

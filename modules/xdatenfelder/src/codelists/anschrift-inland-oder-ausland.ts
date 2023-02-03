@@ -1,6 +1,6 @@
 export const MetaData = {
   id: "C60000006",
-  version: "2021",
+  version: "2021-06-18",
   canonicalUri: "urn:de:fim:codeliste:anschrift-inland-oder-ausland",
   canonicalVersionUri:
     "urn:de:fim:codeliste:anschrift-inland-oder-ausland_2021-06-18",

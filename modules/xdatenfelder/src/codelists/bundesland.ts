@@ -1,6 +1,6 @@
 export const MetaData = {
   id: "C60000014",
-  version: "2010",
+  version: "2010-04-01",
   canonicalUri:
     "urn:de:bund:destatis:bevoelkerungsstatistik:schluessel:bundesland",
   canonicalVersionUri:

@@ -18,7 +18,7 @@ export interface CodeListMetaData {
   longName: string;
 }
 
-export abstract class BaseEnumDataField<T extends string> {
+export abstract class SelectDataField<T extends string> {
   private _value: T;
   private _variants: Record<T, string>;
 

@@ -1,6 +1,6 @@
 export const MetaData = {
   id: "C60000025",
-  version: "2021",
+  version: "2021-06-18",
   canonicalUri: "urn:de:fim:codeliste:rechtsformen-gaengig",
   canonicalVersionUri: "urn:de:fim:codeliste:rechtsformen-gaengig_2021-06-18",
   longName: "",

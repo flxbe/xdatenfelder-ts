@@ -1,6 +1,6 @@
 export const MetaData = {
   id: "C60000028",
-  version: "2021",
+  version: "2021-02-15",
   canonicalUri: "urn:xoev-de:xunternehmen:codeliste:ihk",
   canonicalVersionUri: "urn:xoev-de:xunternehmen:codeliste:ihk_2021-02-15",
   longName: "Industrie- und Handelskammern",

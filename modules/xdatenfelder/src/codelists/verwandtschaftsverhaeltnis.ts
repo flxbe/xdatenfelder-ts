@@ -1,6 +1,6 @@
 export const MetaData = {
   id: "C60000009",
-  version: "2020",
+  version: "2020-08-17",
   canonicalUri: "urn:de:fim:codeliste:verwandtschaftsverhältnis",
   canonicalVersionUri:
     "urn:de:fim:codeliste:verwandtschaftsverhältnis_2020-08-17",

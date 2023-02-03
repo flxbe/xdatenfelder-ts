@@ -1,6 +1,6 @@
 export const MetaData = {
   id: "C60000010",
-  version: "2021",
+  version: "2021-03-19",
   canonicalUri: "urn:de:fim:codeliste:gesetzlichervertreter",
   canonicalVersionUri: "urn:de:fim:codeliste:gesetzlichervertreter_2021-03-19",
   longName: "",

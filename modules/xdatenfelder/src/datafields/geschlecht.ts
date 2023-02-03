@@ -1,7 +1,7 @@
-import { DataFieldMetaData, CodeListMetaData, BaseEnumDataField } from "./base";
+import { DataFieldMetaData, CodeListMetaData, SelectDataField } from "./base";
 import { Value, Variants, MetaData } from "../codelists/geschlecht";
 
-export class Geschlecht extends BaseEnumDataField<Value> {
+export class Geschlecht extends SelectDataField<Value> {
   public static Variants = Variants;
 
   public static Meta: DataFieldMetaData = {
