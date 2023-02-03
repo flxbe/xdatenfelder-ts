@@ -2,6 +2,12 @@
 
 An experimental and type-safe implementation of the data-fields defined in [xDatenfelder](https://www.xrepository.de/details/urn:xoev-de:fim:standard:xdatenfelder).
 
+## Modules
+
+- `xdatenfelder`: The core package containing the types from xDatenfelder. The library is dependency-free and runs both on the server and in the browser.
+- `xdatenfelder-xml`: Parser for the `.xml` files from [harmonisierte Baukastenelemente Version 2.1](https://fimportal.de/fim-haus). Internally used for code generation.
+- `xdatenfelder-react`: Concrete show-case of user input validation using react.
+
 ## Getting Started
 
 ### Validate User Input
