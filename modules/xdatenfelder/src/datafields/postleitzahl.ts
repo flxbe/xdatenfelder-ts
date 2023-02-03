@@ -1,12 +1,10 @@
-import { DataFieldMetaData } from "./base";
+import { DataFieldMetaData } from "../base";
 
 export class Postleitzahl {
   public static Meta: DataFieldMetaData = {
     id: "F60000246",
     version: "1.1",
     name: "Postleitzahl",
-    definition:
-      "Es ist die Postleitzahl anzugeben. Der Typ dieses Elements ist eine Einschränkung des Basistyps String.Latin.",
     bezeichnungEingabe: "Postleitzahl",
     bezeichnungAusgabe: "Postleitzahl",
     hilfetextEingabe:

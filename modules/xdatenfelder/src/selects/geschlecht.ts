@@ -1,4 +1,4 @@
-import { DataFieldMetaData, CodeListMetaData, SelectDataField } from "./base";
+import { DataFieldMetaData, CodeListMetaData, SelectDataField } from "../base";
 import { Value, Variants, MetaData } from "../codelists/geschlecht";
 
 export class Geschlecht extends SelectDataField<Value> {
@@ -6,15 +6,13 @@ export class Geschlecht extends SelectDataField<Value> {
 
   public static Meta: DataFieldMetaData = {
     id: "F60000332",
-    version: "1.2",
+    version: "1.3",
     name: "Geschlecht",
-    definition:
-      "Beschreibt das Geschlecht einer Person. Folgende Angaben sind möglich: divers, männlich, weiblich, keine Angabe",
     bezeichnungEingabe: "Geschlecht",
     bezeichnungAusgabe: "Geschlecht",
     hilfetextEingabe:
       "Geben Sie das Geschlecht an, das auch beim Personenstandsregister oder Standesamt hinterlegt ist.",
-    hilfetextAusgabe: undefined,
+    hilfetextAusgabe: "Geschlecht",
   };
 
   public static CodeListMeta: CodeListMetaData = MetaData;

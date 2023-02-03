@@ -1,4 +1,4 @@
-import { DataFieldMetaData, CodeListMetaData, SelectDataField } from "./base";
+import { DataFieldMetaData, CodeListMetaData, SelectDataField } from "../base";
 import { Value, Variants, MetaData } from "../codelists/staatsangehoerigkeit";
 
 export class Staatsangehoerigkeit extends SelectDataField<Value> {
@@ -8,13 +8,11 @@ export class Staatsangehoerigkeit extends SelectDataField<Value> {
     id: "F60000236",
     version: "1.3",
     name: "Staatsangehörigkeit",
-    definition:
-      "Die Staatsangehörigkeit beschreibt den/die Staat(en), dem/denen ein Bürger juristisch zugehörig ist (Wahlrecht etc.).",
     bezeichnungEingabe: "Staatsangehörigkeit",
     bezeichnungAusgabe: "Staatsangehörigkeit",
     hilfetextEingabe:
-      'Wählen Sie aus, welcher Nationalität bzw. welchen Nationalitäten die Person angehört. Es ist auch die Auswahl "ohne Angabe" möglich, falls die Person keiner Nationalität angehört.',
-    hilfetextAusgabe: "Dieses Feld enthält eine Nationalität der Person.",
+      'Wählen Sie aus, welcher Nationalität bzw. welchen Nationalitäten die Person angehört. Es ist auch die Auswahl "ohne Angabe" möglich, falls die Person keiner Nationalität angehört.&#xD;',
+    hilfetextAusgabe: "Staatsangehörigkeit",
   };
 
   public static CodeListMeta: CodeListMetaData = MetaData;

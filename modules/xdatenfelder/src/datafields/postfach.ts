@@ -1,12 +1,10 @@
-import { DataFieldMetaData } from "./base";
+import { DataFieldMetaData } from "../base";
 
 export class Postfach {
   public static Meta: DataFieldMetaData = {
     id: "F60000249",
     version: "1.1",
     name: "Postfach",
-    definition:
-      "Ein Postfach (oft Postfachnummer) ist ein Schlüssel zur Identifikation eines Postfaches in einer Postfiliale.",
     bezeichnungEingabe: "Postfach",
     bezeichnungAusgabe: "Postfach",
     hilfetextEingabe:

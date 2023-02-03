@@ -2,11 +2,12 @@
   "name": "xdatenfelder-xml",
   "version": "1.0.0",
   "description": "",
-  "main": "src/index.ts",
+  "main": "./src/index.ts",
   "type": "module",
   "scripts": {
     "test": "jest",
-    "generate": "ts-node-esm ./src/index.ts"
+    "generate-code-lists": "ts-node ./src/generate-code-lists.ts",
+    "generate-selects": "ts-node ./src/generate-selects.ts"
   },
   "author": "",
   "license": "ISC",

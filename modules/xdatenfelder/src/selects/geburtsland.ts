@@ -1,4 +1,4 @@
-import { DataFieldMetaData, CodeListMetaData, SelectDataField } from "./base";
+import { DataFieldMetaData, CodeListMetaData, SelectDataField } from "../base";
 import { Value, Variants, MetaData } from "../codelists/staat";
 
 export class Geburtsland extends SelectDataField<Value> {
@@ -8,11 +8,10 @@ export class Geburtsland extends SelectDataField<Value> {
     id: "F60000235",
     version: "1.2",
     name: "Geburtsland / Staat der Geburt",
-    definition: "Der Staat der Geburt einer natürlichen Person.",
     bezeichnungEingabe: "Staat der Geburt",
     bezeichnungAusgabe: "Staat der Geburt",
     hilfetextEingabe: undefined,
-    hilfetextAusgabe: undefined,
+    hilfetextAusgabe: "Staat der Geburt",
   };
 
   public static CodeListMeta: CodeListMetaData = MetaData;
