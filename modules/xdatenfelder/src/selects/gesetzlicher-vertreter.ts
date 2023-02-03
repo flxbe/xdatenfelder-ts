@@ -1,8 +1,12 @@
 import { DataFieldMetaData, CodeListMetaData, SelectDataField } from "../base";
-import { Value, Variants, MetaData } from "../codelists/gesetzlicher-vertreter";
+import {
+  GesetzlicherVertreterValue,
+  GesetzlicherVertreterVariants,
+  GesetzlicherVertreterMetaData,
+} from "../codelists/gesetzlicher-vertreter";
 
-export class GesetzlicherVertreter extends SelectDataField<Value> {
-  public static Variants = Variants;
+export class GesetzlicherVertreter extends SelectDataField<GesetzlicherVertreterValue> {
+  public static Variants = GesetzlicherVertreterVariants;
 
   public static Meta: DataFieldMetaData = {
     id: "F60000318",
@@ -15,9 +19,9 @@ export class GesetzlicherVertreter extends SelectDataField<Value> {
     hilfetextAusgabe: "Vertretung durch eine gesetzlich vertretende Person",
   };
 
-  public static CodeListMeta: CodeListMetaData = MetaData;
+  public static CodeListMeta: CodeListMetaData = GesetzlicherVertreterMetaData;
 
-  constructor(value: Value) {
+  constructor(value: GesetzlicherVertreterValue) {
     super(value, GesetzlicherVertreter.Variants);
   }
 
@@ -29,7 +33,7 @@ export class GesetzlicherVertreter extends SelectDataField<Value> {
     throw "Wrong value";
   }
 
-  public static isValid(value: string): value is Value {
+  public static isValid(value: string): value is GesetzlicherVertreterValue {
     return value in GesetzlicherVertreter.Variants;
   }
 }

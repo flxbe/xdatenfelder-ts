@@ -1,12 +1,12 @@
 import { DataFieldMetaData, CodeListMetaData, SelectDataField } from "../base";
 import {
-  Value,
-  Variants,
-  MetaData,
+  GesetzlicherVertreterBevollmaechtigterValue,
+  GesetzlicherVertreterBevollmaechtigterVariants,
+  GesetzlicherVertreterBevollmaechtigterMetaData,
 } from "../codelists/gesetzlicher-vertreter-bevollmaechtigter";
 
-export class VertretungGesetzlicherVertreterOrderBevollmaechtigter extends SelectDataField<Value> {
-  public static Variants = Variants;
+export class VertretungGesetzlicherVertreterOrderBevollmaechtigter extends SelectDataField<GesetzlicherVertreterBevollmaechtigterValue> {
+  public static Variants = GesetzlicherVertreterBevollmaechtigterVariants;
 
   public static Meta: DataFieldMetaData = {
     id: "F60000352",
@@ -18,9 +18,10 @@ export class VertretungGesetzlicherVertreterOrderBevollmaechtigter extends Selec
     hilfetextAusgabe: "Vertretung der antragstellenden Person",
   };
 
-  public static CodeListMeta: CodeListMetaData = MetaData;
+  public static CodeListMeta: CodeListMetaData =
+    GesetzlicherVertreterBevollmaechtigterMetaData;
 
-  constructor(value: Value) {
+  constructor(value: GesetzlicherVertreterBevollmaechtigterValue) {
     super(
       value,
       VertretungGesetzlicherVertreterOrderBevollmaechtigter.Variants
@@ -37,7 +38,9 @@ export class VertretungGesetzlicherVertreterOrderBevollmaechtigter extends Selec
     throw "Wrong value";
   }
 
-  public static isValid(value: string): value is Value {
+  public static isValid(
+    value: string
+  ): value is GesetzlicherVertreterBevollmaechtigterValue {
     return (
       value in VertretungGesetzlicherVertreterOrderBevollmaechtigter.Variants
     );

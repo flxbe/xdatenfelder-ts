@@ -1,4 +1,4 @@
-export const MetaData = {
+export const RechtsformMetaData = {
   id: "C60000042",
   version: "2",
   canonicalUri: "urn:xoev-de:xunternehmen:codeliste:rechtsformen",
@@ -7,7 +7,7 @@ export const MetaData = {
   shortName: "rechtsformen",
 };
 
-export type Value =
+export type RechtsformValue =
   | "100000"
   | "110000"
   | "111000"
@@ -84,7 +84,7 @@ export type Value =
   | "224000"
   | "224100";
 
-export const Variants: Record<Value, string> = {
+export const RechtsformVariants: Record<RechtsformValue, string> = {
   "100000": "Rechtsf. PG",
   "110000": "PHG",
   "111000": "OHG (auch & Co. OHG)",

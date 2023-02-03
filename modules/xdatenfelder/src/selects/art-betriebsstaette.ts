@@ -1,8 +1,12 @@
 import { DataFieldMetaData, CodeListMetaData, SelectDataField } from "../base";
-import { Value, Variants, MetaData } from "../codelists/art-niederlassung";
+import {
+  ArtNiederlassungValue,
+  ArtNiederlassungVariants,
+  ArtNiederlassungMetaData,
+} from "../codelists/art-niederlassung";
 
-export class ArtBetriebsstaette extends SelectDataField<Value> {
-  public static Variants = Variants;
+export class ArtBetriebsstaette extends SelectDataField<ArtNiederlassungValue> {
+  public static Variants = ArtNiederlassungVariants;
 
   public static Meta: DataFieldMetaData = {
     id: "F60000363",
@@ -14,9 +18,9 @@ export class ArtBetriebsstaette extends SelectDataField<Value> {
     hilfetextAusgabe: "Art der Niederlassung",
   };
 
-  public static CodeListMeta: CodeListMetaData = MetaData;
+  public static CodeListMeta: CodeListMetaData = ArtNiederlassungMetaData;
 
-  constructor(value: Value) {
+  constructor(value: ArtNiederlassungValue) {
     super(value, ArtBetriebsstaette.Variants);
   }
 
@@ -28,7 +32,7 @@ export class ArtBetriebsstaette extends SelectDataField<Value> {
     throw "Wrong value";
   }
 
-  public static isValid(value: string): value is Value {
+  public static isValid(value: string): value is ArtNiederlassungValue {
     return value in ArtBetriebsstaette.Variants;
   }
 }

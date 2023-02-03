@@ -1,8 +1,12 @@
 import { DataFieldMetaData, CodeListMetaData, SelectDataField } from "../base";
-import { Value, Variants, MetaData } from "../codelists/art-eintragung";
+import {
+  ArtEintragungValue,
+  ArtEintragungVariants,
+  ArtEintragungMetaData,
+} from "../codelists/art-eintragung";
 
-export class ArtEintragung extends SelectDataField<Value> {
-  public static Variants = Variants;
+export class ArtEintragung extends SelectDataField<ArtEintragungValue> {
+  public static Variants = ArtEintragungVariants;
 
   public static Meta: DataFieldMetaData = {
     id: "F60000347",
@@ -15,9 +19,9 @@ export class ArtEintragung extends SelectDataField<Value> {
     hilfetextAusgabe: "Art der Eintragung oder des Registers",
   };
 
-  public static CodeListMeta: CodeListMetaData = MetaData;
+  public static CodeListMeta: CodeListMetaData = ArtEintragungMetaData;
 
-  constructor(value: Value) {
+  constructor(value: ArtEintragungValue) {
     super(value, ArtEintragung.Variants);
   }
 
@@ -29,7 +33,7 @@ export class ArtEintragung extends SelectDataField<Value> {
     throw "Wrong value";
   }
 
-  public static isValid(value: string): value is Value {
+  public static isValid(value: string): value is ArtEintragungValue {
     return value in ArtEintragung.Variants;
   }
 }

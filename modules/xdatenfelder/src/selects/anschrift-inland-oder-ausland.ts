@@ -1,12 +1,12 @@
 import { DataFieldMetaData, CodeListMetaData, SelectDataField } from "../base";
 import {
-  Value,
-  Variants,
-  MetaData,
+  AnschriftInlandOderAuslandValue,
+  AnschriftInlandOderAuslandVariants,
+  AnschriftInlandOderAuslandMetaData,
 } from "../codelists/anschrift-inland-oder-ausland";
 
-export class AnschriftInlandOderAusland extends SelectDataField<Value> {
-  public static Variants = Variants;
+export class AnschriftInlandOderAusland extends SelectDataField<AnschriftInlandOderAuslandValue> {
+  public static Variants = AnschriftInlandOderAuslandVariants;
 
   public static Meta: DataFieldMetaData = {
     id: "F60000263",
@@ -19,9 +19,10 @@ export class AnschriftInlandOderAusland extends SelectDataField<Value> {
     hilfetextAusgabe: "Die Anschrift befindet sich:",
   };
 
-  public static CodeListMeta: CodeListMetaData = MetaData;
+  public static CodeListMeta: CodeListMetaData =
+    AnschriftInlandOderAuslandMetaData;
 
-  constructor(value: Value) {
+  constructor(value: AnschriftInlandOderAuslandValue) {
     super(value, AnschriftInlandOderAusland.Variants);
   }
 
@@ -33,7 +34,9 @@ export class AnschriftInlandOderAusland extends SelectDataField<Value> {
     throw "Wrong value";
   }
 
-  public static isValid(value: string): value is Value {
+  public static isValid(
+    value: string
+  ): value is AnschriftInlandOderAuslandValue {
     return value in AnschriftInlandOderAusland.Variants;
   }
 }

@@ -1,4 +1,4 @@
-export const MetaData = {
+export const VerwandtschaftsverhaeltnisMetaData = {
   id: "C60000009",
   version: "2020-08-17",
   canonicalUri: "urn:de:fim:codeliste:verwandtschaftsverhältnis",
@@ -8,7 +8,7 @@ export const MetaData = {
   shortName: "Verwandtschaftsverhältnis",
 };
 
-export type Value =
+export type VerwandtschaftsverhaeltnisValue =
   | "001"
   | "002"
   | "003"
@@ -31,7 +31,10 @@ export type Value =
   | "020"
   | "999";
 
-export const Variants: Record<Value, string> = {
+export const VerwandtschaftsverhaeltnisVariants: Record<
+  VerwandtschaftsverhaeltnisValue,
+  string
+> = {
   "001": "Ehegatte / Ehegattin",
   "002": "Lebenspartner / Lebenspartnerin",
   "003":

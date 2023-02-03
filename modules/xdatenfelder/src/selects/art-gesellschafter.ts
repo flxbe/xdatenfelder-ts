@@ -1,12 +1,12 @@
 import { DataFieldMetaData, CodeListMetaData, SelectDataField } from "../base";
 import {
-  Value,
-  Variants,
-  MetaData,
+  ArtGesellschafterPersonengesellschaftValue,
+  ArtGesellschafterPersonengesellschaftVariants,
+  ArtGesellschafterPersonengesellschaftMetaData,
 } from "../codelists/art-gesellschafter-personengesellschaft";
 
-export class ArtGesellschafter extends SelectDataField<Value> {
-  public static Variants = Variants;
+export class ArtGesellschafter extends SelectDataField<ArtGesellschafterPersonengesellschaftValue> {
+  public static Variants = ArtGesellschafterPersonengesellschaftVariants;
 
   public static Meta: DataFieldMetaData = {
     id: "F60000342",
@@ -18,9 +18,10 @@ export class ArtGesellschafter extends SelectDataField<Value> {
     hilfetextAusgabe: "Gesellschafterart",
   };
 
-  public static CodeListMeta: CodeListMetaData = MetaData;
+  public static CodeListMeta: CodeListMetaData =
+    ArtGesellschafterPersonengesellschaftMetaData;
 
-  constructor(value: Value) {
+  constructor(value: ArtGesellschafterPersonengesellschaftValue) {
     super(value, ArtGesellschafter.Variants);
   }
 
@@ -32,7 +33,9 @@ export class ArtGesellschafter extends SelectDataField<Value> {
     throw "Wrong value";
   }
 
-  public static isValid(value: string): value is Value {
+  public static isValid(
+    value: string
+  ): value is ArtGesellschafterPersonengesellschaftValue {
     return value in ArtGesellschafter.Variants;
   }
 }

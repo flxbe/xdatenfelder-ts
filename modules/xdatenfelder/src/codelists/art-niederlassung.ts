@@ -1,4 +1,4 @@
-export const MetaData = {
+export const ArtNiederlassungMetaData = {
   id: "C60000035",
   version: "1",
   canonicalUri: "urn:xoev-de:xunternehmen:codeliste:artniederlassung",
@@ -7,9 +7,9 @@ export const MetaData = {
   shortName: "artniederlassung",
 };
 
-export type Value = "01" | "02" | "03" | "04";
+export type ArtNiederlassungValue = "01" | "02" | "03" | "04";
 
-export const Variants: Record<Value, string> = {
+export const ArtNiederlassungVariants: Record<ArtNiederlassungValue, string> = {
   "01": "Hauptniederlassung",
   "02": "Zweigniederlassung",
   "03": "Unselbständige Zweigstelle",

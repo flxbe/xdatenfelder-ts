@@ -1,4 +1,4 @@
-export const MetaData = {
+export const BundeslandMetaData = {
   id: "C60000014",
   version: "2010-04-01",
   canonicalUri:
@@ -10,7 +10,7 @@ export const MetaData = {
   shortName: "Bundesland",
 };
 
-export type Value =
+export type BundeslandValue =
   | "01"
   | "02"
   | "03"
@@ -28,7 +28,7 @@ export type Value =
   | "15"
   | "16";
 
-export const Variants: Record<Value, string> = {
+export const BundeslandVariants: Record<BundeslandValue, string> = {
   "01": "Schleswig-Holstein",
   "02": "Hamburg",
   "03": "Niedersachsen",

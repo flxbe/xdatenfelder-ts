@@ -1,8 +1,12 @@
 import { DataFieldMetaData, CodeListMetaData, SelectDataField } from "../base";
-import { Value, Variants, MetaData } from "../codelists/art-anschrift";
+import {
+  ArtAnschriftValue,
+  ArtAnschriftVariants,
+  ArtAnschriftMetaData,
+} from "../codelists/art-anschrift";
 
-export class ArtAnschrift extends SelectDataField<Value> {
-  public static Variants = Variants;
+export class ArtAnschrift extends SelectDataField<ArtAnschriftValue> {
+  public static Variants = ArtAnschriftVariants;
 
   public static Meta: DataFieldMetaData = {
     id: "F60000376",
@@ -14,9 +18,9 @@ export class ArtAnschrift extends SelectDataField<Value> {
     hilfetextAusgabe: "Art der Anschrift",
   };
 
-  public static CodeListMeta: CodeListMetaData = MetaData;
+  public static CodeListMeta: CodeListMetaData = ArtAnschriftMetaData;
 
-  constructor(value: Value) {
+  constructor(value: ArtAnschriftValue) {
     super(value, ArtAnschrift.Variants);
   }
 
@@ -28,7 +32,7 @@ export class ArtAnschrift extends SelectDataField<Value> {
     throw "Wrong value";
   }
 
-  public static isValid(value: string): value is Value {
+  public static isValid(value: string): value is ArtAnschriftValue {
     return value in ArtAnschrift.Variants;
   }
 }

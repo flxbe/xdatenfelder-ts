@@ -1,12 +1,12 @@
 import { DataFieldMetaData, CodeListMetaData, SelectDataField } from "../base";
 import {
-  Value,
-  Variants,
-  MetaData,
+  IndustrieUndHandelskammerValue,
+  IndustrieUndHandelskammerVariants,
+  IndustrieUndHandelskammerMetaData,
 } from "../codelists/industrie-und-handelskammer";
 
-export class IndustrieUndHandelskammer extends SelectDataField<Value> {
-  public static Variants = Variants;
+export class IndustrieUndHandelskammer extends SelectDataField<IndustrieUndHandelskammerValue> {
+  public static Variants = IndustrieUndHandelskammerVariants;
 
   public static Meta: DataFieldMetaData = {
     id: "F60000348",
@@ -18,9 +18,10 @@ export class IndustrieUndHandelskammer extends SelectDataField<Value> {
     hilfetextAusgabe: "IHK",
   };
 
-  public static CodeListMeta: CodeListMetaData = MetaData;
+  public static CodeListMeta: CodeListMetaData =
+    IndustrieUndHandelskammerMetaData;
 
-  constructor(value: Value) {
+  constructor(value: IndustrieUndHandelskammerValue) {
     super(value, IndustrieUndHandelskammer.Variants);
   }
 
@@ -32,7 +33,9 @@ export class IndustrieUndHandelskammer extends SelectDataField<Value> {
     throw "Wrong value";
   }
 
-  public static isValid(value: string): value is Value {
+  public static isValid(
+    value: string
+  ): value is IndustrieUndHandelskammerValue {
     return value in IndustrieUndHandelskammer.Variants;
   }
 }

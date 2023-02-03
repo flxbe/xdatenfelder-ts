@@ -155,12 +155,12 @@ for (const select of data.selectFields) {
 
   raw += `
   import { DataFieldMetaData, CodeListMetaData, SelectDataField } from "../base";
-  import { Value, Variants, MetaData } from "../codelists/${toKebabCase(
+  import { ${codeListLabel}Value, ${codeListLabel}Variants, ${codeListLabel}MetaData } from "../codelists/${toKebabCase(
     codeListLabel
   )}";
   
-  export class ${label} extends SelectDataField<Value> {
-    public static Variants = Variants;
+  export class ${label} extends SelectDataField<${codeListLabel}Value> {
+    public static Variants = ${codeListLabel}Variants;
   
     public static Meta: DataFieldMetaData = {
       id: ${_str(select.identifier)},
@@ -172,9 +172,9 @@ for (const select of data.selectFields) {
       hilfetextAusgabe: ${_str(select.bezeichnungAusgabe)}
     };
   
-    public static CodeListMeta: CodeListMetaData = MetaData;
+    public static CodeListMeta: CodeListMetaData = ${codeListLabel}MetaData;
   
-    constructor(value: Value) {
+    constructor(value: ${codeListLabel}Value) {
       super(value, ${label}.Variants);
     }
   
@@ -186,7 +186,7 @@ for (const select of data.selectFields) {
       throw "Wrong value";
     }
   
-    public static isValid(value: string): value is Value {
+    public static isValid(value: string): value is ${codeListLabel}Value {
       return value in ${label}.Variants;
     }
   }

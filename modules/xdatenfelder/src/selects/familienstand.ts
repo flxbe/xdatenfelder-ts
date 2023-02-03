@@ -1,8 +1,12 @@
 import { DataFieldMetaData, CodeListMetaData, SelectDataField } from "../base";
-import { Value, Variants, MetaData } from "../codelists/familienstand";
+import {
+  FamilienstandValue,
+  FamilienstandVariants,
+  FamilienstandMetaData,
+} from "../codelists/familienstand";
 
-export class Familienstand extends SelectDataField<Value> {
-  public static Variants = Variants;
+export class Familienstand extends SelectDataField<FamilienstandValue> {
+  public static Variants = FamilienstandVariants;
 
   public static Meta: DataFieldMetaData = {
     id: "F60000275",
@@ -14,9 +18,9 @@ export class Familienstand extends SelectDataField<Value> {
     hilfetextAusgabe: "Familienstand",
   };
 
-  public static CodeListMeta: CodeListMetaData = MetaData;
+  public static CodeListMeta: CodeListMetaData = FamilienstandMetaData;
 
-  constructor(value: Value) {
+  constructor(value: FamilienstandValue) {
     super(value, Familienstand.Variants);
   }
 
@@ -28,7 +32,7 @@ export class Familienstand extends SelectDataField<Value> {
     throw "Wrong value";
   }
 
-  public static isValid(value: string): value is Value {
+  public static isValid(value: string): value is FamilienstandValue {
     return value in Familienstand.Variants;
   }
 }

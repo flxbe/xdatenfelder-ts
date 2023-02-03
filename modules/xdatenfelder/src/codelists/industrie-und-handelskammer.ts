@@ -1,4 +1,4 @@
-export const MetaData = {
+export const IndustrieUndHandelskammerMetaData = {
   id: "C60000028",
   version: "2021-02-15",
   canonicalUri: "urn:xoev-de:xunternehmen:codeliste:ihk",
@@ -7,7 +7,7 @@ export const MetaData = {
   shortName: "ihk",
 };
 
-export type Value =
+export type IndustrieUndHandelskammerValue =
   | "101"
   | "102"
   | "103"
@@ -96,7 +96,10 @@ export type Value =
   | "186"
   | "187";
 
-export const Variants: Record<Value, string> = {
+export const IndustrieUndHandelskammerVariants: Record<
+  IndustrieUndHandelskammerValue,
+  string
+> = {
   "101": "Aachen",
   "102": "Arnsberg Hellweg-Sauerland",
   "103": "Aschaffenburg",

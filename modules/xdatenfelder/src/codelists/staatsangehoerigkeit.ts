@@ -1,4 +1,4 @@
-export const MetaData = {
+export const StaatsangehoerigkeitMetaData = {
   id: "C60000019",
   version: "2021-02-19",
   canonicalUri:
@@ -10,7 +10,7 @@ export const MetaData = {
   shortName: "Staatsangehoerigkeit",
 };
 
-export type Value =
+export type StaatsangehoerigkeitValue =
   | "000"
   | "120"
   | "121"
@@ -223,7 +223,10 @@ export type Value =
   | "998"
   | "999";
 
-export const Variants: Record<Value, string> = {
+export const StaatsangehoerigkeitVariants: Record<
+  StaatsangehoerigkeitValue,
+  string
+> = {
   "000": "Deutschland",
   "120": "Jugoslawien",
   "121": "Albanien",

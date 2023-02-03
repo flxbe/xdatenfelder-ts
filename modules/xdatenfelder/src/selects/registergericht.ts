@@ -1,8 +1,12 @@
 import { DataFieldMetaData, CodeListMetaData, SelectDataField } from "../base";
-import { Value, Variants, MetaData } from "../codelists/registergerichte";
+import {
+  RegistergerichteValue,
+  RegistergerichteVariants,
+  RegistergerichteMetaData,
+} from "../codelists/registergerichte";
 
-export class Registergericht extends SelectDataField<Value> {
-  public static Variants = Variants;
+export class Registergericht extends SelectDataField<RegistergerichteValue> {
+  public static Variants = RegistergerichteVariants;
 
   public static Meta: DataFieldMetaData = {
     id: "F60000325",
@@ -15,9 +19,9 @@ export class Registergericht extends SelectDataField<Value> {
     hilfetextAusgabe: "Registergericht",
   };
 
-  public static CodeListMeta: CodeListMetaData = MetaData;
+  public static CodeListMeta: CodeListMetaData = RegistergerichteMetaData;
 
-  constructor(value: Value) {
+  constructor(value: RegistergerichteValue) {
     super(value, Registergericht.Variants);
   }
 
@@ -29,7 +33,7 @@ export class Registergericht extends SelectDataField<Value> {
     throw "Wrong value";
   }
 
-  public static isValid(value: string): value is Value {
+  public static isValid(value: string): value is RegistergerichteValue {
     return value in Registergericht.Variants;
   }
 }

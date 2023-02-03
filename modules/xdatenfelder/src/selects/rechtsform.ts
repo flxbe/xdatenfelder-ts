@@ -1,8 +1,12 @@
 import { DataFieldMetaData, CodeListMetaData, SelectDataField } from "../base";
-import { Value, Variants, MetaData } from "../codelists/rechtsform";
+import {
+  RechtsformValue,
+  RechtsformVariants,
+  RechtsformMetaData,
+} from "../codelists/rechtsform";
 
-export class Rechtsform extends SelectDataField<Value> {
-  public static Variants = Variants;
+export class Rechtsform extends SelectDataField<RechtsformValue> {
+  public static Variants = RechtsformVariants;
 
   public static Meta: DataFieldMetaData = {
     id: "F60000339",
@@ -14,9 +18,9 @@ export class Rechtsform extends SelectDataField<Value> {
     hilfetextAusgabe: "Rechtsform",
   };
 
-  public static CodeListMeta: CodeListMetaData = MetaData;
+  public static CodeListMeta: CodeListMetaData = RechtsformMetaData;
 
-  constructor(value: Value) {
+  constructor(value: RechtsformValue) {
     super(value, Rechtsform.Variants);
   }
 
@@ -28,7 +32,7 @@ export class Rechtsform extends SelectDataField<Value> {
     throw "Wrong value";
   }
 
-  public static isValid(value: string): value is Value {
+  public static isValid(value: string): value is RechtsformValue {
     return value in Rechtsform.Variants;
   }
 }

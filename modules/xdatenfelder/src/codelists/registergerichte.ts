@@ -1,4 +1,4 @@
-export const MetaData = {
+export const RegistergerichteMetaData = {
   id: "C60000027",
   version: "12",
   canonicalUri: "urn:xoev-de:xunternehmen:codeliste:registergerichte",
@@ -7,7 +7,7 @@ export const MetaData = {
   shortName: "Registergerichte",
 };
 
-export type Value =
+export type RegistergerichteValue =
   | "B8534"
   | "B8535"
   | "B8536"
@@ -211,7 +211,7 @@ export type Value =
   | "Y1307"
   | "Y1308";
 
-export const Variants: Record<Value, string> = {
+export const RegistergerichteVariants: Record<RegistergerichteValue, string> = {
   B8534: "Amtsgericht Stuttgart",
   B8535: "Amtsgericht Mannheim",
   B8536: "Amtsgericht Freiburg",

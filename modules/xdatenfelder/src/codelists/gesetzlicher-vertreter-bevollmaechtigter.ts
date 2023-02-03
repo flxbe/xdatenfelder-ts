@@ -1,4 +1,4 @@
-export const MetaData = {
+export const GesetzlicherVertreterBevollmaechtigterMetaData = {
   id: "C60000030",
   version: "2021-06-18",
   canonicalUri: "urn:de:fim:codeliste:gesetzlicher-vertreter-bevollmaechtigter",
@@ -8,9 +8,17 @@ export const MetaData = {
   shortName: "",
 };
 
-export type Value = "001" | "002" | "003" | "004" | "005";
+export type GesetzlicherVertreterBevollmaechtigterValue =
+  | "001"
+  | "002"
+  | "003"
+  | "004"
+  | "005";
 
-export const Variants: Record<Value, string> = {
+export const GesetzlicherVertreterBevollmaechtigterVariants: Record<
+  GesetzlicherVertreterBevollmaechtigterValue,
+  string
+> = {
   "001": "Nein.",
   "002": "Ja, durch eine gesetzliche Vertretung (natürliche Person).",
   "003": "Ja, durch eine gesetzliche Vertretung (juristische Person).",

@@ -23,7 +23,7 @@ for (const list of codeLists) {
 
   let raw = "";
 
-  raw += `export const MetaData = {
+  raw += `export const ${label}MetaData = {
     id: "${list.identifier}",
     version: "${list.version}",
     canonicalUri: "${list.canonicalUri}",
@@ -32,11 +32,11 @@ for (const list of codeLists) {
     shortName: "${list.shortName}",
   }\n\n`;
 
-  raw += `export type Value = ${list.items
+  raw += `export type ${label}Value = ${list.items
     .map((item) => `"${item.code}"`)
     .join(" | ")};\n\n`;
 
-  raw += `export const Variants: Record<Value, string> = {\n ${list.items
+  raw += `export const ${label}Variants: Record<${label}Value, string> = {\n ${list.items
     .map((item) => `"${item.code}": "${item.label}"`)
     .join(",")} };\n\n`;
 
@@ -47,3 +47,19 @@ for (const list of codeLists) {
   await file.write(formatted);
   file.close();
 }
+
+const indexContent = prettier.format(
+  codeLists
+    .map((list) => {
+      const label = CODE_LIST_IDENTIFIER_TO_LABEL[list.identifier];
+      assert(label);
+
+      return `export * from "./${toKebabCase(label)}"`;
+    })
+    .join("\n"),
+  { parser: "typescript" }
+);
+
+const file = await open("../xdatenfelder/src/codelists/index.ts", "w");
+await file.write(indexContent);
+file.close();

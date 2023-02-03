@@ -1,12 +1,12 @@
 import { DataFieldMetaData, CodeListMetaData, SelectDataField } from "../base";
 import {
-  Value,
-  Variants,
-  MetaData,
+  klassifikationKommunikationValue,
+  klassifikationKommunikationVariants,
+  klassifikationKommunikationMetaData,
 } from "../codelists/klassifikation-kommunikation";
 
-export class KommunikationKlassifikation extends SelectDataField<Value> {
-  public static Variants = Variants;
+export class KommunikationKlassifikation extends SelectDataField<klassifikationKommunikationValue> {
+  public static Variants = klassifikationKommunikationVariants;
 
   public static Meta: DataFieldMetaData = {
     id: "F60000378",
@@ -21,9 +21,10 @@ export class KommunikationKlassifikation extends SelectDataField<Value> {
       "Auswahl der Art der Kommunikation (privat, geschäftlich, ...)",
   };
 
-  public static CodeListMeta: CodeListMetaData = MetaData;
+  public static CodeListMeta: CodeListMetaData =
+    klassifikationKommunikationMetaData;
 
-  constructor(value: Value) {
+  constructor(value: klassifikationKommunikationValue) {
     super(value, KommunikationKlassifikation.Variants);
   }
 
@@ -35,7 +36,9 @@ export class KommunikationKlassifikation extends SelectDataField<Value> {
     throw "Wrong value";
   }
 
-  public static isValid(value: string): value is Value {
+  public static isValid(
+    value: string
+  ): value is klassifikationKommunikationValue {
     return value in KommunikationKlassifikation.Variants;
   }
 }

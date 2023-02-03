@@ -27,7 +27,7 @@ export abstract class SelectDataField<T extends string> {
   }
 
   public get value(): T {
-    return this.value;
+    return this._value;
   }
 
   public get label(): string {

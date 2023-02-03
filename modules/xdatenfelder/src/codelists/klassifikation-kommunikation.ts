@@ -1,4 +1,4 @@
-export const MetaData = {
+export const klassifikationKommunikationMetaData = {
   id: "C60000037",
   version: "1",
   canonicalUri:
@@ -9,9 +9,12 @@ export const MetaData = {
   shortName: "klassifikationkommunikation",
 };
 
-export type Value = "01" | "02" | "03";
+export type klassifikationKommunikationValue = "01" | "02" | "03";
 
-export const Variants: Record<Value, string> = {
+export const klassifikationKommunikationVariants: Record<
+  klassifikationKommunikationValue,
+  string
+> = {
   "01": "allgemein",
   "02": "privat",
   "03": "geschäftlich",

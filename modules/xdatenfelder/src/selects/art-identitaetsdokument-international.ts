@@ -1,12 +1,12 @@
 import { DataFieldMetaData, CodeListMetaData, SelectDataField } from "../base";
 import {
-  Value,
-  Variants,
-  MetaData,
+  IdentifikationsdokumenteValue,
+  IdentifikationsdokumenteVariants,
+  IdentifikationsdokumenteMetaData,
 } from "../codelists/identifikationsdokumente";
 
-export class ArtIdentitaetsdokumentInternational extends SelectDataField<Value> {
-  public static Variants = Variants;
+export class ArtIdentitaetsdokumentInternational extends SelectDataField<IdentifikationsdokumenteValue> {
+  public static Variants = IdentifikationsdokumenteVariants;
 
   public static Meta: DataFieldMetaData = {
     id: "F60000238",
@@ -19,9 +19,10 @@ export class ArtIdentitaetsdokumentInternational extends SelectDataField<Value> 
     hilfetextAusgabe: "Identitätsdokument",
   };
 
-  public static CodeListMeta: CodeListMetaData = MetaData;
+  public static CodeListMeta: CodeListMetaData =
+    IdentifikationsdokumenteMetaData;
 
-  constructor(value: Value) {
+  constructor(value: IdentifikationsdokumenteValue) {
     super(value, ArtIdentitaetsdokumentInternational.Variants);
   }
 
@@ -33,7 +34,7 @@ export class ArtIdentitaetsdokumentInternational extends SelectDataField<Value> 
     throw "Wrong value";
   }
 
-  public static isValid(value: string): value is Value {
+  public static isValid(value: string): value is IdentifikationsdokumenteValue {
     return value in ArtIdentitaetsdokumentInternational.Variants;
   }
 }

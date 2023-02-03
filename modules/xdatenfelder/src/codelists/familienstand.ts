@@ -1,4 +1,4 @@
-export const MetaData = {
+export const FamilienstandMetaData = {
   id: "C60000001",
   version: "2",
   canonicalUri: "urn:de:dsmeld:schluesseltabelle:familienstand",
@@ -7,7 +7,7 @@ export const MetaData = {
   shortName: "DSMeld_Familienstand_(DSMeld-Blatt_1401)",
 };
 
-export type Value =
+export type FamilienstandValue =
   | "EA"
   | "GS"
   | "LA"
@@ -19,7 +19,7 @@ export type Value =
   | "VH"
   | "VW";
 
-export const Variants: Record<Value, string> = {
+export const FamilienstandVariants: Record<FamilienstandValue, string> = {
   EA: "Ehe aufgehoben",
   GS: "geschieden",
   LA: "aufgehobene Lebenspartnerschaft",

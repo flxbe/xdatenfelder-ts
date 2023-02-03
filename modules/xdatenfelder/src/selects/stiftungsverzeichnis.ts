@@ -1,8 +1,12 @@
 import { DataFieldMetaData, CodeListMetaData, SelectDataField } from "../base";
-import { Value, Variants, MetaData } from "../codelists/bundesland";
+import {
+  BundeslandValue,
+  BundeslandVariants,
+  BundeslandMetaData,
+} from "../codelists/bundesland";
 
-export class Stiftungsverzeichnis extends SelectDataField<Value> {
-  public static Variants = Variants;
+export class Stiftungsverzeichnis extends SelectDataField<BundeslandValue> {
+  public static Variants = BundeslandVariants;
 
   public static Meta: DataFieldMetaData = {
     id: "F60000374",
@@ -15,9 +19,9 @@ export class Stiftungsverzeichnis extends SelectDataField<Value> {
     hilfetextAusgabe: "Bundesland des Stiftungsregistereintrags",
   };
 
-  public static CodeListMeta: CodeListMetaData = MetaData;
+  public static CodeListMeta: CodeListMetaData = BundeslandMetaData;
 
-  constructor(value: Value) {
+  constructor(value: BundeslandValue) {
     super(value, Stiftungsverzeichnis.Variants);
   }
 
@@ -29,7 +33,7 @@ export class Stiftungsverzeichnis extends SelectDataField<Value> {
     throw "Wrong value";
   }
 
-  public static isValid(value: string): value is Value {
+  public static isValid(value: string): value is BundeslandValue {
     return value in Stiftungsverzeichnis.Variants;
   }
 }

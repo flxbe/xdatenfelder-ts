@@ -1,4 +1,4 @@
-export const MetaData = {
+export const ArtAnschriftMetaData = {
   id: "C60000036",
   version: "1",
   canonicalUri: "urn:xoev-de:xunternehmen:codeliste:artanschrift",
@@ -7,9 +7,9 @@ export const MetaData = {
   shortName: "artanschrift",
 };
 
-export type Value = "00" | "01" | "02" | "03" | "04" | "05" | "06";
+export type ArtAnschriftValue = "00" | "01" | "02" | "03" | "04" | "05" | "06";
 
-export const Variants: Record<Value, string> = {
+export const ArtAnschriftVariants: Record<ArtAnschriftValue, string> = {
   "00": "unbestimmt",
   "01": "Wohnsitzadresse",
   "02": "Adresse des Betriebs / der Betriebsstätte",

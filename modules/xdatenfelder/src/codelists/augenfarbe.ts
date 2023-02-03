@@ -1,4 +1,4 @@
-export const MetaData = {
+export const AugenfarbeMetaData = {
   id: "C60000031",
   version: "1",
   canonicalUri: "urn:de:xauslaender:codelist:azr:artderaugenfarbe",
@@ -7,7 +7,7 @@ export const MetaData = {
   shortName: "AZR.AugenfarbeArt",
 };
 
-export type Value =
+export type AugenfarbeValue =
   | "01"
   | "03"
   | "06"
@@ -20,7 +20,7 @@ export type Value =
   | "98"
   | "99";
 
-export const Variants: Record<Value, string> = {
+export const AugenfarbeVariants: Record<AugenfarbeValue, string> = {
   "01": "Blau",
   "03": "Blaugrau",
   "06": "Braun",

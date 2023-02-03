@@ -1,4 +1,4 @@
-export const MetaData = {
+export const GeschlechtMetaData = {
   id: "C60000018",
   version: "3",
   canonicalUri: "urn:xpersonenstand:schluesseltabelle:geschlecht",
@@ -7,9 +7,9 @@ export const MetaData = {
   shortName: "geschlecht",
 };
 
-export type Value = "d" | "m" | "w" | "x";
+export type GeschlechtValue = "d" | "m" | "w" | "x";
 
-export const Variants: Record<Value, string> = {
+export const GeschlechtVariants: Record<GeschlechtValue, string> = {
   d: "divers",
   m: "männlich",
   w: "weiblich",

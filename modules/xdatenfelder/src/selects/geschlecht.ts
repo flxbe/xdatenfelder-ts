@@ -1,8 +1,12 @@
 import { DataFieldMetaData, CodeListMetaData, SelectDataField } from "../base";
-import { Value, Variants, MetaData } from "../codelists/geschlecht";
+import {
+  GeschlechtValue,
+  GeschlechtVariants,
+  GeschlechtMetaData,
+} from "../codelists/geschlecht";
 
-export class Geschlecht extends SelectDataField<Value> {
-  public static Variants = Variants;
+export class Geschlecht extends SelectDataField<GeschlechtValue> {
+  public static Variants = GeschlechtVariants;
 
   public static Meta: DataFieldMetaData = {
     id: "F60000332",
@@ -15,9 +19,9 @@ export class Geschlecht extends SelectDataField<Value> {
     hilfetextAusgabe: "Geschlecht",
   };
 
-  public static CodeListMeta: CodeListMetaData = MetaData;
+  public static CodeListMeta: CodeListMetaData = GeschlechtMetaData;
 
-  constructor(value: Value) {
+  constructor(value: GeschlechtValue) {
     super(value, Geschlecht.Variants);
   }
 
@@ -29,7 +33,7 @@ export class Geschlecht extends SelectDataField<Value> {
     throw "Wrong value";
   }
 
-  public static isValid(value: string): value is Value {
+  public static isValid(value: string): value is GeschlechtValue {
     return value in Geschlecht.Variants;
   }
 }

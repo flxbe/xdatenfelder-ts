@@ -1,8 +1,8 @@
 import { DataFieldMetaData, CodeListMetaData, SelectDataField } from "../base";
-import { Value, Variants, MetaData } from "../codelists/staat";
+import { StaatValue, StaatVariants, StaatMetaData } from "../codelists/staat";
 
-export class HerausgebenderStaat extends SelectDataField<Value> {
-  public static Variants = Variants;
+export class HerausgebenderStaat extends SelectDataField<StaatValue> {
+  public static Variants = StaatVariants;
 
   public static Meta: DataFieldMetaData = {
     id: "F60000237",
@@ -15,9 +15,9 @@ export class HerausgebenderStaat extends SelectDataField<Value> {
     hilfetextAusgabe: "Staat",
   };
 
-  public static CodeListMeta: CodeListMetaData = MetaData;
+  public static CodeListMeta: CodeListMetaData = StaatMetaData;
 
-  constructor(value: Value) {
+  constructor(value: StaatValue) {
     super(value, HerausgebenderStaat.Variants);
   }
 
@@ -29,7 +29,7 @@ export class HerausgebenderStaat extends SelectDataField<Value> {
     throw "Wrong value";
   }
 
-  public static isValid(value: string): value is Value {
+  public static isValid(value: string): value is StaatValue {
     return value in HerausgebenderStaat.Variants;
   }
 }
