@@ -1,7 +1,7 @@
 {
   "include": ["src/**/*"],
   "exclude": ["node_modules", "**/*.spec.ts"],
-  "extends": "@tsconfig/node-lts-strictest-esm/tsconfig.json",
+  "extends": "@tsconfig/recommended/tsconfig.json",
   "compilerOptions": {
     "outDir": "dist"
   },
