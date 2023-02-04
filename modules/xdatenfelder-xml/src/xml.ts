@@ -1,4 +1,3 @@
-import { open } from "node:fs/promises";
 import { XMLParser } from "fast-xml-parser";
 
 export class XmlArray {
@@ -32,11 +31,7 @@ export class XmlData {
     this.data = data;
   }
 
-  public static async loadFromFile(filepath: string): Promise<XmlData> {
-    const file = await open(filepath, "r");
-    const content = await file.readFile("utf-8");
-    file.close();
-
+  public static fromString(data: string): XmlData {
     const parser = new XMLParser({
       numberParseOptions: {
         leadingZeros: false,
@@ -44,9 +39,10 @@ export class XmlData {
         skipLike: /^.*$/,
       },
     });
-    const data = parser.parse(content);
 
-    return new XmlData(data);
+    const xmlData = parser.parse(data);
+
+    return new XmlData(xmlData);
   }
 
   public hasChild(key: string): boolean {

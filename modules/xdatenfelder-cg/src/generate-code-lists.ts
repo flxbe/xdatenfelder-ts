@@ -1,17 +1,20 @@
 import { open, readdir } from "node:fs/promises";
 import assert from "node:assert/strict";
 import prettier from "prettier";
-import { CodeList } from "./code-list";
-import { CODE_LIST_IDENTIFIER_TO_LABEL, toKebabCase } from "./util";
+import { CodeList } from "xdatenfelder-xml";
+import { CODE_LIST_IDENTIFIER_TO_LABEL, readFile, toKebabCase } from "./util";
 
 const files = await readdir("./data/codelists");
 
 const codeLists = await Promise.all(
-  files.map((filename) => {
+  files.map(async (filename) => {
     const identifier = filename.split("_")[0];
     assert(identifier !== undefined);
 
-    return CodeList.loadFromFile(`./data/codelists/${filename}`, identifier);
+    const filepath = `./data/codelists/${filename}`;
+    const data = await readFile(filepath);
+
+    return CodeList.fromString(data, identifier);
   })
 );
 

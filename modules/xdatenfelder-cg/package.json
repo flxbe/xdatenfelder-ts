@@ -1,22 +1,28 @@
 {
-  "name": "xdatenfelder-xml",
+  "name": "xdatenfelder-cg",
   "version": "0.1.0",
   "description": "",
   "main": "./src/index.ts",
   "type": "module",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "generate-code-lists": "ts-node ./src/generate-code-lists.ts",
+    "generate-selects": "ts-node ./src/generate-selects.ts"
   },
   "author": "Felix Bernhardt",
   "license": "EUPL-1.2",
   "devDependencies": {
     "@jest/globals": "^29.4.1",
     "@tsconfig/node-lts-strictest-esm": "^18.12.1",
+    "@types/xml2js": "^0.4.11",
     "jest": "^29.4.1",
     "ts-jest": "^29.0.5",
+    "ts-node": "^10.9.1",
     "typescript": "^4.9.5"
   },
   "dependencies": {
-    "fast-xml-parser": "^4.1.0"
+    "fast-xml-parser": "^4.1.0",
+    "prettier": "^2.8.3",
+    "xdatenfelder-xml": "file:../xdatenfelder-xml"
   }
 }

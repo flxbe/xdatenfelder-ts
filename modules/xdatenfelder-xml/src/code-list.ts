@@ -1,5 +1,5 @@
-import assert from "node:assert/strict";
 import { XmlData } from "./xml";
+import { assert } from "./util";
 
 export class CodeListItem {
   public code: string;
@@ -42,11 +42,8 @@ export class CodeList {
     this.items = items;
   }
 
-  public static async loadFromFile(
-    filepath: string,
-    identifier: string
-  ): Promise<CodeList> {
-    const data = await XmlData.loadFromFile(filepath);
+  public static fromString(stringData: string, identifier: string): CodeList {
+    const data = XmlData.fromString(stringData);
 
     const codeList = data.getChild("CodeList");
     const identification = codeList.getChild("Identification");
