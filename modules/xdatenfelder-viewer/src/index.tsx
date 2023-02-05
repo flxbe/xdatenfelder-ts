@@ -6,11 +6,24 @@ import { DataField, Schema } from "xdatenfelder-xml";
 function Application() {
   const [schema, setSchema] = React.useState<Schema | null>(null);
 
-  if (schema !== null) {
-    return <Viewer schema={schema} />;
-  } else {
-    return <UploadPage onSchemaUpload={setSchema} />;
+  function renderContent() {
+    if (schema !== null) {
+      return <Viewer schema={schema} />;
+    } else {
+      return <UploadPage onSchemaUpload={setSchema} />;
+    }
   }
+
+  return (
+    <div>
+      <nav className="navbar bg-dark" data-bs-theme="dark">
+        <div className="container-fluid">
+          <span className="navbar-brand mb-0 h1">xDatenfelder Viewer</span>
+        </div>
+      </nav>
+      {renderContent()}
+    </div>
+  );
 }
 
 async function loadFile(file: File): Promise<string> {
@@ -220,12 +233,12 @@ function DataFieldCard({ dataField }: DataFieldCardProps) {
   return (
     <div className="card mb-3">
       <div className="card-body">
-        <h6 className="card-subtitle mb-2 text-muted">
-          <span className={`badge ${colorClass}`}>{dataField.type}</span>
-        </h6>
         <h5 className="card-title">{dataField.name}</h5>
         <h6 className="card-subtitle mb-2 text-muted">
-          {dataField.identifier}
+          <span className="badge text-bg-secondary">
+            {dataField.identifier}
+          </span>{" "}
+          <span className={`badge ${colorClass}`}>{dataField.type}</span>
         </h6>
         <p className="card-text">{dataField.definition}</p>
       </div>
