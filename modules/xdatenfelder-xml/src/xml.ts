@@ -1,5 +1,12 @@
 import { XMLParser } from "fast-xml-parser";
 
+class XmlError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "XmlError";
+  }
+}
+
 export class XmlArray {
   private data: Array<any>;
 
@@ -10,9 +17,9 @@ export class XmlArray {
   public asXmlData(): Array<XmlData> {
     return this.data.map((item) => {
       if (item === undefined) {
-        throw `Child with key ${item} does not exist`;
+        throw new XmlError(`Child with key ${item} does not exist`);
       } else if (typeof item !== "object") {
-        throw `Type of child is ${typeof item}, not "object"`;
+        throw new XmlError(`Type of is ${typeof item}, not "object"`);
       }
 
       return new XmlData(item);
@@ -33,6 +40,7 @@ export class XmlData {
 
   public static fromString(data: string): XmlData {
     const parser = new XMLParser({
+      ignoreAttributes: false,
       numberParseOptions: {
         leadingZeros: false,
         hex: false,
@@ -53,9 +61,11 @@ export class XmlData {
     const child = this.data[key];
 
     if (child === undefined) {
-      throw `Child with key ${key} does not exist`;
+      throw new XmlError(`Cannot find expected element ${key}`);
     } else if (typeof child !== "object") {
-      throw `Type of child is ${typeof child}, not "object"`;
+      throw new XmlError(
+        `Type of child '${key}' is ${typeof child}, not "object"`
+      );
     }
 
     return new XmlData(child);
@@ -64,18 +74,53 @@ export class XmlData {
   public getString(key: string): string {
     const child = this.data[key];
 
-    if (typeof child === "string") {
+    if (typeof child === "string" && child !== "") {
       return child;
     } else {
-      throw `Type of ${key} is ${typeof child}, expected string`;
+      throw `Value of ${key} must be a non-empty string`;
     }
+  }
+
+  public getOptionalString(key: string): string | undefined {
+    const child = this.data[key];
+
+    if (child === undefined || child === "") {
+      return undefined;
+    } else if (typeof child === "string") {
+      return child;
+    } else {
+      throw new XmlError(
+        `Type of ${key} is ${typeof child}, expected optional string`
+      );
+    }
+  }
+
+  public getOptionalInt(key: string): number | undefined {
+    const child = this.data[key];
+
+    if (child === undefined) {
+      return undefined;
+    } else {
+      return parseInt(child);
+    }
+  }
+
+  public getDate(key: string): Date {
+    const data = this.getString(key);
+
+    return new Date(data);
   }
 
   public getArray(key: string): XmlArray {
     const child = this.data[key];
 
+    if (typeof child !== "object") {
+      throw new XmlError(`Item ${key} is not an array, got: ${child}`);
+    }
+
     if (!Array.isArray(child)) {
-      throw `Item ${key} is not an array, got: ${child}`;
+      // If an array has only length one, the parser interprets it as an object. So manually create the array.
+      return new XmlArray([child]);
     } else {
       return new XmlArray(child);
     }
