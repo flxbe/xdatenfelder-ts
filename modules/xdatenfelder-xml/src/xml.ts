@@ -114,11 +114,11 @@ export class XmlData {
   public getArray(key: string): XmlArray {
     const child = this.data[key];
 
-    if (typeof child !== "object") {
+    if (child === undefined) {
+      return new XmlArray([]);
+    } else if (typeof child !== "object") {
       throw new XmlError(`Item ${key} is not an array, got: ${child}`);
-    }
-
-    if (!Array.isArray(child)) {
+    } else if (!Array.isArray(child)) {
       // If an array has only length one, the parser interprets it as an object. So manually create the array.
       return new XmlArray([child]);
     } else {

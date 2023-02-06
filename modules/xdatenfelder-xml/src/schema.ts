@@ -75,6 +75,7 @@ export class Schema {
     const content = data.getChild("xdf:xdatenfelder.stammdatenschema.0102");
     const namespace = content.getString("@_xmlns:xdf");
     if (namespace !== "urn:xoev-de:fim:standard:xdatenfelder_2") {
+      console.log(namespace);
       throw new SchemaError("Only xDatenfelder v2 is supported.");
     }
 
