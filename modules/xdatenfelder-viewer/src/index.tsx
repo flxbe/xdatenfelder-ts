@@ -103,14 +103,16 @@ function Viewer({ schema }: ViewerProps) {
       <div className="container my-5">
         <ul className="nav nav-pills justify-content-center">
           {renderLink("Schema", "/")}
-          {renderLink("Datenfeldgrupppen (0)", "/groups")}
-          {renderLink(
-            `Datenfelder (${schema.dataFields.length})`,
-            "/datafields"
+          {renderBadeLink("Datenfeldgrupppen", "/groups", 0)}
+          {renderBadeLink(
+            "Datenfelder",
+            "/datafields",
+            schema.dataFields.length
           )}
-          {renderLink(
-            `Codelisten (${schema.codeListReferences.length})`,
-            "/codelists"
+          {renderBadeLink(
+            "Codelisten",
+            "/codelists",
+            schema.codeListReferences.length
           )}
         </ul>
       </div>
@@ -127,6 +129,20 @@ function Viewer({ schema }: ViewerProps) {
         ></Route>
       </Routes>
     </div>
+  );
+}
+
+function renderBadeLink(name: string, target: string, count: number) {
+  const isActive = Boolean(useMatch(target));
+
+  const className = isActive ? "nav-link active" : "nav-link";
+
+  return (
+    <li className="nav-item">
+      <Link to={target} className={className} aria-current={isActive}>
+        {name} <span className="badge text-bg-secondary">{count}</span>
+      </Link>
+    </li>
   );
 }
 
