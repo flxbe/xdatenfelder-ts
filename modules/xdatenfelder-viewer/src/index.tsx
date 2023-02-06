@@ -1,7 +1,9 @@
 import * as React from "react";
 import { createRoot } from "react-dom/client";
 import { Routes, Route, BrowserRouter, Link, useMatch } from "react-router-dom";
-import { DataField, Schema } from "xdatenfelder-xml";
+import { Schema, Warning as SchemaWarning } from "xdatenfelder-xml";
+import { Warning } from "./warning";
+import { DataFieldCard } from "./data-field-card";
 
 function Application() {
   const [schema, setSchema] = React.useState<Schema | null>(null);
@@ -99,7 +101,7 @@ function Viewer({ schema }: ViewerProps) {
     <div className="container my-5">
       <div className="container my-5">
         <ul className="nav nav-pills justify-content-center">
-          {renderLink("Vorschau", "/")}
+          {renderLink("Schema", "/")}
           {renderLink("Datenfeldgrupppen (0)", "/groups")}
           {renderLink(
             `Datenfelder (${schema.dataFields.length})`,
@@ -109,7 +111,7 @@ function Viewer({ schema }: ViewerProps) {
         </ul>
       </div>
       <Routes>
-        <Route path="/" element={<PreviewPage schema={schema} />}></Route>
+        <Route path="/" element={<OverviewPage schema={schema} />}></Route>
         <Route path="/groups" element={<div>Gruppen</div>}></Route>
         <Route
           path="/datafields"
@@ -139,8 +141,58 @@ type PreviewPageProps = {
   schema: Schema;
 };
 
-function PreviewPage({ schema }: PreviewPageProps) {
-  return <div>Preview</div>;
+function OverviewPage({ schema }: PreviewPageProps) {
+  return (
+    <div className="container">
+      <h2 className="mb-3">{schema.schemaData.name}</h2>
+      <dl className="row">
+        <dt className="col-sm-3">Nachrichten-Id</dt>
+        <dd className="col-sm-9">{schema.messageId}</dd>
+
+        <dt className="col-sm-3">Id</dt>
+        <dd className="col-sm-9">{schema.schemaData.identifier}</dd>
+
+        <dt className="col-sm-3">Version</dt>
+        <dd className="col-sm-9">{schema.schemaData.version}</dd>
+
+        <dt className="col-sm-3">Versionshinweis</dt>
+        <dd className="col-sm-9">{schema.schemaData.versionInfo || "-"}</dd>
+
+        <dt className="col-sm-3">Autor</dt>
+        <dd className="col-sm-9">{schema.schemaData.creator}</dd>
+
+        <dt className="col-sm-3">Bezug</dt>
+        <dd className="col-sm-9">{schema.schemaData.relatedTo || "-"}</dd>
+
+        <dt className="col-sm-3">Definition</dt>
+        <dd className="col-sm-9">{schema.schemaData.definition || "-"}</dd>
+
+        <dt className="col-sm-3">Beschreibung</dt>
+        <dd className="col-sm-9">{schema.schemaData.description || "-"}</dd>
+      </dl>
+
+      <h4 className="mb-3">Status</h4>
+      {renderStatus(schema.warnings)}
+    </div>
+  );
+}
+
+function renderStatus(warnings: Array<SchemaWarning>) {
+  if (warnings.length === 0) {
+    return (
+      <div className="alert alert-success" role="alert">
+        Keine Warnungen
+      </div>
+    );
+  } else {
+    return (
+      <div>
+        {warnings.map((warning, index) => (
+          <Warning key={index} warning={warning} />
+        ))}
+      </div>
+    );
+  }
 }
 
 type DataFieldsPageProps = {
@@ -198,49 +250,6 @@ function DataFieldsPage({ schema }: DataFieldsPageProps) {
         {dataFields.map((dataField) => (
           <DataFieldCard key={dataField.identifier} dataField={dataField} />
         ))}
-      </div>
-    </div>
-  );
-}
-
-function renderTypeFilter(
-  name: string,
-  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void
-) {
-  return (
-    <div className="form-check">
-      <input className="form-check-input" type="checkbox" value="" id={name} />
-      <label className="form-check-label" htmlFor={name}>
-        {name}
-      </label>
-    </div>
-  );
-}
-
-type DataFieldCardProps = {
-  dataField: DataField;
-};
-
-const TYPE_TO_COLOR_CLASS: Record<string, string> = {
-  input: "text-bg-primary",
-  select: "text-bg-success",
-  label: "text-bg-dark",
-};
-
-function DataFieldCard({ dataField }: DataFieldCardProps) {
-  const colorClass = TYPE_TO_COLOR_CLASS[dataField.type] || "text-bg-secondary";
-
-  return (
-    <div className="card mb-3">
-      <div className="card-body">
-        <h5 className="card-title">{dataField.name}</h5>
-        <h6 className="card-subtitle mb-2 text-muted">
-          <span className="badge text-bg-secondary">
-            {dataField.identifier}
-          </span>{" "}
-          <span className={`badge ${colorClass}`}>{dataField.type}</span>
-        </h6>
-        <p className="card-text">{dataField.definition}</p>
       </div>
     </div>
   );
