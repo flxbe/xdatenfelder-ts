@@ -6,7 +6,7 @@ module.exports = merge(common, {
   mode: "production",
   plugins: [
     new webpack.DefinePlugin({
-      "process.env.BASE_URL": '"/xdatenfelder-ts"',
+      "process.env.BASE_URL": '"/xdatenfelder-ts/"',
     }),
   ],
 });
