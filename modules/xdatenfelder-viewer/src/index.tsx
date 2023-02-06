@@ -1,6 +1,6 @@
 import * as React from "react";
 import { createRoot } from "react-dom/client";
-import { Routes, Route, BrowserRouter, Link, useMatch } from "react-router-dom";
+import { Routes, Route, HashRouter, Link, useMatch } from "react-router-dom";
 import { Schema, Warning as SchemaWarning } from "xdatenfelder-xml";
 import { Warning } from "./warning";
 import { DataFieldCard } from "./data-field-card";
@@ -265,9 +265,9 @@ function DataFieldsPage({ schema }: DataFieldsPageProps) {
 function Root() {
   return (
     <React.StrictMode>
-      <BrowserRouter basename={process.env.BASE_URL}>
+      <HashRouter basename={process.env.BASE_URL}>
         <Application />
-      </BrowserRouter>
+      </HashRouter>
     </React.StrictMode>
   );
 }
