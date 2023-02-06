@@ -30,7 +30,7 @@ export function DataFieldCard({ dataField }: DataFieldCardProps) {
         </h6>
 
         <dl className="row mb-0">
-          <dt className="col-sm-3">Autor</dt>
+          <dt className="col-sm-3">Fachlicher Ersteller</dt>
           <dd className="col-sm-9">{dataField.creator}</dd>
 
           <dt className="col-sm-3">Bezug</dt>

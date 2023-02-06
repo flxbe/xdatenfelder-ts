@@ -165,7 +165,7 @@ function OverviewPage({ schema }: PreviewPageProps) {
         <dt className="col-sm-3">Versionshinweis</dt>
         <dd className="col-sm-9">{schema.schemaData.versionInfo || "-"}</dd>
 
-        <dt className="col-sm-3">Autor</dt>
+        <dt className="col-sm-3">Fachlicher Ersteller</dt>
         <dd className="col-sm-9">{schema.schemaData.creator}</dd>
 
         <dt className="col-sm-3">Bezug</dt>
