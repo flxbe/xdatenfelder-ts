@@ -4,6 +4,7 @@ import { Routes, Route, BrowserRouter, Link, useMatch } from "react-router-dom";
 import { Schema, Warning as SchemaWarning } from "xdatenfelder-xml";
 import { Warning } from "./warning";
 import { DataFieldCard } from "./data-field-card";
+import { CodeListsPage } from "./code-lists-page";
 
 function Application() {
   const [schema, setSchema] = React.useState<Schema | null>(null);
@@ -107,7 +108,10 @@ function Viewer({ schema }: ViewerProps) {
             `Datenfelder (${schema.dataFields.length})`,
             "/datafields"
           )}
-          {renderLink("Codelisten (0)", "/codelists")}
+          {renderLink(
+            `Codelisten (${schema.codeListReferences.length})`,
+            "/codelists"
+          )}
         </ul>
       </div>
       <Routes>
@@ -117,7 +121,10 @@ function Viewer({ schema }: ViewerProps) {
           path="/datafields"
           element={<DataFieldsPage schema={schema} />}
         ></Route>
-        <Route path="/codelists" element={<div>Codelisten</div>}></Route>
+        <Route
+          path="/codelists"
+          element={<CodeListsPage schema={schema} />}
+        ></Route>
       </Routes>
     </div>
   );

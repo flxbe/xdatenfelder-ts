@@ -87,6 +87,17 @@ export class Schema {
   public get selectFields(): Array<DataField> {
     return this.dataFields.filter((dataField) => dataField.type === "select");
   }
+
+  public get codeListReferences(): Array<CodeListReference> {
+    const references: Array<CodeListReference> = [];
+    for (const dataField of this.dataFields) {
+      if (dataField.codeListReference !== undefined) {
+        references.push(dataField.codeListReference);
+      }
+    }
+
+    return references;
+  }
 }
 
 class SchemaParser {
