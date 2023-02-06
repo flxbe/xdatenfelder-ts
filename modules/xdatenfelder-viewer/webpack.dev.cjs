@@ -1,4 +1,5 @@
 const { merge } = require("webpack-merge");
+const webpack = require("webpack");
 const common = require("./webpack.common.cjs");
 
 module.exports = merge(common, {
@@ -8,4 +9,9 @@ module.exports = merge(common, {
     static: "./dist",
     historyApiFallback: true,
   },
+  plugins: [
+    new webpack.DefinePlugin({
+      "process.env.BASE_URL": '"/"',
+    }),
+  ],
 });
