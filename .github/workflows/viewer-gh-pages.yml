@@ -33,6 +33,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 16
+      - run: cd ./modules/xdatenfelder-xml && npm ci
       - run: cd ./modules/xdatenfelder-viewer && npm ci && npm run build
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
