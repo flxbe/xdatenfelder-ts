@@ -265,7 +265,7 @@ function DataFieldsPage({ schema }: DataFieldsPageProps) {
 function Root() {
   return (
     <React.StrictMode>
-      <HashRouter basename={process.env.BASE_URL}>
+      <HashRouter>
         <Application />
       </HashRouter>
     </React.StrictMode>
