@@ -99,9 +99,17 @@ type ViewerProps = {
 
 function Viewer({ schema }: ViewerProps) {
   return (
-    <div className="container my-5">
-      <div className="container my-5">
-        <ul className="nav nav-pills justify-content-center">
+    <>
+      <div className="container-fluid px-4 border-bottom">
+        <h5 className="mt-4">
+          {schema.schemaData.name}{" "}
+          <span className="badge bg-secondary">
+            Version {schema.schemaData.version}
+          </span>
+          <br />
+          <small className="text-muted">{schema.schemaData.identifier}</small>
+        </h5>
+        <ul className="nav mt-4">
           {renderLink("Schema", "/")}
           {renderBadeLink("Datenfeldgrupppen", "/groups", 0)}
           {renderBadeLink(
@@ -116,26 +124,30 @@ function Viewer({ schema }: ViewerProps) {
           )}
         </ul>
       </div>
-      <Routes>
-        <Route path="/" element={<OverviewPage schema={schema} />}></Route>
-        <Route path="/groups" element={<div>Gruppen</div>}></Route>
-        <Route
-          path="/datafields"
-          element={<DataFieldsPage schema={schema} />}
-        ></Route>
-        <Route
-          path="/codelists"
-          element={<CodeListsPage schema={schema} />}
-        ></Route>
-      </Routes>
-    </div>
+      <div className="container p-3">
+        <Routes>
+          <Route path="/" element={<OverviewPage schema={schema} />}></Route>
+          <Route path="/groups" element={<div>Gruppen</div>}></Route>
+          <Route
+            path="/datafields"
+            element={<DataFieldsPage schema={schema} />}
+          ></Route>
+          <Route
+            path="/codelists"
+            element={<CodeListsPage schema={schema} />}
+          ></Route>
+        </Routes>
+      </div>
+    </>
   );
 }
 
 function renderBadeLink(name: string, target: string, count: number) {
   const isActive = Boolean(useMatch(target));
 
-  const className = isActive ? "nav-link active" : "nav-link";
+  const className = isActive
+    ? "nav-link text-reset border-bottom border-2 border-primary"
+    : "nav-link text-reset";
 
   return (
     <li className="nav-item">
@@ -149,7 +161,9 @@ function renderBadeLink(name: string, target: string, count: number) {
 function renderLink(name: string, target: string) {
   const isActive = Boolean(useMatch(target));
 
-  const className = isActive ? "nav-link active" : "nav-link";
+  const className = isActive
+    ? "nav-link text-reset border-bottom border-2 border-primary"
+    : "nav-link text-reset";
 
   return (
     <li className="nav-item">
@@ -166,17 +180,14 @@ type PreviewPageProps = {
 
 function OverviewPage({ schema }: PreviewPageProps) {
   return (
-    <div className="container">
-      <h2 className="mb-3">{schema.schemaData.name}</h2>
+    <div className="container-xxl">
+      <h4 className="mb-2">Eigenschaften</h4>
       <dl className="row">
         <dt className="col-sm-3">Nachrichten-Id</dt>
         <dd className="col-sm-9">{schema.messageId}</dd>
 
         <dt className="col-sm-3">Id</dt>
         <dd className="col-sm-9">{schema.schemaData.identifier}</dd>
-
-        <dt className="col-sm-3">Version</dt>
-        <dd className="col-sm-9">{schema.schemaData.version}</dd>
 
         <dt className="col-sm-3">Versionshinweis</dt>
         <dd className="col-sm-9">{schema.schemaData.versionInfo || "-"}</dd>
@@ -194,7 +205,7 @@ function OverviewPage({ schema }: PreviewPageProps) {
         <dd className="col-sm-9">{schema.schemaData.description || "-"}</dd>
       </dl>
 
-      <h4 className="mb-3">Status</h4>
+      <h4 className="mb-2">Status</h4>
       {renderStatus(schema.warnings)}
     </div>
   );
