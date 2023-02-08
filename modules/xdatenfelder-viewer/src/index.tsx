@@ -110,7 +110,7 @@ function UploadPage({ onSchemaUpload }: UploadPageProps) {
               />
               <div className="form-text">
                 Die Datei wird ausschließlich lokal geöffnet. Es werden keine
-                Daten an den Server geschickt.
+                Daten an den Server gesendet.
               </div>
               {renderError()}
             </div>

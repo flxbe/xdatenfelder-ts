@@ -35,7 +35,7 @@ export function PreviewPage({ schema }: PreviewPageProps) {
       </div>
       <div className="col-12 col-lg-9">
         <Optional identifier={null} location={page}>
-          <h3>Start</h3>
+          <h3>{schema.schemaData.name}</h3>
         </Optional>
         {schema.schemaData.steps.map((identifier) => {
           return (
