@@ -62,15 +62,37 @@ type UploadPageProps = {
 };
 
 function UploadPage({ onSchemaUpload }: UploadPageProps) {
+  const [error, setError] = React.useState<string | null>(null);
+
   async function onChange(event: React.ChangeEvent<HTMLInputElement>) {
     const { files } = event.target;
     if (files === null || files.length === 0) {
       return;
     }
 
-    const data = await loadFile(files[0]);
-    const schema = Schema.fromString(data);
-    onSchemaUpload(schema);
+    try {
+      const data = await loadFile(files[0]);
+      const schema = Schema.fromString(data);
+      onSchemaUpload(schema);
+    } catch (error) {
+      console.error(error);
+      setError(`${error}`);
+    }
+  }
+
+  function renderError() {
+    if (error === null) {
+      return undefined;
+    } else {
+      return (
+        <div
+          className="mt-3 mb-0 alert alert-danger d-flex align-items-center"
+          role="alert"
+        >
+          <div>{error}</div>
+        </div>
+      );
+    }
   }
 
   return (
@@ -79,15 +101,18 @@ function UploadPage({ onSchemaUpload }: UploadPageProps) {
         <div className="col-12 col-md-6">
           <div className="card">
             <div className="card-body">
-              <label htmlFor="fileUpload" className="form-label">
-                Datei hochladen
-              </label>
+              <h4 className="card-title mb-3">Datei öffnen</h4>
               <input
                 className="form-control"
                 type="file"
-                id="fileUpload"
+                accept=".xml"
                 onChange={onChange}
               />
+              <div className="form-text">
+                Die Datei wird ausschließlich lokal geöffnet. Es werden keine
+                Daten an den Server geschickt.
+              </div>
+              {renderError()}
             </div>
           </div>
         </div>
