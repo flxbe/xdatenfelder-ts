@@ -1,5 +1,6 @@
 import * as React from "react";
 import { DataField } from "xdatenfelder-xml";
+import { multilineToHtml } from "./util";
 
 export type DataFieldCardProps = {
   dataField: DataField;
@@ -34,13 +35,19 @@ export function DataFieldCard({ dataField }: DataFieldCardProps) {
           <dd className="col-sm-9">{dataField.creator}</dd>
 
           <dt className="col-sm-3">Bezug</dt>
-          <dd className="col-sm-9">{dataField.relatedTo || "-"}</dd>
+          <dd className="col-sm-9">
+            {multilineToHtml(dataField.relatedTo || "-")}
+          </dd>
 
           <dt className="col-sm-3">Definition</dt>
-          <dd className="col-sm-9">{dataField.definition || "-"}</dd>
+          <dd className="col-sm-9">
+            {multilineToHtml(dataField.definition || "-")}
+          </dd>
 
           <dt className="col-sm-3">Beschreibung</dt>
-          <dd className="col-sm-9">{dataField.description || "-"}</dd>
+          <dd className="col-sm-9">
+            {multilineToHtml(dataField.description || "-")}
+          </dd>
         </dl>
       </div>
       {renderData(dataField)}

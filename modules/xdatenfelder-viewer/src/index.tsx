@@ -5,6 +5,9 @@ import { Schema, Warning as SchemaWarning } from "xdatenfelder-xml";
 import { Warning } from "./warning";
 import { DataFieldCard } from "./data-field-card";
 import { CodeListsPage } from "./code-lists-page";
+import { DataGroupsPage } from "./data-groups-page";
+import { PreviewPage } from "./preview-page";
+import { multilineToHtml } from "./util";
 
 function Application() {
   const [schema, setSchema] = React.useState<Schema | null>(null);
@@ -100,8 +103,8 @@ type ViewerProps = {
 function Viewer({ schema }: ViewerProps) {
   return (
     <>
-      <div className="container-fluid px-4 border-bottom">
-        <h5 className="mt-4">
+      <div className="container-fluid px-4 pt-4 border-bottom bg-white">
+        <h5>
           {schema.schemaData.name}{" "}
           <span className="badge bg-secondary">
             Version {schema.schemaData.version}
@@ -111,11 +114,16 @@ function Viewer({ schema }: ViewerProps) {
         </h5>
         <ul className="nav mt-4">
           {renderLink("Schema", "/")}
-          {renderBadeLink("Datenfeldgrupppen", "/groups", 0)}
+          {renderLink("Vorschau", "/preview")}
+          {renderBadeLink(
+            "Datenfeldgrupppen",
+            "/groups",
+            Object.keys(schema.dataGroups).length
+          )}
           {renderBadeLink(
             "Datenfelder",
             "/datafields",
-            schema.dataFields.length
+            Object.keys(schema.dataFields).length
           )}
           {renderBadeLink(
             "Codelisten",
@@ -127,7 +135,14 @@ function Viewer({ schema }: ViewerProps) {
       <div className="container p-3">
         <Routes>
           <Route path="/" element={<OverviewPage schema={schema} />}></Route>
-          <Route path="/groups" element={<div>Gruppen</div>}></Route>
+          <Route
+            path="/preview"
+            element={<PreviewPage schema={schema} />}
+          ></Route>
+          <Route
+            path="/groups"
+            element={<DataGroupsPage schema={schema} />}
+          ></Route>
           <Route
             path="/datafields"
             element={<DataFieldsPage schema={schema} />}
@@ -158,8 +173,13 @@ function renderBadeLink(name: string, target: string, count: number) {
   );
 }
 
-function renderLink(name: string, target: string) {
-  const isActive = Boolean(useMatch(target));
+function renderLink(name: string, target: string, strict: boolean = true) {
+  let isActive = false;
+  if (strict) {
+    isActive = Boolean(useMatch(target));
+  } else {
+    isActive = Boolean(useMatch(`${target}/*`));
+  }
 
   const className = isActive
     ? "nav-link text-reset border-bottom border-2 border-primary"
@@ -174,11 +194,11 @@ function renderLink(name: string, target: string) {
   );
 }
 
-type PreviewPageProps = {
+type OverviewPageProps = {
   schema: Schema;
 };
 
-function OverviewPage({ schema }: PreviewPageProps) {
+function OverviewPage({ schema }: OverviewPageProps) {
   return (
     <div className="container-xxl">
       <h4 className="mb-2">Eigenschaften</h4>
@@ -196,13 +216,19 @@ function OverviewPage({ schema }: PreviewPageProps) {
         <dd className="col-sm-9">{schema.schemaData.creator}</dd>
 
         <dt className="col-sm-3">Bezug</dt>
-        <dd className="col-sm-9">{schema.schemaData.relatedTo || "-"}</dd>
+        <dd className="col-sm-9">
+          {multilineToHtml(schema.schemaData.relatedTo || "-")}
+        </dd>
 
         <dt className="col-sm-3">Definition</dt>
-        <dd className="col-sm-9">{schema.schemaData.definition || "-"}</dd>
+        <dd className="col-sm-9">
+          {multilineToHtml(schema.schemaData.definition || "-")}
+        </dd>
 
         <dt className="col-sm-3">Beschreibung</dt>
-        <dd className="col-sm-9">{schema.schemaData.description || "-"}</dd>
+        <dd className="col-sm-9">
+          {multilineToHtml(schema.schemaData.description || "-")}
+        </dd>
       </dl>
 
       <h4 className="mb-2">Status</h4>
@@ -247,19 +273,19 @@ function DataFieldsPage({ schema }: DataFieldsPageProps) {
   }
 
   const typeCounter: Record<string, number> = {};
-  for (const dataField of schema.dataFields) {
+  for (const dataField of Object.values(schema.dataFields)) {
     const counter = typeCounter[dataField.type] || 0;
     typeCounter[dataField.type] = counter + 1;
   }
 
-  let dataFields = schema.dataFields;
+  let dataFields = Object.values(schema.dataFields);
   if (types.size > 0) {
     dataFields = dataFields.filter((dataField) => types.has(dataField.type));
   }
 
   return (
     <div className="row">
-      <div className="col-12 col-md-3">
+      <div className="col-12 col-lg-2">
         <div>
           <h5>Typ</h5>
           {Object.entries(typeCounter).map(([type, counter]) => {
@@ -280,7 +306,7 @@ function DataFieldsPage({ schema }: DataFieldsPageProps) {
           })}
         </div>
       </div>
-      <div className="col-12 col-md-9">
+      <div className="col-12 col-lg-10">
         {dataFields.map((dataField) => (
           <DataFieldCard key={dataField.identifier} dataField={dataField} />
         ))}

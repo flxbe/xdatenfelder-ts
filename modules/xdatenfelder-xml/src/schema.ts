@@ -31,6 +31,19 @@ export interface DataField {
   dataType: string;
   inputConstraints?: InputConstraints;
   codeListReference?: CodeListReference;
+  content?: string;
+}
+
+export interface DataGroup {
+  identifier: string;
+  version: string;
+  name: string;
+  definition?: string;
+  description?: string;
+  bezeichnungEingabe?: string;
+  bezeichnungAusgabe?: string;
+  creator: string;
+  steps: Array<string>;
 }
 
 export class SchemaError extends Error {
@@ -49,6 +62,7 @@ interface SchemaData {
   relatedTo?: string;
   creator: string;
   versionInfo?: string;
+  steps: Array<string>;
 }
 
 export interface InvalidInputConstraints {
@@ -63,20 +77,23 @@ export class Schema {
   public readonly messageId: string;
   public readonly createdAt: Date;
   public readonly schemaData: SchemaData;
-  public readonly dataFields: Array<DataField>;
+  public readonly dataFields: Record<string, DataField>;
+  public readonly dataGroups: Record<string, DataGroup>;
   public readonly warnings: Array<Warning>;
 
   constructor(
     messageId: string,
     createdAt: Date,
     schemaData: SchemaData,
-    dataFields: Array<DataField>,
+    dataFields: Record<string, DataField>,
+    dataGroups: Record<string, DataGroup>,
     warnings: Array<Warning>
   ) {
     this.messageId = messageId;
     this.createdAt = createdAt;
     this.schemaData = schemaData;
     this.dataFields = dataFields;
+    this.dataGroups = dataGroups;
     this.warnings = warnings;
   }
 
@@ -85,12 +102,14 @@ export class Schema {
   }
 
   public get selectFields(): Array<DataField> {
-    return this.dataFields.filter((dataField) => dataField.type === "select");
+    return Object.values(this.dataFields).filter(
+      (dataField) => dataField.type === "select"
+    );
   }
 
   public get codeListReferences(): Array<CodeListReference> {
     const references: Array<CodeListReference> = [];
-    for (const dataField of this.dataFields) {
+    for (const dataField of Object.values(this.dataFields)) {
       if (dataField.codeListReference !== undefined) {
         references.push(dataField.codeListReference);
       }
@@ -131,7 +150,8 @@ class SchemaParser {
     const structs = schema.getArray("xdf:struktur").asXmlData();
 
     const dataFields: Record<string, DataField> = {};
-    this.collectDataFields(structs, dataFields);
+    const dataGroups: Record<string, DataGroup> = {};
+    const steps = this.collectStructs(structs, dataFields, dataGroups);
 
     return new Schema(
       messageId,
@@ -145,35 +165,75 @@ class SchemaParser {
         definition,
         creator,
         versionInfo,
+        steps,
       },
-      Object.values(dataFields),
+      dataFields,
+      dataGroups,
       this.warnings
     );
   }
 
-  private collectDataFields(
+  private collectStructs(
     structs: Array<XmlData>,
-    dataFields: Record<string, DataField>
-  ): void {
+    dataFields: Record<string, DataField>,
+    dataGroups: Record<string, DataGroup>
+  ): Array<string> {
+    const steps: Array<string> = [];
+
     for (const struct of structs) {
       const content = struct.getChild("xdf:enthaelt");
 
       if (content.hasChild("xdf:datenfeldgruppe")) {
-        const group = content.getChild("xdf:datenfeldgruppe");
-        this.collectDataFields(
-          group.getArray("xdf:struktur").asXmlData(),
-          dataFields
-        );
+        const data = content.getChild("xdf:datenfeldgruppe");
+        const group = this.parseDataGroup(data, dataFields, dataGroups);
+
+        steps.push(group.identifier);
+        dataGroups[group.identifier] = group;
       } else if (content.hasChild("xdf:datenfeld")) {
         const data = content.getChild("xdf:datenfeld");
         const dataField = this.parseDataField(data);
 
+        steps.push(dataField.identifier);
         dataFields[dataField.identifier] = dataField;
       } else {
         content.print();
         throw "Unknown content";
       }
     }
+
+    return steps;
+  }
+
+  private parseDataGroup(
+    data: XmlData,
+    dataFields: Record<string, DataField>,
+    dataGroups: Record<string, DataGroup>
+  ): DataGroup {
+    const identification = data.getChild("xdf:identifikation");
+    const identifier = identification.getString("xdf:id");
+    const version = identification.getString("xdf:version");
+
+    const name = data.getString("xdf:name");
+    const definition = data.getOptionalString("xdf:definition");
+    const description = data.getOptionalString("xdf:beschreibung");
+    const creator = data.getString("xdf:fachlicherErsteller");
+    const bezeichnungEingabe = data.getOptionalString("xdf:bezeichnungEingabe");
+    const bezeichnungAusgabe = data.getOptionalString("xdf:bezeichnungAusgabe");
+
+    const structs = data.getArray("xdf:struktur").asXmlData();
+    const steps = this.collectStructs(structs, dataFields, dataGroups);
+
+    return {
+      identifier,
+      version,
+      name,
+      creator,
+      definition,
+      description,
+      bezeichnungEingabe,
+      bezeichnungAusgabe,
+      steps,
+    };
   }
 
   private parseDataField(data: XmlData): DataField {
@@ -201,6 +261,7 @@ class SchemaParser {
       const constraints = data.getOptionalString("xdf:praezisierung");
       inputConstraints = this.parseConstraints(identifier, constraints);
     }
+    const content = data.getOptionalString("xdf:inhalt");
 
     return {
       identifier,
@@ -218,6 +279,7 @@ class SchemaParser {
       dataType,
       codeListReference,
       inputConstraints,
+      content,
     };
   }
 
