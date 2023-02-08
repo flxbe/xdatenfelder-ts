@@ -17,8 +17,15 @@ export function PreviewPage({ schema }: PreviewPageProps) {
             Start
           </NavLink>
           {schema.schemaData.steps.map((identifier) => {
+            let label = "Unbekannt";
+
             const group = schema.dataGroups[identifier];
-            const label = group?.bezeichnungEingabe || "Unbekannt";
+            if (group !== undefined) {
+              label = group.bezeichnungEingabe || "Unbekannt";
+            } else {
+              const dataField = schema.dataFields[identifier];
+              label = dataField?.bezeichnungEingabe || "Unbekannt";
+            }
 
             return (
               <NavLink
@@ -35,7 +42,7 @@ export function PreviewPage({ schema }: PreviewPageProps) {
       </div>
       <div className="col-12 col-lg-9">
         <Optional identifier={null} location={page}>
-          <h3>{schema.schemaData.name}</h3>
+          <Start schema={schema} />
         </Optional>
         {schema.schemaData.steps.map((identifier) => {
           return (
@@ -98,34 +105,42 @@ function Optional({
 function Start({ schema }: { schema: Schema }) {
   return (
     <div>
-      <h3>Start</h3>
+      <h3>{schema.schemaData.name}</h3>
       <p>{schema.schemaData.description}</p>
     </div>
   );
 }
 
-function Step({ schema, identifier }: { schema: Schema; identifier: string }) {
-  if (identifier in schema.dataFields) {
-    return <div>Datenfeld</div>;
+const Step = React.memo(
+  ({ schema, identifier }: { schema: Schema; identifier: string }) => {
+    const dataField = schema.dataFields[identifier];
+    if (dataField !== undefined) {
+      return (
+        <div>
+          <h2 className="mb-4">{dataField.bezeichnungEingabe}</h2>
+          <DataFieldSection schema={schema} dataField={dataField} />
+        </div>
+      );
+    }
+
+    const group = schema.dataGroups[identifier];
+    if (group === undefined) {
+      return <div>Cannot find group {identifier}</div>;
+    }
+
+    return (
+      <div>
+        <h2 className="mb-4">{group.bezeichnungEingabe}</h2>
+
+        {group.steps.map((identifier) => {
+          return (
+            <Section key={identifier} schema={schema} identifier={identifier} />
+          );
+        })}
+      </div>
+    );
   }
-
-  const group = schema.dataGroups[identifier];
-  if (group === undefined) {
-    return <div>Cannot find group {identifier}</div>;
-  }
-
-  return (
-    <div>
-      <h2 className="mb-4">{group.bezeichnungEingabe}</h2>
-
-      {group.steps.map((identifier) => {
-        return (
-          <Section key={identifier} schema={schema} identifier={identifier} />
-        );
-      })}
-    </div>
-  );
-}
+);
 
 function Section({
   schema,
