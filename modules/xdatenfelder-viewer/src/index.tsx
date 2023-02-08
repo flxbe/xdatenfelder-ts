@@ -61,8 +61,26 @@ type UploadPageProps = {
   onSchemaUpload: (schema: Schema) => void;
 };
 
+interface ParserError {
+  type: "error";
+  message: string;
+}
+
+interface Ready {
+  type: "ready";
+}
+
+interface Loading {
+  type: "loading";
+}
+
+type UploadState = ParserError | Ready | Loading;
+
 function UploadPage({ onSchemaUpload }: UploadPageProps) {
-  const [error, setError] = React.useState<string | null>(null);
+  const [state, setState] = React.useState<UploadState>({ type: "ready" });
+
+  const isLoading = state.type === "loading";
+  // const [error, setError] = React.useState<string | null>(null);
 
   async function onChange(event: React.ChangeEvent<HTMLInputElement>) {
     const { files } = event.target;
@@ -70,29 +88,33 @@ function UploadPage({ onSchemaUpload }: UploadPageProps) {
       return;
     }
 
+    setState({ type: "loading" });
+
     try {
       const data = await loadFile(files[0]);
       const schema = Schema.fromString(data);
       onSchemaUpload(schema);
     } catch (error) {
       console.error(error);
-      setError(`${error}`);
+      setState({ type: "error", message: `${error}` });
     }
   }
 
   function renderError() {
-    if (error === null) {
+    if (state.type !== "error") {
       return undefined;
-    } else {
-      return (
-        <div
-          className="mt-3 mb-0 alert alert-danger d-flex align-items-center"
-          role="alert"
-        >
-          <div>{error}</div>
-        </div>
-      );
     }
+
+    const message = state.message;
+
+    return (
+      <div
+        className="mt-3 mb-0 alert alert-danger d-flex align-items-center"
+        role="alert"
+      >
+        <div>{message}</div>
+      </div>
+    );
   }
 
   return (
@@ -106,6 +128,7 @@ function UploadPage({ onSchemaUpload }: UploadPageProps) {
                 className="form-control"
                 type="file"
                 accept=".xml"
+                disabled={isLoading}
                 onChange={onChange}
               />
               <div className="form-text">
