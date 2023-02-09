@@ -322,13 +322,15 @@ function DataFieldsPage({ schema }: DataFieldsPageProps) {
 
   const typeCounter: Record<string, number> = {};
   for (const dataField of Object.values(schema.dataFields)) {
-    const counter = typeCounter[dataField.type] || 0;
-    typeCounter[dataField.type] = counter + 1;
+    const counter = typeCounter[dataField.input.type] || 0;
+    typeCounter[dataField.input.type] = counter + 1;
   }
 
   let dataFields = Object.values(schema.dataFields);
   if (types.size > 0) {
-    dataFields = dataFields.filter((dataField) => types.has(dataField.type));
+    dataFields = dataFields.filter((dataField) =>
+      types.has(dataField.input.type)
+    );
   }
 
   return (

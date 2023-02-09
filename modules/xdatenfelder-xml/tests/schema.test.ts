@@ -45,31 +45,49 @@ describe("Loading a schema from xml", () => {
         hilfetextEingabe: "Hilfe Eingabe",
         hilfetextAusgabe: "Hilfe Ausgabe",
         creator: "FIM-Baustein Datenfelder",
-        type: "input",
-        dataType: "text",
-        inputConstraints: {
-          minLength: 1,
-          maxLength: 120,
-          minValue: undefined,
-          maxValue: undefined,
-          pattern: undefined,
+        input: {
+          type: "text",
+          constraints: {
+            minLength: 1,
+            maxLength: 120,
+            pattern: undefined,
+          },
         },
-        codeListReference: undefined,
       },
     });
   });
 
-  test("should parse label data fields", async () => {
+  test("should parse label fields", async () => {
     const schema = await loadSchema("label.xml");
 
     expect(schema.schemaData.steps).toEqual(["F123"]);
     expect(schema.dataFields["F123"]).toEqual(
       expect.objectContaining({
         identifier: "F123",
-        type: "label",
-        inputConstraints: undefined,
-        codeListReference: undefined,
-        content: "Hinweis Inhalt",
+        input: {
+          type: "label",
+          content: "Hinweis Inhalt",
+        },
+      })
+    );
+  });
+
+  test("should parse select fields", async () => {
+    const schema = await loadSchema("select.xml");
+
+    expect(schema.schemaData.steps).toEqual(["F123"]);
+    expect(schema.dataFields["F123"]).toEqual(
+      expect.objectContaining({
+        identifier: "F123",
+        input: {
+          type: "select",
+          codeListReference: {
+            identifier: "C123",
+            version: "1",
+            canonicalUri: "urn:de:example",
+            canonicalVersionUri: "urn:de:example_1",
+          },
+        },
       })
     );
   });

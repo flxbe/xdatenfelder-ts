@@ -1,3 +1,4 @@
+import { assert } from "./util";
 import { XmlData } from "./xml";
 
 export interface CodeListReference {
@@ -7,13 +8,82 @@ export interface CodeListReference {
   canonicalVersionUri: string;
 }
 
-export interface InputConstraints {
-  minLength?: number;
-  maxLength?: number;
+interface InputConstraints {
   minValue?: number;
   maxValue?: number;
+  minLength?: number;
+  maxLength?: number;
   pattern?: string;
 }
+
+export interface NumberConstraints {
+  minValue?: number;
+  maxValue?: number;
+}
+
+export interface TextConstraints {
+  minLength?: number;
+  maxLength?: number;
+  pattern?: string;
+}
+
+export interface SelectDescription {
+  type: "select";
+  codeListReference: CodeListReference;
+}
+
+export interface TextDescription {
+  type: "text";
+  constraints: TextConstraints;
+}
+
+export interface IntegerDescription {
+  type: "integer";
+  constraints: NumberConstraints;
+}
+
+export interface LabelDescription {
+  type: "label";
+  content: string;
+}
+
+export interface BoolDescription {
+  type: "bool";
+}
+
+export interface FileDescription {
+  type: "file";
+}
+
+export interface DateDescription {
+  type: "date";
+}
+
+export interface NumberDescription {
+  type: "number";
+  constraints: NumberConstraints;
+}
+
+export interface CurrencyDescription {
+  type: "currency";
+  constraints: NumberConstraints;
+}
+
+export interface ObjectDescription {
+  type: "object";
+}
+
+export type InputDescription =
+  | SelectDescription
+  | TextDescription
+  | IntegerDescription
+  | BoolDescription
+  | FileDescription
+  | DateDescription
+  | NumberDescription
+  | CurrencyDescription
+  | ObjectDescription
+  | LabelDescription;
 
 export interface DataField {
   identifier: string;
@@ -27,11 +97,7 @@ export interface DataField {
   bezeichnungAusgabe: string;
   hilfetextEingabe?: string;
   hilfetextAusgabe?: string;
-  type: string;
-  dataType: string;
-  inputConstraints?: InputConstraints;
-  codeListReference?: CodeListReference;
-  content?: string;
+  input: InputDescription;
 }
 
 export interface DataGroup {
@@ -103,15 +169,15 @@ export class Schema {
 
   public get selectFields(): Array<DataField> {
     return Object.values(this.dataFields).filter(
-      (dataField) => dataField.type === "select"
+      (dataField) => dataField.input.type === "select"
     );
   }
 
   public get codeListReferences(): Array<CodeListReference> {
     const references: Array<CodeListReference> = [];
     for (const dataField of Object.values(this.dataFields)) {
-      if (dataField.codeListReference !== undefined) {
-        references.push(dataField.codeListReference);
+      if (dataField.input.type === "select") {
+        references.push(dataField.input.codeListReference);
       }
     }
 
@@ -183,13 +249,13 @@ class SchemaParser {
     for (const struct of structs) {
       const content = struct.getChild("xdf:enthaelt");
 
-      if (content.hasChild("xdf:datenfeldgruppe")) {
+      if (content.hasKey("xdf:datenfeldgruppe")) {
         const data = content.getChild("xdf:datenfeldgruppe");
         const group = this.parseDataGroup(data, dataFields, dataGroups);
 
         steps.push(group.identifier);
         dataGroups[group.identifier] = group;
-      } else if (content.hasChild("xdf:datenfeld")) {
+      } else if (content.hasKey("xdf:datenfeld")) {
         const data = content.getChild("xdf:datenfeld");
         const dataField = this.parseDataField(data);
 
@@ -248,20 +314,10 @@ class SchemaParser {
     const description = data.getOptionalString("xdf:beschreibung");
     const bezeichnungEingabe = data.getString("xdf:bezeichnungEingabe");
     const bezeichnungAusgabe = data.getString("xdf:bezeichnungAusgabe");
-    const type = data.getChild("xdf:feldart").getString("code");
-    const dataType = data.getChild("xdf:datentyp").getString("code");
     const hilfetextEingabe = data.getOptionalString("xdf:hilfetextEingabe");
     const hilfetextAusgabe = data.getOptionalString("xdf:hilfetextAusgabe");
 
-    let codeListReference: CodeListReference | undefined = undefined;
-    let inputConstraints: InputConstraints | undefined = undefined;
-    if (type === "select") {
-      codeListReference = this.parseCodeListReference(data);
-    } else if (type === "input") {
-      const constraints = data.getOptionalString("xdf:praezisierung");
-      inputConstraints = this.parseConstraints(identifier, constraints);
-    }
-    const content = data.getOptionalString("xdf:inhalt");
+    const input = this.parseInputDescription(identifier, data);
 
     return {
       identifier,
@@ -275,12 +331,127 @@ class SchemaParser {
       bezeichnungAusgabe,
       hilfetextEingabe,
       hilfetextAusgabe,
-      type,
-      dataType,
-      codeListReference,
-      inputConstraints,
-      content,
+      input,
     };
+  }
+
+  private parseInputDescription(
+    identifier: string,
+    data: XmlData
+  ): InputDescription {
+    const type = data.getChild("xdf:feldart").getString("code");
+    const dataType = data.getChild("xdf:datentyp").getString("code");
+
+    switch (type) {
+      case "select": {
+        // TODO: assert(dataType === "text"), or log warning
+        // TODO: Check for unused input constraints, like content or praezisierung.
+        const codeListReference = this.parseCodeListReference(data);
+
+        return {
+          type: "select",
+          codeListReference,
+        };
+      }
+
+      case "input": {
+        const constraints = data.getOptionalString("xdf:praezisierung");
+        const inputConstraints = this.parseConstraints(identifier, constraints);
+
+        switch (dataType) {
+          case "text": {
+            return {
+              type: "text",
+              constraints: {
+                minLength: inputConstraints?.minLength,
+                maxLength: inputConstraints?.maxLength,
+                pattern: inputConstraints?.pattern,
+              },
+            };
+          }
+
+          case "bool": {
+            return { type: "bool" };
+          }
+
+          case "num_int": {
+            return {
+              type: "integer",
+              constraints: {
+                minValue: inputConstraints?.minLength,
+                maxValue: inputConstraints?.maxValue,
+              },
+            };
+          }
+
+          case "date": {
+            return { type: "date" };
+          }
+
+          case "num": {
+            return {
+              type: "number",
+              constraints: {
+                minValue: inputConstraints?.minLength,
+                maxValue: inputConstraints?.maxValue,
+              },
+            };
+          }
+
+          case "num_currency": {
+            return {
+              type: "currency",
+              constraints: {
+                minValue: inputConstraints?.minLength,
+                maxValue: inputConstraints?.maxValue,
+              },
+            };
+          }
+
+          case "file": {
+            return { type: "file" };
+          }
+
+          case "obj": {
+            return { type: "object" };
+          }
+
+          default: {
+            throw new Error(
+              `Unknown data type for data field ${identifier}: ${dataType}`
+            );
+          }
+        }
+      }
+
+      case "label": {
+        // TODO: assert(dataType === "text"), or log warning
+
+        const content = data.getOptionalString("xdf:inhalt");
+        // TODO: Log warning for empty label
+
+        return {
+          type: "label",
+          content: content || "Leerer Hinweis",
+        };
+      }
+
+      default: {
+        throw new Error(
+          `Unknown input type for data field ${identifier}: ${type}`
+        );
+      }
+    }
+
+    let codeListReference: CodeListReference | undefined = undefined;
+    let inputConstraints: InputConstraints | undefined = undefined;
+    if (type === "select") {
+      codeListReference = this.parseCodeListReference(data);
+    } else if (type === "input") {
+      const constraints = data.getOptionalString("xdf:praezisierung");
+      inputConstraints = this.parseConstraints(identifier, constraints);
+    }
+    const content = data.getOptionalString("xdf:inhalt");
   }
 
   private parseConstraints(

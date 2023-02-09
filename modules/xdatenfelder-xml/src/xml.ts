@@ -53,7 +53,7 @@ export class XmlData {
     return new XmlData(xmlData);
   }
 
-  public hasChild(key: string): boolean {
+  public hasKey(key: string): boolean {
     return key in this.data;
   }
 

@@ -277,7 +277,7 @@ function DataFieldInput({
   schema: Schema;
   dataField: DataField;
 }) {
-  switch (dataField.type) {
+  switch (dataField.input.type) {
     case "select": {
       return (
         <div className="mb-3">
@@ -295,95 +295,86 @@ function DataFieldInput({
       );
     }
 
-    case "input": {
-      switch (dataField.dataType) {
-        case "text": {
-          return (
-            <div className="mb-3">
-              <label className="form-label">
-                {dataField.bezeichnungEingabe}
-              </label>
-              <input type="text" className="form-control" />
-              {inputHelp(dataField)}
-            </div>
-          );
-        }
+    case "text": {
+      return (
+        <div className="mb-3">
+          <label className="form-label">{dataField.bezeichnungEingabe}</label>
+          <input type="text" className="form-control" />
+          {inputHelp(dataField)}
+        </div>
+      );
+    }
 
-        case "num_int": {
-          return (
-            <div className="mb-3">
-              <label className="form-label">
-                {dataField.bezeichnungEingabe}
-              </label>
-              <input type="number" className="form-control" />
-              {inputHelp(dataField)}
-            </div>
-          );
-        }
+    case "number":
+    case "integer":
+    case "currency": {
+      <div className="mb-3">
+        <label className="form-label">{dataField.bezeichnungEingabe}</label>
+        <input type="number" className="form-control" />
+        {inputHelp(dataField)}
+      </div>;
+    }
 
-        case "bool": {
-          return (
-            <div className="mb-3">
-              <div className="form-check">
-                <input
-                  className="form-check-input"
-                  type="checkbox"
-                  id={dataField.identifier}
-                />
-                <label
-                  className="form-check-label"
-                  htmlFor={dataField.identifier}
-                >
-                  {dataField.bezeichnungEingabe}
-                </label>
-              </div>
-              {inputHelp(dataField)}
-            </div>
-          );
-        }
+    case "bool": {
+      return (
+        <div className="mb-3">
+          <div className="form-check">
+            <input
+              className="form-check-input"
+              type="checkbox"
+              id={dataField.identifier}
+            />
+            <label className="form-check-label" htmlFor={dataField.identifier}>
+              {dataField.bezeichnungEingabe}
+            </label>
+          </div>
+          {inputHelp(dataField)}
+        </div>
+      );
+    }
 
-        case "file": {
-          return (
-            <div className="mb-3">
-              <label className="form-label">
-                {dataField.bezeichnungEingabe}
-              </label>
-              <input className="form-control" type="file" />
-              {inputHelp(dataField)}
-            </div>
-          );
-        }
+    case "file": {
+      return (
+        <div className="mb-3">
+          <label className="form-label">{dataField.bezeichnungEingabe}</label>
+          <input className="form-control" type="file" />
+          {inputHelp(dataField)}
+        </div>
+      );
+    }
 
-        case "date": {
-          return (
-            <div className="mb-3">
-              <label className="form-label">
-                {dataField.bezeichnungEingabe}
-              </label>
-              <input type="text" className="form-control" />
-              {inputHelp(dataField)}
-            </div>
-          );
-        }
+    case "object": {
+      return (
+        <div className="mb-3">
+          <label className="form-label">{dataField.bezeichnungEingabe}</label>
+          <input className="form-control" type="file" />
+          {inputHelp(dataField)}
+        </div>
+      );
+    }
 
-        default: {
-          return <div>Unbekannter Datentype: {dataField.dataType}</div>;
-        }
-      }
+    case "date": {
+      return (
+        <div className="mb-3">
+          <label className="form-label">{dataField.bezeichnungEingabe}</label>
+          <input type="text" className="form-control" />
+          {inputHelp(dataField)}
+        </div>
+      );
     }
 
     case "label": {
       return (
         <div className="alert alert-info" role="alert">
           <h5 className="alert-heading">{dataField.bezeichnungEingabe}</h5>
-          {multilineToHtml(dataField.content)}
+          {multilineToHtml(dataField.input.content)}
         </div>
       );
     }
 
     default: {
-      console.warn(`Unbekannter input type: ${dataField.type}`);
-      return <div>Unbekannter input type: {dataField.type}</div>;
+      console.warn(`Unbekannter input type: ${dataField.input}`);
+      return <div>Unbekannter input type: {dataField.input}</div>;
     }
   }
 }
