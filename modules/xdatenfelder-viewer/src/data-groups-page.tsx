@@ -22,7 +22,11 @@ export function DataGroupsPage({ schema }: DataGroupsPageProps) {
               <tr key={group.identifier}>
                 <th scope="row">{group.identifier}</th>
                 <td>{group.version}</td>
-                <td>{group.steps.join(", ")}</td>
+                <td>
+                  {group.elements
+                    .map((element) => element.identifier)
+                    .join(", ")}
+                </td>
               </tr>
             ))}
           </tbody>

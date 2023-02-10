@@ -12,12 +12,14 @@ describe("Loading a schema from xml", () => {
       identifier: "T1234",
       version: "1.0",
       name: "Test",
+      inputLabel: "Test",
+      outputLabel: undefined,
       description: "Eine Beschreibung",
       definition: "Eine Defintion",
       relatedTo: "Bezug",
       creator: "Test",
       versionInfo: "Ein Versionshinweis",
-      steps: ["G00000082"],
+      elements: [{ type: "dataGroup", identifier: "G00000082" }],
     });
     expect(schema.dataGroups).toEqual({
       G00000082: {
@@ -29,7 +31,8 @@ describe("Loading a schema from xml", () => {
         inputLabel: "Natürliche Person",
         outputLabel: "Natürliche Person",
         creator: "FIM Baustein Datenfelder",
-        steps: ["F60000227"],
+        versionInfo: "Versionshinweis",
+        elements: [{ type: "dataField", identifier: "F60000227" }],
       },
     });
     expect(schema.dataFields).toEqual({
@@ -60,7 +63,9 @@ describe("Loading a schema from xml", () => {
   test("should parse label fields", async () => {
     const schema = await loadSchema("label.xml");
 
-    expect(schema.schemaData.steps).toEqual(["F123"]);
+    expect(schema.schemaData.elements).toEqual([
+      { type: "dataField", identifier: "F123" },
+    ]);
     expect(schema.dataFields["F123"]).toEqual(
       expect.objectContaining({
         identifier: "F123",
@@ -75,7 +80,9 @@ describe("Loading a schema from xml", () => {
   test("should parse select fields", async () => {
     const schema = await loadSchema("select.xml");
 
-    expect(schema.schemaData.steps).toEqual(["F123"]);
+    expect(schema.schemaData.elements).toEqual([
+      { type: "dataField", identifier: "F123" },
+    ]);
     expect(schema.dataFields["F123"]).toEqual(
       expect.objectContaining({
         identifier: "F123",

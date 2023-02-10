@@ -84,31 +84,52 @@ export type InputDescription =
   | ObjectDescription
   | LabelDescription;
 
-export interface DataField {
+export interface ElementReference {
+  type: "dataField" | "dataGroup";
   identifier: string;
-  version: string;
-  name: string;
-  definition?: string;
-  relatedTo?: string;
-  creator: string;
-  description?: string;
-  inputLabel: string;
-  outputLabel: string;
-  inputHint?: string;
-  outputHint?: string;
-  input: InputDescription;
+  // relatedTo?: string;
+  // amount: string
 }
 
-export interface DataGroup {
+interface BasicData {
   identifier: string;
   version: string;
   name: string;
+  inputLabel: string;
+  outputLabel?: string;
   definition?: string;
   description?: string;
-  inputLabel?: string;
-  outputLabel?: string;
-  creator: string;
-  steps: Array<string>;
+  relatedTo?: string;
+  // status
+  // validSince
+  // validUntil
+  creator?: string;
+  versionInfo?: string;
+  // releaseDate
+}
+
+interface ElementData extends BasicData {
+  // type
+  inputHint?: string;
+  outputHint?: string;
+}
+
+export interface DataField extends ElementData {
+  input: InputDescription;
+  // rules
+}
+
+export interface DataGroup extends ElementData {
+  elements: Array<ElementReference>;
+  // rules
+}
+
+interface SchemaData extends BasicData {
+  elements: Array<ElementReference>;
+  // help
+  // rules
+  // ableitungsmodifikationenStruktur
+  // ableitungsmodifikationenRepraesentation
 }
 
 export class SchemaError extends Error {
@@ -116,18 +137,6 @@ export class SchemaError extends Error {
     super(message);
     this.name = "SchemaError";
   }
-}
-
-interface SchemaData {
-  identifier: string;
-  version: string;
-  name: string;
-  definition?: string;
-  description?: string;
-  relatedTo?: string;
-  creator: string;
-  versionInfo?: string;
-  steps: Array<string>;
 }
 
 export interface InvalidInputConstraints {
@@ -166,6 +175,24 @@ export class Schema {
     return new SchemaParser().parseSchema(stringData);
   }
 
+  public getDataField(identifier: string): DataField {
+    const dataField = this.dataFields[identifier];
+    if (dataField === undefined) {
+      throw new Error(`Could not find data field ${identifier}`);
+    }
+
+    return dataField;
+  }
+
+  public getDataGroup(identifier: string): DataGroup {
+    const dataGroup = this.dataGroups[identifier];
+    if (dataGroup === undefined) {
+      throw new Error(`Could not find data group ${identifier}`);
+    }
+
+    return dataGroup;
+  }
+
   public get selectFields(): Array<DataField> {
     return Object.values(this.dataFields).filter(
       (dataField) => dataField.input.type === "select"
@@ -202,23 +229,13 @@ class SchemaParser {
     const createdAt = header.getDate("xdf:erstellungszeitpunkt");
 
     const schema = content.getChild("xdf:stammdatenschema");
-
-    const identification = schema.getChild("xdf:identifikation");
-    const identifier = identification.getString("xdf:id");
-    const version = identification.getString("xdf:version");
-    const name = schema.getString("xdf:name");
-    const description = schema.getOptionalString("xdf:beschreibung");
-    const definition = schema.getOptionalString("xdf:definition");
-    const relatedTo = schema.getOptionalString("xdf:bezug");
-    const creator = schema.getString("xdf:fachlicherErsteller");
-    const versionInfo = schema.getOptionalString("xdf:versionshinweis");
+    const basicData = this.parseBasicData(schema);
 
     const structs = schema.getArray("xdf:struktur").asXmlData();
-
     const dataFields: Record<string, DataField> = {};
     const dataGroups: Record<string, DataGroup> = {};
-    const steps = this.collectStructs(
-      identifier,
+    const elements = this.collectStructs(
+      basicData.identifier,
       structs,
       dataFields,
       dataGroups
@@ -228,15 +245,8 @@ class SchemaParser {
       messageId,
       createdAt,
       {
-        identifier,
-        version,
-        name,
-        description,
-        relatedTo,
-        definition,
-        creator,
-        versionInfo,
-        steps,
+        ...basicData,
+        elements,
       },
       dataFields,
       dataGroups,
@@ -249,8 +259,8 @@ class SchemaParser {
     structs: Array<XmlData>,
     dataFields: Record<string, DataField>,
     dataGroups: Record<string, DataGroup>
-  ): Array<string> {
-    const steps: Array<string> = [];
+  ): Array<ElementReference> {
+    const elements: Array<ElementReference> = [];
 
     for (const struct of structs) {
       const content = struct.getChild("xdf:enthaelt");
@@ -259,13 +269,13 @@ class SchemaParser {
         const data = content.getChild("xdf:datenfeldgruppe");
         const group = this.parseDataGroup(data, dataFields, dataGroups);
 
-        steps.push(group.identifier);
+        elements.push({ type: "dataGroup", identifier: group.identifier });
         dataGroups[group.identifier] = group;
       } else if (content.hasKey("xdf:datenfeld")) {
         const data = content.getChild("xdf:datenfeld");
         const dataField = this.parseDataField(data);
 
-        steps.push(dataField.identifier);
+        elements.push({ type: "dataField", identifier: dataField.identifier });
         dataFields[dataField.identifier] = dataField;
       } else {
         content.print();
@@ -273,7 +283,7 @@ class SchemaParser {
       }
     }
 
-    return steps;
+    return elements;
   }
 
   private parseDataGroup(
@@ -281,67 +291,29 @@ class SchemaParser {
     dataFields: Record<string, DataField>,
     dataGroups: Record<string, DataGroup>
   ): DataGroup {
-    const identification = data.getChild("xdf:identifikation");
-    const identifier = identification.getString("xdf:id");
-    const version = identification.getString("xdf:version");
-
-    const name = data.getString("xdf:name");
-    const definition = data.getOptionalString("xdf:definition");
-    const description = data.getOptionalString("xdf:beschreibung");
-    const creator = data.getString("xdf:fachlicherErsteller");
-    const inputLabel = data.getOptionalString("xdf:bezeichnungEingabe");
-    const outputLabel = data.getOptionalString("xdf:bezeichnungAusgabe");
+    const elementData = this.parseElementData(data);
 
     const structs = data.getArray("xdf:struktur").asXmlData();
-    const steps = this.collectStructs(
-      identifier,
+    const elements = this.collectStructs(
+      elementData.identifier,
       structs,
       dataFields,
       dataGroups
     );
 
     return {
-      identifier,
-      version,
-      name,
-      creator,
-      definition,
-      description,
-      inputLabel,
-      outputLabel,
-      steps,
+      ...elementData,
+      elements,
     };
   }
 
   private parseDataField(data: XmlData): DataField {
-    const identification = data.getChild("xdf:identifikation");
-    const identifier = identification.getString("xdf:id");
-    const version = identification.getString("xdf:version");
+    const elementData = this.parseElementData(data);
 
-    const name = data.getString("xdf:name");
-    const definition = data.getOptionalString("xdf:definition");
-    const creator = data.getString("xdf:fachlicherErsteller");
-    const relatedTo = data.getOptionalString("xdf:bezug");
-    const description = data.getOptionalString("xdf:beschreibung");
-    const inputLabel = data.getString("xdf:bezeichnungEingabe");
-    const outputLabel = data.getString("xdf:bezeichnungAusgabe");
-    const inputHint = data.getOptionalString("xdf:hilfetextEingabe");
-    const outputHint = data.getOptionalString("xdf:hilfetextAusgabe");
-
-    const input = this.parseInputDescription(identifier, data);
+    const input = this.parseInputDescription(elementData.identifier, data);
 
     return {
-      identifier,
-      version,
-      name,
-      definition,
-      creator,
-      relatedTo,
-      description,
-      inputLabel,
-      outputLabel,
-      inputHint,
-      outputHint,
+      ...elementData,
       input,
     };
   }
@@ -523,6 +495,47 @@ class SchemaParser {
       version,
       canonicalUri,
       canonicalVersionUri,
+    };
+  }
+
+  private parseElementData(data: XmlData): ElementData {
+    const basicData = this.parseBasicData(data);
+
+    const inputHint = data.getOptionalString("xdf:hilfetextEingabe");
+    const outputHint = data.getOptionalString("xdf:hilfetextAusgabe");
+
+    return {
+      ...basicData,
+      inputHint,
+      outputHint,
+    };
+  }
+
+  private parseBasicData(data: XmlData): BasicData {
+    const identification = data.getChild("xdf:identifikation");
+    const identifier = identification.getString("xdf:id");
+    const version = identification.getString("xdf:version");
+
+    const name = data.getString("xdf:name");
+    const definition = data.getOptionalString("xdf:definition");
+    const creator = data.getOptionalString("xdf:fachlicherErsteller");
+    const relatedTo = data.getOptionalString("xdf:bezug");
+    const description = data.getOptionalString("xdf:beschreibung");
+    const inputLabel = data.getString("xdf:bezeichnungEingabe");
+    const outputLabel = data.getOptionalString("xdf:bezeichnungAusgabe");
+    const versionInfo = data.getOptionalString("xdf:versionshinweis");
+
+    return {
+      identifier,
+      version,
+      name,
+      definition,
+      creator,
+      relatedTo,
+      description,
+      inputLabel,
+      outputLabel,
+      versionInfo,
     };
   }
 }

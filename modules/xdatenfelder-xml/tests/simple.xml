@@ -46,8 +46,7 @@
                         <code>aktiv</code>
                     </xdf:status>
                     <xdf:fachlicherErsteller>FIM Baustein Datenfelder</xdf:fachlicherErsteller>
-                    <xdf:versionshinweis>Enthält Änderungen des Kerndatenmodells durch Version 1.1 von XUnternehmen und
-weitere kleinere Änderungen.</xdf:versionshinweis>
+                    <xdf:versionshinweis>Versionshinweis</xdf:versionshinweis>
                     <xdf:schemaelementart listURI="urn:xoev-de:fim:codeliste:xdatenfelder.schemaelementart" listVersionID="1.0">
                         <code>ABS</code>
                     </xdf:schemaelementart>

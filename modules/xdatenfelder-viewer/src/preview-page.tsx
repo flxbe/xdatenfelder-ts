@@ -1,5 +1,10 @@
 import * as React from "react";
-import { DataField, DataGroup, Schema } from "xdatenfelder-xml";
+import {
+  DataField,
+  DataGroup,
+  ElementReference,
+  Schema,
+} from "xdatenfelder-xml";
 import { multilineToHtml } from "./util";
 
 export type PreviewPageProps = {
@@ -16,12 +21,11 @@ export function PreviewPage({ schema }: PreviewPageProps) {
           <NavLink to={null} location={page} onClick={setPage}>
             Start
           </NavLink>
-          {schema.schemaData.steps.map((identifier) => {
-            let label = "Unbekannt";
-
-            const group = schema.dataGroups[identifier];
-            if (group !== undefined) {
-              label = group.inputLabel || "Unbekannt";
+          {schema.schemaData.elements.map(({ type, identifier }) => {
+            let label = "";
+            if (type === "dataGroup") {
+              const group = schema.dataGroups[identifier];
+              label = group?.inputLabel || "Unbekannt";
             } else {
               const dataField = schema.dataFields[identifier];
               label = dataField?.inputLabel || "Unbekannt";
@@ -44,10 +48,14 @@ export function PreviewPage({ schema }: PreviewPageProps) {
         <Optional identifier={null} location={page}>
           <Start schema={schema} />
         </Optional>
-        {schema.schemaData.steps.map((identifier) => {
+        {schema.schemaData.elements.map((element) => {
           return (
-            <Optional key={identifier} identifier={identifier} location={page}>
-              <Step schema={schema} identifier={identifier} />
+            <Optional
+              key={element.identifier}
+              identifier={element.identifier}
+              location={page}
+            >
+              <Step schema={schema} element={element} />
             </Optional>
           );
         })}
@@ -112,55 +120,56 @@ function Start({ schema }: { schema: Schema }) {
 }
 
 const Step = React.memo(
-  ({ schema, identifier }: { schema: Schema; identifier: string }) => {
-    const dataField = schema.dataFields[identifier];
-    if (dataField !== undefined) {
+  ({ schema, element }: { schema: Schema; element: ElementReference }) => {
+    const { type, identifier } = element;
+
+    if (type === "dataField") {
+      const dataField = schema.getDataField(identifier);
+
       return (
         <div>
           <h2 className="mb-4">{dataField.inputLabel}</h2>
           <DataFieldSection schema={schema} dataField={dataField} />
         </div>
       );
+    } else {
+      const dataGroup = schema.getDataGroup(identifier);
+
+      return (
+        <div>
+          <h2 className="mb-4">{dataGroup.inputLabel}</h2>
+
+          {dataGroup.elements.map((element) => {
+            return (
+              <Section
+                key={element.identifier}
+                schema={schema}
+                element={element}
+              />
+            );
+          })}
+        </div>
+      );
     }
-
-    const group = schema.dataGroups[identifier];
-    if (group === undefined) {
-      return <div>Cannot find group {identifier}</div>;
-    }
-
-    return (
-      <div>
-        <h2 className="mb-4">{group.inputLabel}</h2>
-
-        {group.steps.map((identifier) => {
-          return (
-            <Section key={identifier} schema={schema} identifier={identifier} />
-          );
-        })}
-      </div>
-    );
   }
 );
 
 function Section({
   schema,
-  identifier,
+  element,
 }: {
   schema: Schema;
-  identifier: string;
+  element: ElementReference;
 }) {
-  const dataField = schema.dataFields[identifier];
-  if (dataField !== undefined) {
-    return <DataFieldSection schema={schema} dataField={dataField} />;
-  }
+  const { type, identifier } = element;
 
-  const dataGroup = schema.dataGroups[identifier];
-  if (dataGroup !== undefined) {
+  if (type === "dataField") {
+    const dataField = schema.getDataField(identifier);
+    return <DataFieldSection schema={schema} dataField={dataField} />;
+  } else {
+    const dataGroup = schema.getDataGroup(identifier);
     return <DataGroupSection schema={schema} dataGroup={dataGroup} />;
   }
-
-  console.warn(`Unbekanntes element: ${identifier}`);
-  return <div>Unknown element {identifier}</div>;
 }
 
 function DataFieldSection({
@@ -191,12 +200,12 @@ function DataGroupSection({
     <div className="card mb-4">
       <div className="card-header">{dataGroup.name}</div>
       <div className="card-body pb-0">
-        {dataGroup.steps.map((identifier) => {
+        {dataGroup.elements.map((element) => {
           return (
             <DataGroupElement
-              key={identifier}
+              key={element.identifier}
               schema={schema}
-              identifier={identifier}
+              element={element}
               level={1}
             />
           );
@@ -208,20 +217,20 @@ function DataGroupSection({
 
 function DataGroupElement({
   schema,
-  identifier,
+  element,
   level,
 }: {
   schema: Schema;
-  identifier: string;
+  element: ElementReference;
   level: number;
 }) {
-  const dataField = schema.dataFields[identifier];
-  if (dataField !== undefined) {
-    return <DataFieldInput schema={schema} dataField={dataField} />;
-  }
+  const { type, identifier } = element;
 
-  const dataGroup = schema.dataGroups[identifier];
-  if (dataGroup !== undefined) {
+  if (type === "dataField") {
+    const dataField = schema.getDataField(identifier);
+    return <DataFieldInput schema={schema} dataField={dataField} />;
+  } else {
+    const dataGroup = schema.getDataGroup(identifier);
     return (
       <DataSubGroupElement
         schema={schema}
@@ -230,9 +239,6 @@ function DataGroupElement({
       />
     );
   }
-
-  console.warn(`Unbekanntes element: ${identifier}`);
-  return <div>Unknown element {identifier}</div>;
 }
 
 function DataSubGroupElement({
@@ -256,11 +262,11 @@ function DataSubGroupElement({
   return (
     <>
       {title}
-      {dataGroup.steps.map((identifier) => {
+      {dataGroup.elements.map((element) => {
         return (
           <DataGroupElement
-            key={identifier}
-            identifier={identifier}
+            key={element.identifier}
+            element={element}
             schema={schema}
             level={level + 1}
           />

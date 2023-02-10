@@ -10,7 +10,7 @@
             <xdf:version>1.0</xdf:version>
         </xdf:identifikation>
         <xdf:name>Test</xdf:name>
-        <xdf:bezeichnungEingabe></xdf:bezeichnungEingabe>
+        <xdf:bezeichnungEingabe>Test</xdf:bezeichnungEingabe>
         <xdf:beschreibung></xdf:beschreibung>
         <xdf:definition></xdf:definition>
         <xdf:bezug></xdf:bezug>
@@ -21,14 +21,10 @@
         <xdf:versionshinweis></xdf:versionshinweis>
         <xdf:freigabedatum>2023-01-01</xdf:freigabedatum>
         <xdf:veroeffentlichungsdatum>2023-01-01</xdf:veroeffentlichungsdatum>
-        <xdf:ableitungsmodifikationenStruktur
-            listURI="urn:xoev-de:fim:codeliste:xdatenfelder.ableitungsmodifikationenStruktur"
-            listVersionID="1.0">
+        <xdf:ableitungsmodifikationenStruktur listURI="urn:xoev-de:fim:codeliste:xdatenfelder.ableitungsmodifikationenStruktur" listVersionID="1.0">
             <code>3</code>
         </xdf:ableitungsmodifikationenStruktur>
-        <xdf:ableitungsmodifikationenRepraesentation
-            listURI="urn:xoev-de:fim:codeliste:xdatenfelder.ableitungsmodifikationenRepraesentation"
-            listVersionID="1.0">
+        <xdf:ableitungsmodifikationenRepraesentation listURI="urn:xoev-de:fim:codeliste:xdatenfelder.ableitungsmodifikationenRepraesentation" listVersionID="1.0">
             <code>1</code>
         </xdf:ableitungsmodifikationenRepraesentation>
     </xdf:stammdatenschema>
