@@ -1,4 +1,3 @@
-import { assert } from "./util";
 import { XmlData } from "./xml";
 
 export interface CodeListReference {
@@ -93,10 +92,10 @@ export interface DataField {
   relatedTo?: string;
   creator: string;
   description?: string;
-  bezeichnungEingabe: string;
-  bezeichnungAusgabe: string;
-  hilfetextEingabe?: string;
-  hilfetextAusgabe?: string;
+  inputLabel: string;
+  outputLabel: string;
+  inputHint?: string;
+  outputHint?: string;
   input: InputDescription;
 }
 
@@ -106,8 +105,8 @@ export interface DataGroup {
   name: string;
   definition?: string;
   description?: string;
-  bezeichnungEingabe?: string;
-  bezeichnungAusgabe?: string;
+  inputLabel?: string;
+  outputLabel?: string;
   creator: string;
   steps: Array<string>;
 }
@@ -174,14 +173,15 @@ export class Schema {
   }
 
   public get codeListReferences(): Array<CodeListReference> {
-    const references: Array<CodeListReference> = [];
+    const references: Record<string, CodeListReference> = {};
     for (const dataField of Object.values(this.dataFields)) {
       if (dataField.input.type === "select") {
-        references.push(dataField.input.codeListReference);
+        const reference = dataField.input.codeListReference;
+        references[reference.canonicalVersionUri] = reference;
       }
     }
 
-    return references;
+    return Object.values(references);
   }
 }
 
@@ -217,7 +217,12 @@ class SchemaParser {
 
     const dataFields: Record<string, DataField> = {};
     const dataGroups: Record<string, DataGroup> = {};
-    const steps = this.collectStructs(structs, dataFields, dataGroups);
+    const steps = this.collectStructs(
+      identifier,
+      structs,
+      dataFields,
+      dataGroups
+    );
 
     return new Schema(
       messageId,
@@ -240,6 +245,7 @@ class SchemaParser {
   }
 
   private collectStructs(
+    identifier: string,
     structs: Array<XmlData>,
     dataFields: Record<string, DataField>,
     dataGroups: Record<string, DataGroup>
@@ -263,7 +269,7 @@ class SchemaParser {
         dataFields[dataField.identifier] = dataField;
       } else {
         content.print();
-        throw "Unknown content";
+        throw new SchemaError(`Unknown struct type for ${identifier}`);
       }
     }
 
@@ -283,11 +289,16 @@ class SchemaParser {
     const definition = data.getOptionalString("xdf:definition");
     const description = data.getOptionalString("xdf:beschreibung");
     const creator = data.getString("xdf:fachlicherErsteller");
-    const bezeichnungEingabe = data.getOptionalString("xdf:bezeichnungEingabe");
-    const bezeichnungAusgabe = data.getOptionalString("xdf:bezeichnungAusgabe");
+    const inputLabel = data.getOptionalString("xdf:bezeichnungEingabe");
+    const outputLabel = data.getOptionalString("xdf:bezeichnungAusgabe");
 
     const structs = data.getArray("xdf:struktur").asXmlData();
-    const steps = this.collectStructs(structs, dataFields, dataGroups);
+    const steps = this.collectStructs(
+      identifier,
+      structs,
+      dataFields,
+      dataGroups
+    );
 
     return {
       identifier,
@@ -296,8 +307,8 @@ class SchemaParser {
       creator,
       definition,
       description,
-      bezeichnungEingabe,
-      bezeichnungAusgabe,
+      inputLabel,
+      outputLabel,
       steps,
     };
   }
@@ -312,10 +323,10 @@ class SchemaParser {
     const creator = data.getString("xdf:fachlicherErsteller");
     const relatedTo = data.getOptionalString("xdf:bezug");
     const description = data.getOptionalString("xdf:beschreibung");
-    const bezeichnungEingabe = data.getString("xdf:bezeichnungEingabe");
-    const bezeichnungAusgabe = data.getString("xdf:bezeichnungAusgabe");
-    const hilfetextEingabe = data.getOptionalString("xdf:hilfetextEingabe");
-    const hilfetextAusgabe = data.getOptionalString("xdf:hilfetextAusgabe");
+    const inputLabel = data.getString("xdf:bezeichnungEingabe");
+    const outputLabel = data.getString("xdf:bezeichnungAusgabe");
+    const inputHint = data.getOptionalString("xdf:hilfetextEingabe");
+    const outputHint = data.getOptionalString("xdf:hilfetextAusgabe");
 
     const input = this.parseInputDescription(identifier, data);
 
@@ -327,10 +338,10 @@ class SchemaParser {
       creator,
       relatedTo,
       description,
-      bezeichnungEingabe,
-      bezeichnungAusgabe,
-      hilfetextEingabe,
-      hilfetextAusgabe,
+      inputLabel,
+      outputLabel,
+      inputHint,
+      outputHint,
       input,
     };
   }
@@ -355,6 +366,8 @@ class SchemaParser {
       }
 
       case "input": {
+        // TODO: Log warning if there are constraints not applicable to the specific
+        // data type (e.g. `minValue` for a `bool`).
         const constraints = data.getOptionalString("xdf:praezisierung");
         const inputConstraints = this.parseConstraints(identifier, constraints);
 
@@ -442,16 +455,6 @@ class SchemaParser {
         );
       }
     }
-
-    let codeListReference: CodeListReference | undefined = undefined;
-    let inputConstraints: InputConstraints | undefined = undefined;
-    if (type === "select") {
-      codeListReference = this.parseCodeListReference(data);
-    } else if (type === "input") {
-      const constraints = data.getOptionalString("xdf:praezisierung");
-      inputConstraints = this.parseConstraints(identifier, constraints);
-    }
-    const content = data.getOptionalString("xdf:inhalt");
   }
 
   private parseConstraints(

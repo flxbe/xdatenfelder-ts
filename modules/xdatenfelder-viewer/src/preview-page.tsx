@@ -21,10 +21,10 @@ export function PreviewPage({ schema }: PreviewPageProps) {
 
             const group = schema.dataGroups[identifier];
             if (group !== undefined) {
-              label = group.bezeichnungEingabe || "Unbekannt";
+              label = group.inputLabel || "Unbekannt";
             } else {
               const dataField = schema.dataFields[identifier];
-              label = dataField?.bezeichnungEingabe || "Unbekannt";
+              label = dataField?.inputLabel || "Unbekannt";
             }
 
             return (
@@ -117,7 +117,7 @@ const Step = React.memo(
     if (dataField !== undefined) {
       return (
         <div>
-          <h2 className="mb-4">{dataField.bezeichnungEingabe}</h2>
+          <h2 className="mb-4">{dataField.inputLabel}</h2>
           <DataFieldSection schema={schema} dataField={dataField} />
         </div>
       );
@@ -130,7 +130,7 @@ const Step = React.memo(
 
     return (
       <div>
-        <h2 className="mb-4">{group.bezeichnungEingabe}</h2>
+        <h2 className="mb-4">{group.inputLabel}</h2>
 
         {group.steps.map((identifier) => {
           return (
@@ -246,11 +246,11 @@ function DataSubGroupElement({
 }) {
   let title = undefined;
   if (level === 1) {
-    title = <h3>{dataGroup.bezeichnungEingabe}</h3>;
+    title = <h3>{dataGroup.inputLabel}</h3>;
   } else if (level === 2) {
-    title = <h4>{dataGroup.bezeichnungEingabe}</h4>;
+    title = <h4>{dataGroup.inputLabel}</h4>;
   } else {
-    title = <h5>{dataGroup.bezeichnungEingabe}</h5>;
+    title = <h5>{dataGroup.inputLabel}</h5>;
   }
 
   return (
@@ -281,11 +281,8 @@ function DataFieldInput({
     case "select": {
       return (
         <div className="mb-3">
-          <label className="form-label">{dataField.bezeichnungEingabe}</label>
-          <select
-            className="form-select"
-            aria-label={dataField.bezeichnungEingabe}
-          >
+          <label className="form-label">{dataField.inputLabel}</label>
+          <select className="form-select" aria-label={dataField.inputLabel}>
             <option value="1">Beispiel 1</option>
             <option value="2">Beispiel 2</option>
             <option value="3">Beispiel 3</option>
@@ -298,7 +295,7 @@ function DataFieldInput({
     case "text": {
       return (
         <div className="mb-3">
-          <label className="form-label">{dataField.bezeichnungEingabe}</label>
+          <label className="form-label">{dataField.inputLabel}</label>
           <input type="text" className="form-control" />
           {inputHelp(dataField)}
         </div>
@@ -309,7 +306,7 @@ function DataFieldInput({
     case "integer":
     case "currency": {
       <div className="mb-3">
-        <label className="form-label">{dataField.bezeichnungEingabe}</label>
+        <label className="form-label">{dataField.inputLabel}</label>
         <input type="number" className="form-control" />
         {inputHelp(dataField)}
       </div>;
@@ -325,7 +322,7 @@ function DataFieldInput({
               id={dataField.identifier}
             />
             <label className="form-check-label" htmlFor={dataField.identifier}>
-              {dataField.bezeichnungEingabe}
+              {dataField.inputLabel}
             </label>
           </div>
           {inputHelp(dataField)}
@@ -336,7 +333,7 @@ function DataFieldInput({
     case "file": {
       return (
         <div className="mb-3">
-          <label className="form-label">{dataField.bezeichnungEingabe}</label>
+          <label className="form-label">{dataField.inputLabel}</label>
           <input className="form-control" type="file" />
           {inputHelp(dataField)}
         </div>
@@ -346,7 +343,7 @@ function DataFieldInput({
     case "object": {
       return (
         <div className="mb-3">
-          <label className="form-label">{dataField.bezeichnungEingabe}</label>
+          <label className="form-label">{dataField.inputLabel}</label>
           <input className="form-control" type="file" />
           {inputHelp(dataField)}
         </div>
@@ -356,7 +353,7 @@ function DataFieldInput({
     case "date": {
       return (
         <div className="mb-3">
-          <label className="form-label">{dataField.bezeichnungEingabe}</label>
+          <label className="form-label">{dataField.inputLabel}</label>
           <input type="text" className="form-control" />
           {inputHelp(dataField)}
         </div>
@@ -366,7 +363,7 @@ function DataFieldInput({
     case "label": {
       return (
         <div className="alert alert-info" role="alert">
-          <h5 className="alert-heading">{dataField.bezeichnungEingabe}</h5>
+          <h5 className="alert-heading">{dataField.inputLabel}</h5>
           {multilineToHtml(dataField.input.content)}
         </div>
       );
@@ -381,8 +378,6 @@ function DataFieldInput({
 
 function inputHelp(dataField: DataField) {
   return (
-    <div className="form-text">
-      {multilineToHtml(dataField.hilfetextEingabe)}
-    </div>
+    <div className="form-text">{multilineToHtml(dataField.inputHint)}</div>
   );
 }

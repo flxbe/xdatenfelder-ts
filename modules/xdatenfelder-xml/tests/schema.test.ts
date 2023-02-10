@@ -1,9 +1,9 @@
 import { open } from "node:fs/promises";
 import { describe, expect, test } from "@jest/globals";
-import { Schema, SchemaError } from "../src/schema";
+import { Schema } from "../src/schema";
 
 describe("Loading a schema from xml", () => {
-  test("Should correctly load a schema", async () => {
+  test("Should correctly load the schema", async () => {
     const schema = await loadSchema("simple.xml");
 
     expect(schema.messageId).toEqual("abcd1234");
@@ -26,8 +26,8 @@ describe("Loading a schema from xml", () => {
         name: "Natürliche Person (abstrakt, umfassend)",
         definition: "Eine Definition",
         description: "Eine Beschreibung",
-        bezeichnungEingabe: "Natürliche Person",
-        bezeichnungAusgabe: "Natürliche Person",
+        inputLabel: "Natürliche Person",
+        outputLabel: "Natürliche Person",
         creator: "FIM Baustein Datenfelder",
         steps: ["F60000227"],
       },
@@ -40,10 +40,10 @@ describe("Loading a schema from xml", () => {
         description: "Eine Beschreibung",
         definition: "Eine Definition",
         relatedTo: "Ein Bezug",
-        bezeichnungEingabe: "Familienname",
-        bezeichnungAusgabe: "Familienname",
-        hilfetextEingabe: "Hilfe Eingabe",
-        hilfetextAusgabe: "Hilfe Ausgabe",
+        inputLabel: "Familienname",
+        outputLabel: "Familienname",
+        inputHint: "Hilfe Eingabe",
+        outputHint: "Hilfe Ausgabe",
         creator: "FIM-Baustein Datenfelder",
         input: {
           type: "text",

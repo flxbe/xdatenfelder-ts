@@ -19,7 +19,7 @@ export function CodeListsPage({ schema }: CodeListsPageProps) {
           </thead>
           <tbody>
             {schema.codeListReferences.map((reference) => (
-              <tr key={reference.identifier}>
+              <tr key={reference.canonicalVersionUri}>
                 <th scope="row">{reference.identifier}</th>
                 <td>{reference.version}</td>
                 <td>{reference.canonicalVersionUri}</td>
