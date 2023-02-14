@@ -91,7 +91,7 @@ export interface ElementReference {
   // amount: string
 }
 
-interface BasicData {
+export interface BasicData {
   identifier: string;
   version: string;
   name: string;
@@ -108,7 +108,7 @@ interface BasicData {
   // releaseDate
 }
 
-interface ElementData extends BasicData {
+export interface ElementData extends BasicData {
   // type
   inputHint?: string;
   outputHint?: string;
@@ -124,7 +124,7 @@ export interface DataGroup extends ElementData {
   // rules
 }
 
-interface SchemaData extends BasicData {
+export interface SchemaData extends BasicData {
   elements: Array<ElementReference>;
   // help
   // rules

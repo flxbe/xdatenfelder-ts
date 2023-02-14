@@ -1,7 +1,11 @@
 import * as React from "react";
 import { createRoot } from "react-dom/client";
 import { Routes, Route, HashRouter, Link, useMatch } from "react-router-dom";
-import { Schema, Warning as SchemaWarning } from "xdatenfelder-xml";
+import {
+  FastSchemaParser,
+  Schema,
+  Warning as SchemaWarning,
+} from "xdatenfelder-xml";
 import { Warning } from "./warning";
 import { DataFieldCard } from "./data-field-card";
 import { CodeListsPage } from "./code-lists-page";
@@ -91,8 +95,11 @@ function UploadPage({ onSchemaUpload }: UploadPageProps) {
     setState({ type: "loading" });
 
     try {
+      const measure = performance.measure("loading");
       const data = await loadFile(files[0]);
+      // const schema = FastSchemaParser.parseString(data);
       const schema = Schema.fromString(data);
+      console.log(measure);
       onSchemaUpload(schema);
     } catch (error) {
       console.error(error);
