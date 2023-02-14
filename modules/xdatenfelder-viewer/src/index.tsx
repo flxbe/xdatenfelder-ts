@@ -35,6 +35,7 @@ function Application() {
 async function loadFile(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
+
     reader.onload = (event) => {
       if (event.target === null) {
         return reject("Target is none");
@@ -80,7 +81,6 @@ function UploadPage({ onSchemaUpload }: UploadPageProps) {
   const [state, setState] = React.useState<UploadState>({ type: "ready" });
 
   const isLoading = state.type === "loading";
-  // const [error, setError] = React.useState<string | null>(null);
 
   async function onChange(event: React.ChangeEvent<HTMLInputElement>) {
     const { files } = event.target;
@@ -98,6 +98,21 @@ function UploadPage({ onSchemaUpload }: UploadPageProps) {
       console.error(error);
       setState({ type: "error", message: `${error}` });
     }
+  }
+
+  function renderProgress() {
+    if (state.type !== "loading") {
+      return undefined;
+    }
+
+    return (
+      <div
+        className="mt-3 mb-0 alert alert-info d-flex align-items-center"
+        role="alert"
+      >
+        <div>Datei wird geladen...</div>
+      </div>
+    );
   }
 
   function renderError() {
@@ -135,6 +150,7 @@ function UploadPage({ onSchemaUpload }: UploadPageProps) {
                 Die Datei wird ausschließlich lokal geöffnet. Es werden keine
                 Daten an den Server gesendet.
               </div>
+              {renderProgress()}
               {renderError()}
             </div>
           </div>
