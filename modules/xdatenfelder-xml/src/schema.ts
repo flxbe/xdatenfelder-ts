@@ -108,6 +108,10 @@ interface BasicData {
   // releaseDate
 }
 
+export interface Rule extends BasicData {
+  script: string;
+}
+
 interface ElementData extends BasicData {
   // type
   inputHint?: string;
@@ -116,18 +120,18 @@ interface ElementData extends BasicData {
 
 export interface DataField extends ElementData {
   input: InputDescription;
-  // rules
+  rules: Array<Rule>;
 }
 
 export interface DataGroup extends ElementData {
   elements: Array<ElementReference>;
-  // rules
+  rules: Array<Rule>;
 }
 
 interface SchemaData extends BasicData {
   elements: Array<ElementReference>;
+  rules: Array<Rule>;
   // help
-  // rules
   // ableitungsmodifikationenStruktur
   // ableitungsmodifikationenRepraesentation
 }
@@ -139,13 +143,19 @@ export class SchemaError extends Error {
   }
 }
 
-export interface InvalidInputConstraints {
+export interface InvalidInputConstraintsWarning {
   type: "invalidInputConstraints";
   identifier: string;
   value: string;
 }
 
-export type Warning = InvalidInputConstraints;
+export interface MissingAttributeWarning {
+  type: "missingAttribute";
+  identifier: string;
+  attribute: string;
+}
+
+export type Warning = InvalidInputConstraintsWarning | MissingAttributeWarning;
 
 export class Schema {
   public readonly messageId: string;
@@ -241,17 +251,37 @@ class SchemaParser {
       dataGroups
     );
 
+    const rules = this.parseRules(schema);
+
     return new Schema(
       messageId,
       createdAt,
       {
         ...basicData,
         elements,
+        rules,
       },
       dataFields,
       dataGroups,
       this.warnings
     );
+  }
+
+  private parseRules(data: XmlData): Array<Rule> {
+    return data
+      .getArray("xdf:regel")
+      .asXmlData()
+      .map((value) => this.parseRule(value));
+  }
+
+  private parseRule(data: XmlData): Rule {
+    const basicData = this.parseBasicData(data);
+    const script = data.getString("xdf:script");
+
+    return {
+      ...basicData,
+      script,
+    };
   }
 
   private collectStructs(
@@ -301,9 +331,12 @@ class SchemaParser {
       dataGroups
     );
 
+    const rules = this.parseRules(data);
+
     return {
       ...elementData,
       elements,
+      rules,
     };
   }
 
@@ -311,9 +344,11 @@ class SchemaParser {
     const elementData = this.parseElementData(data);
 
     const input = this.parseInputDescription(elementData.identifier, data);
+    const rules = this.parseRules(data);
 
     return {
       ...elementData,
+      rules,
       input,
     };
   }
@@ -521,9 +556,18 @@ class SchemaParser {
     const creator = data.getOptionalString("xdf:fachlicherErsteller");
     const relatedTo = data.getOptionalString("xdf:bezug");
     const description = data.getOptionalString("xdf:beschreibung");
-    const inputLabel = data.getString("xdf:bezeichnungEingabe");
+    let inputLabel = data.getOptionalString("xdf:bezeichnungEingabe");
     const outputLabel = data.getOptionalString("xdf:bezeichnungAusgabe");
     const versionInfo = data.getOptionalString("xdf:versionshinweis");
+
+    if (inputLabel === undefined) {
+      this.warnings.push({
+        type: "missingAttribute",
+        attribute: "xdf:bezeichnungEingabe",
+        identifier,
+      });
+      inputLabel = name;
+    }
 
     return {
       identifier,

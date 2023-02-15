@@ -19,6 +19,7 @@ describe("Loading a schema from xml", () => {
       relatedTo: "Bezug",
       creator: "Test",
       versionInfo: "Ein Versionshinweis",
+      rules: [],
       elements: [{ type: "dataGroup", identifier: "G00000082" }],
     });
     expect(schema.dataGroups).toEqual({
@@ -32,6 +33,7 @@ describe("Loading a schema from xml", () => {
         outputLabel: "Natürliche Person",
         creator: "FIM Baustein Datenfelder",
         versionInfo: "Versionshinweis",
+        rules: [],
         elements: [{ type: "dataField", identifier: "F60000227" }],
       },
     });
@@ -48,6 +50,7 @@ describe("Loading a schema from xml", () => {
         inputHint: "Hilfe Eingabe",
         outputHint: "Hilfe Ausgabe",
         creator: "FIM-Baustein Datenfelder",
+        rules: [],
         input: {
           type: "text",
           constraints: {
@@ -97,6 +100,26 @@ describe("Loading a schema from xml", () => {
         },
       })
     );
+  });
+
+  test("should parse rules", async () => {
+    const schema = await loadSchema("rule.xml");
+
+    expect(schema.schemaData.rules).toEqual([
+      {
+        identifier: "R60000037",
+        version: "1.2",
+        name: "MindestEineAngabe",
+        inputLabel: "MindestEineAngabe",
+        outputLabel: undefined,
+        creator: "Bundesredaktion",
+        definition: "Eine Definition",
+        description: undefined,
+        relatedTo: undefined,
+        script: "function script() {}",
+        versionInfo: undefined,
+      },
+    ]);
   });
 
   test("should allow undefined fields", async () => {

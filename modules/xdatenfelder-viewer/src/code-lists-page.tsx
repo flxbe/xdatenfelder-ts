@@ -1,9 +1,9 @@
 import * as React from "react";
 import { Schema } from "xdatenfelder-xml";
 
-export type CodeListsPageProps = {
+export interface CodeListsPageProps {
   schema: Schema;
-};
+}
 
 export function CodeListsPage({ schema }: CodeListsPageProps) {
   return (

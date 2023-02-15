@@ -1,9 +1,9 @@
 import * as React from "react";
 import { Warning as SchemaWarning } from "xdatenfelder-xml";
 
-export type WarningProps = {
+export interface WarningProps {
   warning: SchemaWarning;
-};
+}
 
 export function Warning({ warning }: WarningProps) {
   return (
@@ -24,5 +24,17 @@ function getMessage(warning: SchemaWarning) {
         </>
       );
     }
+    case "missingAttribute": {
+      return (
+        <>
+          <b>
+            Fehlender Attributwert "{warning.attribute}" in Datenfeld{" "}
+            {warning.identifier}
+          </b>
+        </>
+      );
+    }
+    default:
+      throw new Error(`Unknown warning: ${warning}`);
   }
 }

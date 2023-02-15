@@ -58,9 +58,9 @@ async function loadFile(file: File): Promise<string> {
   });
 }
 
-type UploadPageProps = {
+interface UploadPageProps {
   onSchemaUpload: (schema: Schema) => void;
-};
+}
 
 interface ParserError {
   type: "error";
@@ -94,7 +94,7 @@ function UploadPage({ onSchemaUpload }: UploadPageProps) {
       const data = await loadFile(files[0]);
       const schema = Schema.fromString(data);
       onSchemaUpload(schema);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       setState({ type: "error", message: `${error}` });
     }
@@ -274,49 +274,64 @@ function OverviewPage({ schema }: OverviewPageProps) {
         <dd className="col-sm-9">{schema.schemaData.identifier}</dd>
 
         <dt className="col-sm-3">Versionshinweis</dt>
-        <dd className="col-sm-9">{schema.schemaData.versionInfo || "-"}</dd>
+        <dd className="col-sm-9">{schema.schemaData.versionInfo ?? "-"}</dd>
 
         <dt className="col-sm-3">Fachlicher Ersteller</dt>
         <dd className="col-sm-9">{schema.schemaData.creator}</dd>
 
         <dt className="col-sm-3">Bezug</dt>
         <dd className="col-sm-9">
-          {multilineToHtml(schema.schemaData.relatedTo || "-")}
+          {multilineToHtml(schema.schemaData.relatedTo ?? "-")}
         </dd>
 
         <dt className="col-sm-3">Definition</dt>
         <dd className="col-sm-9">
-          {multilineToHtml(schema.schemaData.definition || "-")}
+          {multilineToHtml(schema.schemaData.definition ?? "-")}
         </dd>
 
         <dt className="col-sm-3">Beschreibung</dt>
         <dd className="col-sm-9">
-          {multilineToHtml(schema.schemaData.description || "-")}
+          {multilineToHtml(schema.schemaData.description ?? "-")}
         </dd>
       </dl>
 
-      <h4 className="mb-2">Status</h4>
       {renderStatus(schema.warnings)}
     </div>
   );
 }
 
 function renderStatus(warnings: Array<SchemaWarning>) {
-  if (warnings.length === 0) {
-    return (
-      <div className="alert alert-success" role="alert">
-        Keine Warnungen
-      </div>
-    );
-  } else {
-    return (
-      <div>
-        {warnings.map((warning, index) => (
-          <Warning key={index} warning={warning} />
-        ))}
-      </div>
-    );
+  function renderContent() {
+    if (warnings.length === 0) {
+      return (
+        <div className="alert alert-success" role="alert">
+          Keine Warnungen
+        </div>
+      );
+    } else {
+      return (
+        <div>
+          {warnings.map((warning, index) => (
+            <Warning key={index} warning={warning} />
+          ))}
+        </div>
+      );
+    }
   }
+
+  return (
+    <>
+      <h4 className="mb-2">
+        Status
+        {warnings.length === 0 ? undefined : (
+          <span className="ms-1 badge bg-warning">
+            {warnings.length} Warnungen
+          </span>
+        )}
+      </h4>
+      {renderContent()}
+    </>
+  );
 }
 
 type DataFieldsPageProps = {
@@ -338,7 +353,7 @@ function DataFieldsPage({ schema }: DataFieldsPageProps) {
 
   const typeCounter: Record<string, number> = {};
   for (const dataField of Object.values(schema.dataFields)) {
-    const counter = typeCounter[dataField.input.type] || 0;
+    const counter = typeCounter[dataField.input.type] ?? 0;
     typeCounter[dataField.input.type] = counter + 1;
   }
 
@@ -360,7 +375,7 @@ function DataFieldsPage({ schema }: DataFieldsPageProps) {
                 <input
                   className="form-check-input"
                   type="checkbox"
-                  value={`${types.has(type)}`}
+                  value={types.has(type) ? "true" : "false"}
                   onChange={() => toggleType(type)}
                   id={type}
                 />

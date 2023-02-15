@@ -7,9 +7,9 @@ import {
 } from "xdatenfelder-xml";
 import { multilineToHtml } from "./util";
 
-export type PreviewPageProps = {
+export interface PreviewPageProps {
   schema: Schema;
-};
+}
 
 export function PreviewPage({ schema }: PreviewPageProps) {
   const [page, setPage] = React.useState<string | null>(null);
@@ -25,10 +25,10 @@ export function PreviewPage({ schema }: PreviewPageProps) {
             let label = "";
             if (type === "dataGroup") {
               const group = schema.dataGroups[identifier];
-              label = group?.inputLabel || "Unbekannt";
+              label = group.inputLabel;
             } else {
               const dataField = schema.dataFields[identifier];
-              label = dataField?.inputLabel || "Unbekannt";
+              label = dataField.inputLabel;
             }
 
             return (
@@ -129,7 +129,7 @@ const Step = React.memo(
       return (
         <div>
           <h2 className="mb-4">{dataField.inputLabel}</h2>
-          <DataFieldSection schema={schema} dataField={dataField} />
+          <DataFieldSection dataField={dataField} />
         </div>
       );
     } else {
@@ -165,25 +165,19 @@ function Section({
 
   if (type === "dataField") {
     const dataField = schema.getDataField(identifier);
-    return <DataFieldSection schema={schema} dataField={dataField} />;
+    return <DataFieldSection dataField={dataField} />;
   } else {
     const dataGroup = schema.getDataGroup(identifier);
     return <DataGroupSection schema={schema} dataGroup={dataGroup} />;
   }
 }
 
-function DataFieldSection({
-  schema,
-  dataField,
-}: {
-  schema: Schema;
-  dataField: DataField;
-}) {
+function DataFieldSection({ dataField }: { dataField: DataField }) {
   return (
     <div className="card mb-4">
       <div className="card-header">{dataField.name}</div>
       <div className="card-body pb-0">
-        <DataFieldInput schema={schema} dataField={dataField} />
+        <DataFieldInput dataField={dataField} />
       </div>
     </div>
   );
@@ -228,7 +222,7 @@ function DataGroupElement({
 
   if (type === "dataField") {
     const dataField = schema.getDataField(identifier);
-    return <DataFieldInput schema={schema} dataField={dataField} />;
+    return <DataFieldInput dataField={dataField} />;
   } else {
     const dataGroup = schema.getDataGroup(identifier);
     return (
@@ -276,13 +270,7 @@ function DataSubGroupElement({
   );
 }
 
-function DataFieldInput({
-  schema,
-  dataField,
-}: {
-  schema: Schema;
-  dataField: DataField;
-}) {
+function DataFieldInput({ dataField }: { dataField: DataField }) {
   switch (dataField.input.type) {
     case "select": {
       return (
@@ -311,11 +299,13 @@ function DataFieldInput({
     case "number":
     case "integer":
     case "currency": {
-      <div className="mb-3">
-        <label className="form-label">{dataField.inputLabel}</label>
-        <input type="number" className="form-control" />
-        {inputHelp(dataField)}
-      </div>;
+      return (
+        <div className="mb-3">
+          <label className="form-label">{dataField.inputLabel}</label>
+          <input type="number" className="form-control" />
+          {inputHelp(dataField)}
+        </div>
+      );
     }
 
     case "bool": {
@@ -373,11 +363,6 @@ function DataFieldInput({
           {multilineToHtml(dataField.input.content)}
         </div>
       );
-    }
-
-    default: {
-      console.warn(`Unbekannter input type: ${dataField.input}`);
-      return <div>Unbekannter input type: {dataField.input}</div>;
     }
   }
 }

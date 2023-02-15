@@ -2,9 +2,9 @@ import * as React from "react";
 import { DataField } from "xdatenfelder-xml";
 import { multilineToHtml } from "./util";
 
-export type DataFieldCardProps = {
+export interface DataFieldCardProps {
   dataField: DataField;
-};
+}
 
 const TYPE_TO_COLOR_CLASS: Record<string, string> = {
   select: "text-bg-success",
@@ -36,17 +36,17 @@ export function DataFieldCard({ dataField }: DataFieldCardProps) {
 
           <dt className="col-sm-3">Bezug</dt>
           <dd className="col-sm-9">
-            {multilineToHtml(dataField.relatedTo || "-")}
+            {multilineToHtml(dataField.relatedTo ?? "-")}
           </dd>
 
           <dt className="col-sm-3">Definition</dt>
           <dd className="col-sm-9">
-            {multilineToHtml(dataField.definition || "-")}
+            {multilineToHtml(dataField.definition ?? "-")}
           </dd>
 
           <dt className="col-sm-3">Beschreibung</dt>
           <dd className="col-sm-9">
-            {multilineToHtml(dataField.description || "-")}
+            {multilineToHtml(dataField.description ?? "-")}
           </dd>
         </dl>
       </div>
@@ -88,13 +88,13 @@ function renderData(dataField: DataField) {
         <div className="card-body border-top">
           <dl className="row mb-0">
             <dt className="col-sm-3">Minimale Länge</dt>
-            <dd className="col-sm-9">{constraints.minLength || "-"}</dd>
+            <dd className="col-sm-9">{constraints.minLength ?? "-"}</dd>
 
             <dt className="col-sm-3">Maximale Länge</dt>
-            <dd className="col-sm-9">{constraints.maxLength || "-"}</dd>
+            <dd className="col-sm-9">{constraints.maxLength ?? "-"}</dd>
 
             <dt className="col-sm-3">Pattern</dt>
-            <dd className="col-sm-9">{constraints.pattern || "-"}</dd>
+            <dd className="col-sm-9">{constraints.pattern ?? "-"}</dd>
           </dl>
         </div>
       );
@@ -109,10 +109,10 @@ function renderData(dataField: DataField) {
         <div className="card-body border-top">
           <dl className="row mb-0">
             <dt className="col-sm-3">Minimaler Wert</dt>
-            <dd className="col-sm-9">{constraints.minValue || "-"}</dd>
+            <dd className="col-sm-9">{constraints.minValue ?? "-"}</dd>
 
             <dt className="col-sm-3">Maximaler Wert</dt>
-            <dd className="col-sm-9">{constraints.maxValue || "-"}</dd>
+            <dd className="col-sm-9">{constraints.maxValue ?? "-"}</dd>
           </dl>
         </div>
       );
