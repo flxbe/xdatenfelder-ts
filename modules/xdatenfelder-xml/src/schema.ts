@@ -164,7 +164,6 @@ export class Schema {
   public readonly dataFields: Record<string, DataField>;
   public readonly dataGroups: Record<string, DataGroup>;
   public readonly rules: Record<string, Rule>;
-  public readonly warnings: Array<Warning>;
 
   constructor(
     messageId: string,
@@ -172,8 +171,7 @@ export class Schema {
     schemaData: SchemaData,
     dataFields: Record<string, DataField>,
     dataGroups: Record<string, DataGroup>,
-    rules: Record<string, Rule>,
-    warnings: Array<Warning>
+    rules: Record<string, Rule>
   ) {
     this.messageId = messageId;
     this.createdAt = createdAt;
@@ -181,10 +179,16 @@ export class Schema {
     this.dataFields = dataFields;
     this.dataGroups = dataGroups;
     this.rules = rules;
-    this.warnings = warnings;
   }
 
   public static fromString(stringData: string): Schema {
+    return Schema.parse(stringData).schema;
+  }
+
+  public static parse(stringData: string): {
+    schema: Schema;
+    warnings: Warning[];
+  } {
     return new SchemaParser().parseSchema(stringData);
   }
 
@@ -228,7 +232,10 @@ export class Schema {
 class SchemaParser {
   private warnings: Array<Warning> = [];
 
-  public parseSchema(stringData: string): Schema {
+  public parseSchema(stringData: string): {
+    schema: Schema;
+    warnings: Warning[];
+  } {
     const data = XmlData.fromString(stringData);
 
     const content = data.getChild("xdf:xdatenfelder.stammdatenschema.0102");
@@ -241,10 +248,10 @@ class SchemaParser {
     const messageId = header.getString("xdf:nachrichtID");
     const createdAt = header.getDate("xdf:erstellungszeitpunkt");
 
-    const schema = content.getChild("xdf:stammdatenschema");
-    const basicData = this.parseBasicData(schema);
+    const schemaNode = content.getChild("xdf:stammdatenschema");
+    const basicData = this.parseBasicData(schemaNode);
 
-    const structs = schema.getArray("xdf:struktur").asXmlData();
+    const structs = schemaNode.getArray("xdf:struktur").asXmlData();
     const dataFields: Record<string, DataField> = {};
     const dataGroups: Record<string, DataGroup> = {};
     const rules: Record<string, Rule> = {};
@@ -256,21 +263,23 @@ class SchemaParser {
       rules
     );
 
-    const ruleReferences = this.parseRules(schema, rules);
+    const ruleReferences = this.parseRules(schemaNode, rules);
 
-    return new Schema(
-      messageId,
-      createdAt,
-      {
-        ...basicData,
-        elements,
-        rules: ruleReferences,
-      },
-      dataFields,
-      dataGroups,
-      rules,
-      this.warnings
-    );
+    return {
+      schema: new Schema(
+        messageId,
+        createdAt,
+        {
+          ...basicData,
+          elements,
+          rules: ruleReferences,
+        },
+        dataFields,
+        dataGroups,
+        rules
+      ),
+      warnings: this.warnings,
+    };
   }
 
   private parseRules(

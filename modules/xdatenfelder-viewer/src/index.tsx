@@ -10,14 +10,19 @@ import { PreviewPage } from "./preview-page";
 import { multilineToHtml } from "./util";
 import { RulesPage } from "./rules-page";
 
+interface State {
+  schema: Schema;
+  warnings: SchemaWarning[];
+}
+
 function Application() {
-  const [schema, setSchema] = React.useState<Schema | null>(null);
+  const [state, setState] = React.useState<State | null>(null);
 
   function renderContent() {
-    if (schema !== null) {
-      return <Viewer schema={schema} />;
+    if (state !== null) {
+      return <Viewer state={state} />;
     } else {
-      return <UploadPage onSchemaUpload={setSchema} />;
+      return <UploadPage onSchemaUpload={setState} />;
     }
   }
 
@@ -60,7 +65,7 @@ async function loadFile(file: File): Promise<string> {
 }
 
 interface UploadPageProps {
-  onSchemaUpload: (schema: Schema) => void;
+  onSchemaUpload: (state: State) => void;
 }
 
 interface ParserError {
@@ -93,8 +98,8 @@ function UploadPage({ onSchemaUpload }: UploadPageProps) {
 
     try {
       const data = await loadFile(files[0]);
-      const schema = Schema.fromString(data);
-      onSchemaUpload(schema);
+      const parseResult = Schema.parse(data);
+      onSchemaUpload(parseResult);
     } catch (error: any) {
       console.error(error);
       setState({ type: "error", message: `${error}` });
@@ -162,10 +167,12 @@ function UploadPage({ onSchemaUpload }: UploadPageProps) {
 }
 
 type ViewerProps = {
-  schema: Schema;
+  state: State;
 };
 
-function Viewer({ schema }: ViewerProps) {
+function Viewer({ state }: ViewerProps) {
+  const { schema, warnings } = state;
+
   return (
     <>
       <div className="container-fluid px-4 pt-4 border-bottom bg-white">
@@ -200,7 +207,7 @@ function Viewer({ schema }: ViewerProps) {
       </div>
       <div className="container p-3">
         <Routes>
-          <Route path="/" element={<OverviewPage schema={schema} />}></Route>
+          <Route path="/" element={<OverviewPage state={state} />}></Route>
           <Route
             path="/preview"
             element={<PreviewPage schema={schema} />}
@@ -262,10 +269,12 @@ function renderLink(name: string, target: string, strict: boolean = true) {
 }
 
 type OverviewPageProps = {
-  schema: Schema;
+  state: State;
 };
 
-function OverviewPage({ schema }: OverviewPageProps) {
+function OverviewPage({ state }: OverviewPageProps) {
+  const { schema, warnings } = state;
+
   return (
     <div className="container-xxl">
       <h4 className="mb-2">Eigenschaften</h4>
@@ -298,7 +307,7 @@ function OverviewPage({ schema }: OverviewPageProps) {
         </dd>
       </dl>
 
-      {renderStatus(schema.warnings)}
+      {renderStatus(warnings)}
     </div>
   );
 }

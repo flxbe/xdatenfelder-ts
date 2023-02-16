@@ -14,6 +14,20 @@ export interface PreviewPageProps {
 export function PreviewPage({ schema }: PreviewPageProps) {
   const [page, setPage] = React.useState<string | null>(null);
 
+  function renderContent() {
+    if (page === null) {
+      return <Start schema={schema} />;
+    } else {
+      for (const element of schema.schemaData.elements) {
+        if (element.identifier === page) {
+          return <Step schema={schema} element={element} />;
+        }
+      }
+
+      throw new Error(`Cannot find page with identifier ${page}`);
+    }
+  }
+
   return (
     <div className="row">
       <div className="col-12 col-lg-3">
@@ -44,22 +58,7 @@ export function PreviewPage({ schema }: PreviewPageProps) {
           })}
         </div>
       </div>
-      <div className="col-12 col-lg-9">
-        <Optional identifier={null} location={page}>
-          <Start schema={schema} />
-        </Optional>
-        {schema.schemaData.elements.map((element) => {
-          return (
-            <Optional
-              key={element.identifier}
-              identifier={element.identifier}
-              location={page}
-            >
-              <Step schema={schema} element={element} />
-            </Optional>
-          );
-        })}
-      </div>
+      <div className="col-12 col-lg-9">{renderContent()}</div>
     </div>
   );
 }
@@ -95,21 +94,6 @@ function NavLink({
   );
 }
 
-function Optional({
-  children,
-  identifier,
-  location,
-}: {
-  children: JSX.Element;
-  identifier: string | null;
-  location: string | null;
-}) {
-  const isActive = identifier === location;
-  const className = isActive ? "" : "d-none";
-
-  return <div className={className}>{children}</div>;
-}
-
 function Start({ schema }: { schema: Schema }) {
   return (
     <div>
@@ -119,40 +103,44 @@ function Start({ schema }: { schema: Schema }) {
   );
 }
 
-const Step = React.memo(
-  ({ schema, element }: { schema: Schema; element: ElementReference }) => {
-    const { type, identifier } = element;
+function Step({
+  schema,
+  element,
+}: {
+  schema: Schema;
+  element: ElementReference;
+}) {
+  const { type, identifier } = element;
 
-    if (type === "dataField") {
-      const dataField = schema.getDataField(identifier);
+  if (type === "dataField") {
+    const dataField = schema.getDataField(identifier);
 
-      return (
-        <div>
-          <h2 className="mb-4">{dataField.inputLabel}</h2>
-          <DataFieldSection dataField={dataField} />
-        </div>
-      );
-    } else {
-      const dataGroup = schema.getDataGroup(identifier);
+    return (
+      <div>
+        <h2 className="mb-4">{dataField.inputLabel}</h2>
+        <DataFieldSection dataField={dataField} />
+      </div>
+    );
+  } else {
+    const dataGroup = schema.getDataGroup(identifier);
 
-      return (
-        <div>
-          <h2 className="mb-4">{dataGroup.inputLabel}</h2>
+    return (
+      <div>
+        <h2 className="mb-4">{dataGroup.inputLabel}</h2>
 
-          {dataGroup.elements.map((element) => {
-            return (
-              <Section
-                key={element.identifier}
-                schema={schema}
-                element={element}
-              />
-            );
-          })}
-        </div>
-      );
-    }
+        {dataGroup.elements.map((element) => {
+          return (
+            <Section
+              key={element.identifier}
+              schema={schema}
+              element={element}
+            />
+          );
+        })}
+      </div>
+    );
   }
-);
+}
 
 function Section({
   schema,
@@ -271,12 +259,25 @@ function DataSubGroupElement({
 }
 
 function DataFieldInput({ dataField }: { dataField: DataField }) {
+  const [value, setValue] = React.useState<string>("");
+
+  const inputProps = {
+    value,
+    onChange: (
+      event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    ) => setValue(event.target.value),
+  };
+
   switch (dataField.input.type) {
     case "select": {
       return (
         <div className="mb-3">
           <label className="form-label">{dataField.inputLabel}</label>
-          <select className="form-select" aria-label={dataField.inputLabel}>
+          <select
+            className="form-select"
+            aria-label={dataField.inputLabel}
+            {...inputProps}
+          >
             <option value="1">Beispiel 1</option>
             <option value="2">Beispiel 2</option>
             <option value="3">Beispiel 3</option>
@@ -290,7 +291,7 @@ function DataFieldInput({ dataField }: { dataField: DataField }) {
       return (
         <div className="mb-3">
           <label className="form-label">{dataField.inputLabel}</label>
-          <input type="text" className="form-control" />
+          <input type="text" className="form-control" {...inputProps} />
           {inputHelp(dataField)}
         </div>
       );
@@ -302,7 +303,7 @@ function DataFieldInput({ dataField }: { dataField: DataField }) {
       return (
         <div className="mb-3">
           <label className="form-label">{dataField.inputLabel}</label>
-          <input type="number" className="form-control" />
+          <input type="number" className="form-control" {...inputProps} />
           {inputHelp(dataField)}
         </div>
       );
@@ -315,6 +316,7 @@ function DataFieldInput({ dataField }: { dataField: DataField }) {
             <input
               className="form-check-input"
               type="checkbox"
+              {...inputProps}
               id={dataField.identifier}
             />
             <label className="form-check-label" htmlFor={dataField.identifier}>
@@ -330,7 +332,7 @@ function DataFieldInput({ dataField }: { dataField: DataField }) {
       return (
         <div className="mb-3">
           <label className="form-label">{dataField.inputLabel}</label>
-          <input className="form-control" type="file" />
+          <input className="form-control" type="file" {...inputProps} />
           {inputHelp(dataField)}
         </div>
       );
@@ -340,7 +342,7 @@ function DataFieldInput({ dataField }: { dataField: DataField }) {
       return (
         <div className="mb-3">
           <label className="form-label">{dataField.inputLabel}</label>
-          <input className="form-control" type="file" />
+          <input className="form-control" type="file" {...inputProps} />
           {inputHelp(dataField)}
         </div>
       );
@@ -350,7 +352,7 @@ function DataFieldInput({ dataField }: { dataField: DataField }) {
       return (
         <div className="mb-3">
           <label className="form-label">{dataField.inputLabel}</label>
-          <input type="text" className="form-control" />
+          <input type="text" className="form-control" {...inputProps} />
           {inputHelp(dataField)}
         </div>
       );
