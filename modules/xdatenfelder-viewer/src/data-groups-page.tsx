@@ -24,22 +24,18 @@ export function DataGroupsPage({ schema }: DataGroupsPageProps) {
                 className="list-group-item list-group-item-action"
                 key={dataGroup.identifier}
               >
-                <div className="row">
-                  <div className="col-12 col-md">
-                    <h6 className="mb-0">
-                      {dataGroup.name}{" "}
-                      <small className="text-muted">v{dataGroup.version}</small>
-                    </h6>
-                    <small>
-                      <span className="text-muted">Erstellt von</span>{" "}
-                      {dataGroup.creator ?? "Unbekannt"}
-                    </small>
-                  </div>
-                  <div className="col-12 col-md-auto">
-                    <span className="badge bg-secondary">
+                <div>
+                  <h6 className="mb-0">
+                    <span className="badge rounded-pill text-bg-secondary">
                       {dataGroup.identifier}
-                    </span>
-                  </div>
+                    </span>{" "}
+                    {dataGroup.name}{" "}
+                    <small className="text-muted">v{dataGroup.version}</small>
+                  </h6>
+                  <small>
+                    <span className="text-muted">Erstellt von</span>{" "}
+                    {dataGroup.creator ?? "Unbekannt"}
+                  </small>
                 </div>
               </div>
             ))}

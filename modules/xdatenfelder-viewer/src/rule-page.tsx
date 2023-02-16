@@ -27,7 +27,9 @@ export function RulePage({ schema }: RulePageProps) {
             {rule.name} <small className="text-muted">v{rule.version}</small>
           </h3>
           <h6>
-            <span className="badge bg-secondary">{rule.identifier}</span>{" "}
+            <span className="badge rounded-pill text-bg-secondary">
+              {rule.identifier}
+            </span>{" "}
           </h6>
         </div>
         <div className="col-12 col-md-3 text-end">

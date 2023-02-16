@@ -29,7 +29,9 @@ export function DataFieldPage({ schema }: DataFieldPageProps) {
             <small className="text-muted">v{dataField.version}</small>
           </h3>
           <h6>
-            <span className="badge bg-secondary">{dataField.identifier}</span>{" "}
+            <span className="badge rounded-pill text-bg-secondary">
+              {dataField.identifier}
+            </span>{" "}
             <DataFieldType type={dataField.input.type} />
           </h6>
         </div>

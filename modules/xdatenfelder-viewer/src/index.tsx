@@ -184,12 +184,11 @@ function Viewer({ state }: ViewerProps) {
     <>
       <div className="container-fluid px-4 pt-4 border-bottom bg-white">
         <h5>
-          {schema.schemaData.name}{" "}
-          <small className="text-muted">v{schema.schemaData.version}</small>
-          <br />
-          <span className="badge bg-secondary">
+          <span className="badge rounded-pill text-bg-secondary">
             {schema.schemaData.identifier}
-          </span>
+          </span>{" "}
+          {schema.schemaData.name}{" "}
+          <small className="text-muted">v{schema.schemaData.version}</small>{" "}
         </h5>
         <ul className="nav mt-4">
           {renderLink("Schema", "/")}

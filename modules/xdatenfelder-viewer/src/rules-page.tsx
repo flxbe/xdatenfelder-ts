@@ -26,22 +26,18 @@ export function RulesPage({ schema }: RulesPageProps) {
                 to={`/rules/${rule.identifier}`}
                 key={rule.identifier}
               >
-                <div className="row">
-                  <div className="col-12 col-md">
-                    <h6 className="mb-0">
-                      {rule.name}{" "}
-                      <small className="text-muted">v{rule.version}</small>
-                    </h6>
-                    <small>
-                      <span className="text-muted">Erstellt von</span>{" "}
-                      {rule.creator ?? "Unbekannt"}
-                    </small>
-                  </div>
-                  <div className="col-12 col-md-auto">
-                    <span className="badge bg-secondary">
+                <div>
+                  <h6 className="mb-0">
+                    <span className="badge rounded-pill text-bg-secondary">
                       {rule.identifier}
                     </span>{" "}
-                  </div>
+                    {rule.name}{" "}
+                    <small className="text-muted">v{rule.version}</small>
+                  </h6>
+                  <small>
+                    <span className="text-muted">Erstellt von</span>{" "}
+                    {rule.creator ?? "Unbekannt"}
+                  </small>
                 </div>
               </Link>
             ))}

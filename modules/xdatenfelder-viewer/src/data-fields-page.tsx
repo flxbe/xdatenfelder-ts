@@ -69,6 +69,9 @@ export function DataFieldsPage({ schema }: DataFieldsPageProps) {
                 <div className="row">
                   <div className="col-12 col-md">
                     <h6 className="mb-0">
+                      <span className="badge rounded-pill text-bg-secondary">
+                        {dataField.identifier}
+                      </span>{" "}
                       {dataField.name}{" "}
                       <small className="text-muted">v{dataField.version}</small>
                     </h6>
@@ -78,9 +81,6 @@ export function DataFieldsPage({ schema }: DataFieldsPageProps) {
                     </small>
                   </div>
                   <div className="col-12 col-md-auto">
-                    <span className="badge bg-secondary">
-                      {dataField.identifier}
-                    </span>{" "}
                     <DataFieldType type={dataField.input.type} />
                   </div>
                 </div>
