@@ -7,12 +7,14 @@ import {
   Warning as SchemaWarning,
 } from "xdatenfelder-xml";
 import { Warning } from "./warning";
-import { DataFieldCard } from "./data-field-card";
+import { DataFieldsPage } from "./data-fields-page";
+import { DataFieldPage } from "./data-field-page";
 import { CodeListsPage } from "./code-lists-page";
 import { DataGroupsPage } from "./data-groups-page";
 import { PreviewPage } from "./preview-page";
 import { multilineToHtml } from "./util";
 import { RulesPage } from "./rules-page";
+import { NotFoundPage } from "./not-found-page";
 
 interface State {
   schema: Schema;
@@ -182,11 +184,11 @@ function Viewer({ state }: ViewerProps) {
       <div className="container-fluid px-4 pt-4 border-bottom bg-white">
         <h5>
           {schema.schemaData.name}{" "}
-          <span className="badge bg-secondary">
-            Version {schema.schemaData.version}
-          </span>
+          <small className="text-muted">v{schema.schemaData.version}</small>
           <br />
-          <small className="text-muted">{schema.schemaData.identifier}</small>
+          <span className="badge bg-secondary">
+            {schema.schemaData.identifier}
+          </span>
         </h5>
         <ul className="nav mt-4">
           {renderLink("Schema", "/")}
@@ -209,7 +211,7 @@ function Viewer({ state }: ViewerProps) {
           )}
         </ul>
       </div>
-      <div className="container p-3">
+      <div className="container p-4">
         <Routes>
           <Route path="/" element={<OverviewPage state={state} />}></Route>
           <Route
@@ -224,11 +226,16 @@ function Viewer({ state }: ViewerProps) {
             path="/datafields"
             element={<DataFieldsPage schema={schema} />}
           ></Route>
+          <Route
+            path="/datafields/:identifier"
+            element={<DataFieldPage schema={schema} />}
+          ></Route>
           <Route path="/rules" element={<RulesPage schema={schema} />}></Route>
           <Route
             path="/codelists"
             element={<CodeListsPage schema={schema} />}
           ></Route>
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </div>
     </>
@@ -367,68 +374,6 @@ function renderStatus(warnings: SchemaWarnings) {
       </h4>
       {renderContent()}
     </>
-  );
-}
-
-type DataFieldsPageProps = {
-  schema: Schema;
-};
-
-function DataFieldsPage({ schema }: DataFieldsPageProps) {
-  const [types, setTypes] = React.useState<Set<string>>(new Set());
-
-  function toggleType(type: string) {
-    const newTypes = new Set(types);
-    if (newTypes.has(type)) {
-      newTypes.delete(type);
-    } else {
-      newTypes.add(type);
-    }
-    setTypes(newTypes);
-  }
-
-  const typeCounter: Record<string, number> = {};
-  for (const dataField of Object.values(schema.dataFields)) {
-    const counter = typeCounter[dataField.input.type] ?? 0;
-    typeCounter[dataField.input.type] = counter + 1;
-  }
-
-  let dataFields = Object.values(schema.dataFields);
-  if (types.size > 0) {
-    dataFields = dataFields.filter((dataField) =>
-      types.has(dataField.input.type)
-    );
-  }
-
-  return (
-    <div className="row">
-      <div className="col-12 col-lg-2">
-        <div>
-          <h5>Typ</h5>
-          {Object.entries(typeCounter).map(([type, counter]) => {
-            return (
-              <div key={type} className="form-check">
-                <input
-                  className="form-check-input"
-                  type="checkbox"
-                  value={types.has(type) ? "true" : "false"}
-                  onChange={() => toggleType(type)}
-                  id={type}
-                />
-                <label className="form-check-label" htmlFor={type}>
-                  {type} ({counter})
-                </label>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-      <div className="col-12 col-lg-10">
-        {dataFields.map((dataField) => (
-          <DataFieldCard key={dataField.identifier} dataField={dataField} />
-        ))}
-      </div>
-    </div>
   );
 }
 
