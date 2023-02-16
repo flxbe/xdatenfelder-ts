@@ -61,6 +61,7 @@ describe("Loading a schema from xml", () => {
         },
       },
     });
+    expect(schema.rules).toEqual({});
   });
 
   test("should parse label fields", async () => {
@@ -105,8 +106,8 @@ describe("Loading a schema from xml", () => {
   test("should parse rules", async () => {
     const schema = await loadSchema("rule.xml");
 
-    expect(schema.schemaData.rules).toEqual([
-      {
+    expect(schema.rules).toEqual({
+      R60000037: {
         identifier: "R60000037",
         version: "1.2",
         name: "MindestEineAngabe",
@@ -119,7 +120,9 @@ describe("Loading a schema from xml", () => {
         script: "function script() {}",
         versionInfo: undefined,
       },
-    ]);
+    });
+
+    expect(schema.schemaData.rules).toEqual(["R60000037"]);
   });
 
   test("should allow undefined fields", async () => {

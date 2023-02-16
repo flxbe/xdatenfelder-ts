@@ -15,6 +15,7 @@ export function DataGroupsPage({ schema }: DataGroupsPageProps) {
               <th scope="col">Id</th>
               <th scope="col">Version</th>
               <th scope="col">Elemente</th>
+              <th scope="col">Regeln</th>
             </tr>
           </thead>
           <tbody>
@@ -27,6 +28,7 @@ export function DataGroupsPage({ schema }: DataGroupsPageProps) {
                     .map((element) => element.identifier)
                     .join(", ")}
                 </td>
+                <td>{group.rules.join(", ")}</td>
               </tr>
             ))}
           </tbody>

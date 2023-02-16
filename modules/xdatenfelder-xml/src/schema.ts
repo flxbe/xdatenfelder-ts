@@ -120,17 +120,17 @@ interface ElementData extends BasicData {
 
 export interface DataField extends ElementData {
   input: InputDescription;
-  rules: Array<Rule>;
+  rules: Array<string>;
 }
 
 export interface DataGroup extends ElementData {
   elements: Array<ElementReference>;
-  rules: Array<Rule>;
+  rules: Array<string>;
 }
 
 interface SchemaData extends BasicData {
   elements: Array<ElementReference>;
-  rules: Array<Rule>;
+  rules: Array<string>;
   // help
   // ableitungsmodifikationenStruktur
   // ableitungsmodifikationenRepraesentation
@@ -163,6 +163,7 @@ export class Schema {
   public readonly schemaData: SchemaData;
   public readonly dataFields: Record<string, DataField>;
   public readonly dataGroups: Record<string, DataGroup>;
+  public readonly rules: Record<string, Rule>;
   public readonly warnings: Array<Warning>;
 
   constructor(
@@ -171,6 +172,7 @@ export class Schema {
     schemaData: SchemaData,
     dataFields: Record<string, DataField>,
     dataGroups: Record<string, DataGroup>,
+    rules: Record<string, Rule>,
     warnings: Array<Warning>
   ) {
     this.messageId = messageId;
@@ -178,6 +180,7 @@ export class Schema {
     this.schemaData = schemaData;
     this.dataFields = dataFields;
     this.dataGroups = dataGroups;
+    this.rules = rules;
     this.warnings = warnings;
   }
 
@@ -244,14 +247,16 @@ class SchemaParser {
     const structs = schema.getArray("xdf:struktur").asXmlData();
     const dataFields: Record<string, DataField> = {};
     const dataGroups: Record<string, DataGroup> = {};
+    const rules: Record<string, Rule> = {};
     const elements = this.collectStructs(
       basicData.identifier,
       structs,
       dataFields,
-      dataGroups
+      dataGroups,
+      rules
     );
 
-    const rules = this.parseRules(schema);
+    const ruleReferences = this.parseRules(schema, rules);
 
     return new Schema(
       messageId,
@@ -259,19 +264,31 @@ class SchemaParser {
       {
         ...basicData,
         elements,
-        rules,
+        rules: ruleReferences,
       },
       dataFields,
       dataGroups,
+      rules,
       this.warnings
     );
   }
 
-  private parseRules(data: XmlData): Array<Rule> {
-    return data
+  private parseRules(
+    data: XmlData,
+    rules: Record<string, Rule>
+  ): Array<string> {
+    const entries = data
       .getArray("xdf:regel")
       .asXmlData()
       .map((value) => this.parseRule(value));
+
+    const ruleReferences: Array<string> = [];
+    for (const rule of entries) {
+      rules[rule.identifier] = rule;
+      ruleReferences.push(rule.identifier);
+    }
+
+    return ruleReferences;
   }
 
   private parseRule(data: XmlData): Rule {
@@ -288,7 +305,8 @@ class SchemaParser {
     identifier: string,
     structs: Array<XmlData>,
     dataFields: Record<string, DataField>,
-    dataGroups: Record<string, DataGroup>
+    dataGroups: Record<string, DataGroup>,
+    rules: Record<string, Rule>
   ): Array<ElementReference> {
     const elements: Array<ElementReference> = [];
 
@@ -297,13 +315,13 @@ class SchemaParser {
 
       if (content.hasKey("xdf:datenfeldgruppe")) {
         const data = content.getChild("xdf:datenfeldgruppe");
-        const group = this.parseDataGroup(data, dataFields, dataGroups);
+        const group = this.parseDataGroup(data, dataFields, dataGroups, rules);
 
         elements.push({ type: "dataGroup", identifier: group.identifier });
         dataGroups[group.identifier] = group;
       } else if (content.hasKey("xdf:datenfeld")) {
         const data = content.getChild("xdf:datenfeld");
-        const dataField = this.parseDataField(data);
+        const dataField = this.parseDataField(data, rules);
 
         elements.push({ type: "dataField", identifier: dataField.identifier });
         dataFields[dataField.identifier] = dataField;
@@ -319,7 +337,8 @@ class SchemaParser {
   private parseDataGroup(
     data: XmlData,
     dataFields: Record<string, DataField>,
-    dataGroups: Record<string, DataGroup>
+    dataGroups: Record<string, DataGroup>,
+    rules: Record<string, Rule>
   ): DataGroup {
     const elementData = this.parseElementData(data);
 
@@ -328,27 +347,31 @@ class SchemaParser {
       elementData.identifier,
       structs,
       dataFields,
-      dataGroups
+      dataGroups,
+      rules
     );
 
-    const rules = this.parseRules(data);
+    const ruleReferences = this.parseRules(data, rules);
 
     return {
       ...elementData,
       elements,
-      rules,
+      rules: ruleReferences,
     };
   }
 
-  private parseDataField(data: XmlData): DataField {
+  private parseDataField(
+    data: XmlData,
+    rules: Record<string, Rule>
+  ): DataField {
     const elementData = this.parseElementData(data);
 
     const input = this.parseInputDescription(elementData.identifier, data);
-    const rules = this.parseRules(data);
+    const ruleReferences = this.parseRules(data, rules);
 
     return {
       ...elementData,
-      rules,
+      rules: ruleReferences,
       input,
     };
   }

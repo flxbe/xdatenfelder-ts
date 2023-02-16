@@ -8,6 +8,7 @@ import { CodeListsPage } from "./code-lists-page";
 import { DataGroupsPage } from "./data-groups-page";
 import { PreviewPage } from "./preview-page";
 import { multilineToHtml } from "./util";
+import { RulesPage } from "./rules-page";
 
 function Application() {
   const [schema, setSchema] = React.useState<Schema | null>(null);
@@ -189,6 +190,7 @@ function Viewer({ schema }: ViewerProps) {
             "/datafields",
             Object.keys(schema.dataFields).length
           )}
+          {renderBadeLink("Regeln", "/rules", Object.keys(schema.rules).length)}
           {renderBadeLink(
             "Codelisten",
             "/codelists",
@@ -211,6 +213,7 @@ function Viewer({ schema }: ViewerProps) {
             path="/datafields"
             element={<DataFieldsPage schema={schema} />}
           ></Route>
+          <Route path="/rules" element={<RulesPage schema={schema} />}></Route>
           <Route
             path="/codelists"
             element={<CodeListsPage schema={schema} />}

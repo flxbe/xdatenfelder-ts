@@ -48,6 +48,9 @@ export function DataFieldCard({ dataField }: DataFieldCardProps) {
           <dd className="col-sm-9">
             {multilineToHtml(dataField.description ?? "-")}
           </dd>
+
+          <dt className="col-sm-3">Regeln</dt>
+          <dd className="col-sm-9">{dataField.rules.join(", ") || "-"}</dd>
         </dl>
       </div>
       {renderData(dataField)}
