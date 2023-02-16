@@ -38,7 +38,8 @@ export function DataFieldsPage({ schema }: DataFieldsPageProps) {
       <div className="row">
         <div className="col-12 col-lg-2">
           <div>
-            <h5>Typ</h5>
+            <h5>Filter</h5>
+            <h6>Typ</h6>
             {Object.entries(typeCounter).map(([type, counter]) => {
               return (
                 <div key={type} className="form-check">

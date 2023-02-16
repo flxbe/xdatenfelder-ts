@@ -15,6 +15,7 @@ import { PreviewPage } from "./preview-page";
 import { multilineToHtml } from "./util";
 import { RulesPage } from "./rules-page";
 import { NotFoundPage } from "./not-found-page";
+import { RulePage } from "./rule-page";
 
 interface State {
   schema: Schema;
@@ -231,6 +232,10 @@ function Viewer({ state }: ViewerProps) {
             element={<DataFieldPage schema={schema} />}
           ></Route>
           <Route path="/rules" element={<RulesPage schema={schema} />}></Route>
+          <Route
+            path="/rules/:identifier"
+            element={<RulePage schema={schema} />}
+          ></Route>
           <Route
             path="/codelists"
             element={<CodeListsPage schema={schema} />}

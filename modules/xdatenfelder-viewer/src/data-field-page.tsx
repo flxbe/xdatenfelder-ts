@@ -63,6 +63,16 @@ export function DataFieldPage({ schema }: DataFieldPageProps) {
           {multilineToHtml(dataField.description ?? "-")}
         </dd>
 
+        <dt className="col-sm-3">Bezeichnung Eingabe</dt>
+        <dd className="col-sm-9">{dataField.inputLabel}</dd>
+        <dt className="col-sm-3">Hilfetext Eingabe</dt>
+        <dd className="col-sm-9">{dataField.inputHint ?? "-"}</dd>
+
+        <dt className="col-sm-3">Bezeichnung Ausgabe</dt>
+        <dd className="col-sm-9">{dataField.outputLabel ?? "-"}</dd>
+        <dt className="col-sm-3">Bezeichnung Ausgabe</dt>
+        <dd className="col-sm-9">{dataField.outputHint ?? "-"}</dd>
+
         <dt className="col-sm-3">Regeln</dt>
         <dd className="col-sm-9">{dataField.rules.join(", ") || "-"}</dd>
 

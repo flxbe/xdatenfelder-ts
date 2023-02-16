@@ -6,33 +6,45 @@ export interface DataGroupsPageProps {
 }
 
 export function DataGroupsPage({ schema }: DataGroupsPageProps) {
+  const dataGroups = Object.values(schema.dataGroups);
+
   return (
-    <div className="container">
-      <div className="table-responsive">
-        <table className="table table-striped table-bordered table-sm">
-          <thead>
-            <tr>
-              <th scope="col">Id</th>
-              <th scope="col">Version</th>
-              <th scope="col">Elemente</th>
-              <th scope="col">Regeln</th>
-            </tr>
-          </thead>
-          <tbody>
-            {Object.values(schema.dataGroups).map((group) => (
-              <tr key={group.identifier}>
-                <th scope="row">{group.identifier}</th>
-                <td>{group.version}</td>
-                <td>
-                  {group.elements
-                    .map((element) => element.identifier)
-                    .join(", ")}
-                </td>
-                <td>{group.rules.join(", ")}</td>
-              </tr>
+    <div className="container-xxl">
+      <div className="row">
+        <div className="col-12 col-lg-2">
+          <div>
+            <h5>Filter</h5>
+            <span className="text-muted">Keine Filter</span>
+          </div>
+        </div>
+        <div className="col-12 col-lg-10">
+          <div className="list-group">
+            {dataGroups.map((dataGroup) => (
+              <div
+                className="list-group-item list-group-item-action"
+                key={dataGroup.identifier}
+              >
+                <div className="row">
+                  <div className="col-12 col-md">
+                    <h6 className="mb-0">
+                      {dataGroup.name}{" "}
+                      <small className="text-muted">v{dataGroup.version}</small>
+                    </h6>
+                    <small>
+                      <span className="text-muted">Erstellt von</span>{" "}
+                      {dataGroup.creator ?? "Unbekannt"}
+                    </small>
+                  </div>
+                  <div className="col-12 col-md-auto">
+                    <span className="badge bg-secondary">
+                      {dataGroup.identifier}
+                    </span>
+                  </div>
+                </div>
+              </div>
             ))}
-          </tbody>
-        </table>
+          </div>
+        </div>
       </div>
     </div>
   );
