@@ -18,7 +18,7 @@ function getMessage(warning: SchemaWarning) {
     case "invalidInputConstraints": {
       return (
         <>
-          <b>Ungültige Präzisierung in Datenfeld {warning.identifier}</b>
+          <b>Ungültige Präzisierung in Element {warning.identifier}</b>
           <br />
           <code>{warning.value}</code>
         </>

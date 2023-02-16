@@ -1,7 +1,11 @@
 import * as React from "react";
 import { createRoot } from "react-dom/client";
 import { Routes, Route, HashRouter, Link, useMatch } from "react-router-dom";
-import { Schema, Warning as SchemaWarning } from "xdatenfelder-xml";
+import {
+  Schema,
+  SchemaWarnings,
+  Warning as SchemaWarning,
+} from "xdatenfelder-xml";
 import { Warning } from "./warning";
 import { DataFieldCard } from "./data-field-card";
 import { CodeListsPage } from "./code-lists-page";
@@ -12,7 +16,7 @@ import { RulesPage } from "./rules-page";
 
 interface State {
   schema: Schema;
-  warnings: SchemaWarning[];
+  warnings: SchemaWarnings;
 }
 
 function Application() {
@@ -312,9 +316,29 @@ function OverviewPage({ state }: OverviewPageProps) {
   );
 }
 
-function renderStatus(warnings: Array<SchemaWarning>) {
+function renderStatus(warnings: SchemaWarnings) {
+  const allWarnings: SchemaWarning[] = [];
+  for (const warning of warnings.schemaWarnings) {
+    allWarnings.push(warning);
+  }
+  for (const dataFieldWarnings of Object.values(warnings.dataFieldWarnings)) {
+    for (const warning of dataFieldWarnings) {
+      allWarnings.push(warning);
+    }
+  }
+  for (const dataGroupWarnings of Object.values(warnings.dataGroupWarnings)) {
+    for (const warning of dataGroupWarnings) {
+      allWarnings.push(warning);
+    }
+  }
+  for (const ruleWarnings of Object.values(warnings.ruleWarnings)) {
+    for (const warning of ruleWarnings) {
+      allWarnings.push(warning);
+    }
+  }
+
   function renderContent() {
-    if (warnings.length === 0) {
+    if (allWarnings.length === 0) {
       return (
         <div className="alert alert-success" role="alert">
           Keine Warnungen
@@ -323,7 +347,7 @@ function renderStatus(warnings: Array<SchemaWarning>) {
     } else {
       return (
         <div>
-          {warnings.map((warning, index) => (
+          {allWarnings.map((warning, index) => (
             <Warning key={index} warning={warning} />
           ))}
         </div>
@@ -335,9 +359,9 @@ function renderStatus(warnings: Array<SchemaWarning>) {
     <>
       <h4 className="mb-2">
         Status
-        {warnings.length === 0 ? undefined : (
+        {allWarnings.length === 0 ? undefined : (
           <span className="ms-1 badge bg-warning">
-            {warnings.length} Warnungen
+            {allWarnings.length} Warnungen
           </span>
         )}
       </h4>
