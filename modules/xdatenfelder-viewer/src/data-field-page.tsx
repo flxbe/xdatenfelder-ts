@@ -102,39 +102,24 @@ function renderData(dataField: DataField) {
 
           <dt className="col-sm-3">Canonical Version URI</dt>
           <dd className="col-sm-9">{codeListReference.canonicalVersionUri}</dd>
+
+          <dt className="col-sm-3">Inhalt</dt>
+          <dd className="col-sm-9">{dataField.input.content ?? "-"}</dd>
         </>
       );
     }
 
-    case "text": {
-      const { constraints } = dataField.input;
-
-      return (
-        <>
-          <dt className="col-sm-3">Minimale Länge</dt>
-          <dd className="col-sm-9">{constraints.minLength ?? "-"}</dd>
-
-          <dt className="col-sm-3">Maximale Länge</dt>
-          <dd className="col-sm-9">{constraints.maxLength ?? "-"}</dd>
-
-          <dt className="col-sm-3">Pattern</dt>
-          <dd className="col-sm-9">{constraints.pattern ?? "-"}</dd>
-        </>
-      );
-    }
-
+    case "text":
     case "number":
     case "integer":
     case "currency": {
-      const { constraints } = dataField.input;
-
       return (
         <>
-          <dt className="col-sm-3">Minimaler Wert</dt>
-          <dd className="col-sm-9">{constraints.minValue ?? "-"}</dd>
+          <dt className="col-sm-3">Präzisierung</dt>
+          <dd className="col-sm-9">{dataField.input.constraints ?? "-"}</dd>
 
-          <dt className="col-sm-3">Maximaler Wert</dt>
-          <dd className="col-sm-9">{constraints.maxValue ?? "-"}</dd>
+          <dt className="col-sm-3">Inhalt</dt>
+          <dd className="col-sm-9">{dataField.input.content ?? "-"}</dd>
         </>
       );
     }

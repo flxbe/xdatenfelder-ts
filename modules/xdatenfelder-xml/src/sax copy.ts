@@ -228,9 +228,7 @@ function parseBasicData(holder: BasicDataHolder): BasicData {
   }
 
   if (holder.inputLabel === undefined) {
-    // HACK: Rules do not have an inputLabel, although this is not standard compliant.
-    holder.inputLabel = holder.name;
-    // throw new MissingChildNodeError("xdf:bezeichnungEingabe");
+    throw new MissingChildNodeError("xdf:bezeichnungEingabe");
   }
 
   // Not beautiful, but works: TypeScript does not understand, that returning holder directly
@@ -274,7 +272,6 @@ class SchemaState extends State {
 
   public dataHolder: BasicDataHolder = {};
   public elements: Array<ElementReference> = [];
-  private rules: Array<string> = [];
 
   constructor(parent: RootSchemaState) {
     super();
@@ -291,10 +288,6 @@ class SchemaState extends State {
       case "xdf:struktur":
         return new ElementReferenceState(this, this.context);
       case "xdf:regel":
-        return new RuleState(this, (rule) => {
-          this.context.rules[rule.identifier] = rule;
-          this.rules.push(rule.identifier);
-        });
       case "xdf:ableitungsmodifikationenStruktur":
       case "xdf:ableitungsmodifikationenRepraesentation":
         return new NoOpState(this);
@@ -312,7 +305,7 @@ class SchemaState extends State {
       data: {
         ...basicData,
         elements: this.elements,
-        rules: this.rules,
+        rules: [],
       },
       ...this.context,
     };
@@ -474,7 +467,7 @@ class DataGroupState extends State {
 
   public dataHolder: ElementDataHolder = {};
   public elements: Array<ElementReference> = [];
-  public rules: Array<string> = [];
+  public rules: Array<Rule> = [];
 
   constructor(parent: ElementState, context: Context) {
     super();
@@ -494,10 +487,7 @@ class DataGroupState extends State {
         return new ElementReferenceState(this, this.context);
       }
       case "xdf:regel": {
-        return new RuleState(this, (rule) => {
-          this.context.rules[rule.identifier] = rule;
-          this.rules.push(rule.identifier);
-        });
+        return new NoOpState(this);
       }
       default:
         throw new UnexpectedTagError(tag.name);
@@ -516,7 +506,7 @@ class DataGroupState extends State {
         inputHint: this.dataHolder.inputHint,
         outputHint: this.dataHolder.outputHint,
         elements: this.elements,
-        rules: this.rules,
+        rules: [],
       },
     };
 
@@ -845,7 +835,7 @@ function handleBasicData(
         (value) => (parent.dataHolder.name = value)
       );
     case "xdf:bezeichnungEingabe":
-      return new OptionalValueNodeState(
+      return new ValueNodeState(
         parent,
         "xdf:bezeichnungEingabe",
         (value) => (parent.dataHolder.inputLabel = value)

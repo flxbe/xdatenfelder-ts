@@ -54,11 +54,8 @@ describe("Loading a schema from xml", () => {
         rules: [],
         input: {
           type: "text",
-          constraints: {
-            minLength: 1,
-            maxLength: 120,
-            pattern: undefined,
-          },
+          content: undefined,
+          constraints: '{"minLength":"1","maxLength":"120"}',
         },
       },
     });
@@ -93,6 +90,7 @@ describe("Loading a schema from xml", () => {
         identifier: "F123",
         input: {
           type: "select",
+          content: undefined,
           codeListReference: {
             identifier: "C123",
             version: "1",
@@ -104,7 +102,7 @@ describe("Loading a schema from xml", () => {
     );
   });
 
-  test("should parse rules", async () => {
+  test("should parse schema rules", async () => {
     const schema = await loadSchema("rule.xml");
 
     expect(schema.rules).toEqual({
@@ -124,6 +122,50 @@ describe("Loading a schema from xml", () => {
     });
 
     expect(schema.schemaData.rules).toEqual(["R60000037"]);
+  });
+
+  test("should parse data field rules", async () => {
+    const schema = await loadSchema("data-field-rule.xml");
+
+    expect(schema.rules).toEqual({
+      R60000037: {
+        identifier: "R60000037",
+        version: "1.2",
+        name: "MindestEineAngabe",
+        inputLabel: "MindestEineAngabe",
+        outputLabel: undefined,
+        creator: "Bundesredaktion",
+        definition: "Eine Definition",
+        description: undefined,
+        relatedTo: undefined,
+        script: "function script() {}",
+        versionInfo: undefined,
+      },
+    });
+
+    expect(schema.getDataField("F123").rules).toEqual(["R60000037"]);
+  });
+
+  test("should parse data group rules", async () => {
+    const schema = await loadSchema("data-group-rule.xml");
+
+    expect(schema.rules).toEqual({
+      R60000037: {
+        identifier: "R60000037",
+        version: "1.2",
+        name: "MindestEineAngabe",
+        inputLabel: "MindestEineAngabe",
+        outputLabel: undefined,
+        creator: "Bundesredaktion",
+        definition: "Eine Definition",
+        description: undefined,
+        relatedTo: undefined,
+        script: "function script() {}",
+        versionInfo: undefined,
+      },
+    });
+
+    expect(schema.getDataGroup("G00000082").rules).toEqual(["R60000037"]);
   });
 
   test("should allow undefined fields", async () => {
