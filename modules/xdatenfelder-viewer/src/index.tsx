@@ -2,25 +2,35 @@ import * as React from "react";
 import { createRoot } from "react-dom/client";
 import { Routes, Route, HashRouter, Link, useMatch } from "react-router-dom";
 import {
-  FastSchemaParser,
   Schema,
+  FastSchemaParser,
+  SchemaWarnings,
   Warning as SchemaWarning,
 } from "xdatenfelder-xml";
 import { Warning } from "./warning";
-import { DataFieldCard } from "./data-field-card";
+import { DataFieldsPage } from "./data-fields-page";
+import { DataFieldPage } from "./data-field-page";
 import { CodeListsPage } from "./code-lists-page";
 import { DataGroupsPage } from "./data-groups-page";
 import { PreviewPage } from "./preview-page";
 import { multilineToHtml } from "./util";
+import { RulesPage } from "./rules-page";
+import { NotFoundPage } from "./not-found-page";
+import { RulePage } from "./rule-page";
+
+interface State {
+  schema: Schema;
+  warnings: SchemaWarnings;
+}
 
 function Application() {
-  const [schema, setSchema] = React.useState<Schema | null>(null);
+  const [state, setState] = React.useState<State | null>(null);
 
   function renderContent() {
-    if (schema !== null) {
-      return <Viewer schema={schema} />;
+    if (state !== null) {
+      return <Viewer state={state} />;
     } else {
-      return <UploadPage onSchemaUpload={setSchema} />;
+      return <UploadPage onSchemaUpload={setState} />;
     }
   }
 
@@ -39,6 +49,7 @@ function Application() {
 async function loadFile(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
+
     reader.onload = (event) => {
       if (event.target === null) {
         return reject("Target is none");
@@ -61,9 +72,9 @@ async function loadFile(file: File): Promise<string> {
   });
 }
 
-type UploadPageProps = {
-  onSchemaUpload: (schema: Schema) => void;
-};
+interface UploadPageProps {
+  onSchemaUpload: (state: State) => void;
+}
 
 interface ParserError {
   type: "error";
@@ -84,7 +95,6 @@ function UploadPage({ onSchemaUpload }: UploadPageProps) {
   const [state, setState] = React.useState<UploadState>({ type: "ready" });
 
   const isLoading = state.type === "loading";
-  // const [error, setError] = React.useState<string | null>(null);
 
   async function onChange(event: React.ChangeEvent<HTMLInputElement>) {
     const { files } = event.target;
@@ -98,13 +108,28 @@ function UploadPage({ onSchemaUpload }: UploadPageProps) {
       const measure = performance.measure("loading");
       const data = await loadFile(files[0]);
       // const schema = FastSchemaParser.parseString(data);
-      const schema = Schema.fromString(data);
+      const parseResult = Schema.parse(data);
       console.log(measure);
-      onSchemaUpload(schema);
-    } catch (error) {
+      onSchemaUpload(parseResult);
+    } catch (error: any) {
       console.error(error);
       setState({ type: "error", message: `${error}` });
     }
+  }
+
+  function renderProgress() {
+    if (state.type !== "loading") {
+      return undefined;
+    }
+
+    return (
+      <div
+        className="mt-3 mb-0 alert alert-info d-flex align-items-center"
+        role="alert"
+      >
+        <div>Datei wird geladen...</div>
+      </div>
+    );
   }
 
   function renderError() {
@@ -142,6 +167,7 @@ function UploadPage({ onSchemaUpload }: UploadPageProps) {
                 Die Datei wird ausschließlich lokal geöffnet. Es werden keine
                 Daten an den Server gesendet.
               </div>
+              {renderProgress()}
               {renderError()}
             </div>
           </div>
@@ -152,20 +178,21 @@ function UploadPage({ onSchemaUpload }: UploadPageProps) {
 }
 
 type ViewerProps = {
-  schema: Schema;
+  state: State;
 };
 
-function Viewer({ schema }: ViewerProps) {
+function Viewer({ state }: ViewerProps) {
+  const { schema, warnings } = state;
+
   return (
     <>
       <div className="container-fluid px-4 pt-4 border-bottom bg-white">
         <h5>
+          <span className="badge rounded-pill text-bg-secondary">
+            {schema.schemaData.identifier}
+          </span>{" "}
           {schema.schemaData.name}{" "}
-          <span className="badge bg-secondary">
-            Version {schema.schemaData.version}
-          </span>
-          <br />
-          <small className="text-muted">{schema.schemaData.identifier}</small>
+          <small className="text-muted">v{schema.schemaData.version}</small>{" "}
         </h5>
         <ul className="nav mt-4">
           {renderLink("Schema", "/")}
@@ -180,6 +207,7 @@ function Viewer({ schema }: ViewerProps) {
             "/datafields",
             Object.keys(schema.dataFields).length
           )}
+          {renderBadeLink("Regeln", "/rules", Object.keys(schema.rules).length)}
           {renderBadeLink(
             "Codelisten",
             "/codelists",
@@ -187,9 +215,9 @@ function Viewer({ schema }: ViewerProps) {
           )}
         </ul>
       </div>
-      <div className="container p-3">
+      <div className="container p-4">
         <Routes>
-          <Route path="/" element={<OverviewPage schema={schema} />}></Route>
+          <Route path="/" element={<OverviewPage state={state} />}></Route>
           <Route
             path="/preview"
             element={<PreviewPage schema={schema} />}
@@ -203,9 +231,19 @@ function Viewer({ schema }: ViewerProps) {
             element={<DataFieldsPage schema={schema} />}
           ></Route>
           <Route
+            path="/datafields/:identifier"
+            element={<DataFieldPage schema={schema} />}
+          ></Route>
+          <Route path="/rules" element={<RulesPage schema={schema} />}></Route>
+          <Route
+            path="/rules/:identifier"
+            element={<RulePage schema={schema} />}
+          ></Route>
+          <Route
             path="/codelists"
             element={<CodeListsPage schema={schema} />}
           ></Route>
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </div>
     </>
@@ -250,10 +288,12 @@ function renderLink(name: string, target: string, strict: boolean = true) {
 }
 
 type OverviewPageProps = {
-  schema: Schema;
+  state: State;
 };
 
-function OverviewPage({ schema }: OverviewPageProps) {
+function OverviewPage({ state }: OverviewPageProps) {
+  const { schema, warnings } = state;
+
   return (
     <div className="container-xxl">
       <h4 className="mb-2">Eigenschaften</h4>
@@ -265,110 +305,83 @@ function OverviewPage({ schema }: OverviewPageProps) {
         <dd className="col-sm-9">{schema.schemaData.identifier}</dd>
 
         <dt className="col-sm-3">Versionshinweis</dt>
-        <dd className="col-sm-9">{schema.schemaData.versionInfo || "-"}</dd>
+        <dd className="col-sm-9">{schema.schemaData.versionInfo ?? "-"}</dd>
 
         <dt className="col-sm-3">Fachlicher Ersteller</dt>
         <dd className="col-sm-9">{schema.schemaData.creator}</dd>
 
         <dt className="col-sm-3">Bezug</dt>
         <dd className="col-sm-9">
-          {multilineToHtml(schema.schemaData.relatedTo || "-")}
+          {multilineToHtml(schema.schemaData.relatedTo ?? "-")}
         </dd>
 
         <dt className="col-sm-3">Definition</dt>
         <dd className="col-sm-9">
-          {multilineToHtml(schema.schemaData.definition || "-")}
+          {multilineToHtml(schema.schemaData.definition ?? "-")}
         </dd>
 
         <dt className="col-sm-3">Beschreibung</dt>
         <dd className="col-sm-9">
-          {multilineToHtml(schema.schemaData.description || "-")}
+          {multilineToHtml(schema.schemaData.description ?? "-")}
         </dd>
       </dl>
 
-      <h4 className="mb-2">Status</h4>
-      {renderStatus(schema.warnings)}
+      {renderStatus(warnings)}
     </div>
   );
 }
 
-function renderStatus(warnings: Array<SchemaWarning>) {
-  if (warnings.length === 0) {
-    return (
-      <div className="alert alert-success" role="alert">
-        Keine Warnungen
-      </div>
-    );
-  } else {
-    return (
-      <div>
-        {warnings.map((warning, index) => (
-          <Warning key={index} warning={warning} />
-        ))}
-      </div>
-    );
+function renderStatus(warnings: SchemaWarnings) {
+  const allWarnings: SchemaWarning[] = [];
+  for (const warning of warnings.schemaWarnings) {
+    allWarnings.push(warning);
   }
-}
-
-type DataFieldsPageProps = {
-  schema: Schema;
-};
-
-function DataFieldsPage({ schema }: DataFieldsPageProps) {
-  const [types, setTypes] = React.useState<Set<string>>(new Set());
-
-  function toggleType(type: string) {
-    const newTypes = new Set(types);
-    if (newTypes.has(type)) {
-      newTypes.delete(type);
-    } else {
-      newTypes.add(type);
+  for (const dataFieldWarnings of Object.values(warnings.dataFieldWarnings)) {
+    for (const warning of dataFieldWarnings) {
+      allWarnings.push(warning);
     }
-    setTypes(newTypes);
+  }
+  for (const dataGroupWarnings of Object.values(warnings.dataGroupWarnings)) {
+    for (const warning of dataGroupWarnings) {
+      allWarnings.push(warning);
+    }
+  }
+  for (const ruleWarnings of Object.values(warnings.ruleWarnings)) {
+    for (const warning of ruleWarnings) {
+      allWarnings.push(warning);
+    }
   }
 
-  const typeCounter: Record<string, number> = {};
-  for (const dataField of Object.values(schema.dataFields)) {
-    const counter = typeCounter[dataField.input.type] || 0;
-    typeCounter[dataField.input.type] = counter + 1;
-  }
-
-  let dataFields = Object.values(schema.dataFields);
-  if (types.size > 0) {
-    dataFields = dataFields.filter((dataField) =>
-      types.has(dataField.input.type)
-    );
+  function renderContent() {
+    if (allWarnings.length === 0) {
+      return (
+        <div className="alert alert-success" role="alert">
+          Keine Warnungen
+        </div>
+      );
+    } else {
+      return (
+        <div>
+          {allWarnings.map((warning, index) => (
+            <Warning key={index} warning={warning} />
+          ))}
+        </div>
+      );
+    }
   }
 
   return (
-    <div className="row">
-      <div className="col-12 col-lg-2">
-        <div>
-          <h5>Typ</h5>
-          {Object.entries(typeCounter).map(([type, counter]) => {
-            return (
-              <div key={type} className="form-check">
-                <input
-                  className="form-check-input"
-                  type="checkbox"
-                  value={`${types.has(type)}`}
-                  onChange={() => toggleType(type)}
-                  id={type}
-                />
-                <label className="form-check-label" htmlFor={type}>
-                  {type} ({counter})
-                </label>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-      <div className="col-12 col-lg-10">
-        {dataFields.map((dataField) => (
-          <DataFieldCard key={dataField.identifier} dataField={dataField} />
-        ))}
-      </div>
-    </div>
+    <>
+      <h4 className="mb-2">
+        Status
+        {allWarnings.length === 0 ? undefined : (
+          <span className="ms-1 badge bg-warning">
+            {allWarnings.length} Warnungen
+          </span>
+        )}
+      </h4>
+      {renderContent()}
+    </>
   );
 }
 

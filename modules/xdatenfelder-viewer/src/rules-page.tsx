@@ -1,12 +1,13 @@
 import * as React from "react";
 import { Schema } from "xdatenfelder-xml";
+import { Link } from "react-router-dom";
 
-export interface DataGroupsPageProps {
+export interface RulesPageProps {
   schema: Schema;
 }
 
-export function DataGroupsPage({ schema }: DataGroupsPageProps) {
-  const dataGroups = Object.values(schema.dataGroups);
+export function RulesPage({ schema }: RulesPageProps) {
+  const rules = Object.values(schema.rules);
 
   return (
     <div className="container-xxl">
@@ -19,25 +20,26 @@ export function DataGroupsPage({ schema }: DataGroupsPageProps) {
         </div>
         <div className="col-12 col-lg-10">
           <div className="list-group">
-            {dataGroups.map((dataGroup) => (
-              <div
+            {rules.map((rule) => (
+              <Link
                 className="list-group-item list-group-item-action"
-                key={dataGroup.identifier}
+                to={`/rules/${rule.identifier}`}
+                key={rule.identifier}
               >
                 <div>
                   <h6 className="mb-0">
                     <span className="badge rounded-pill text-bg-secondary">
-                      {dataGroup.identifier}
+                      {rule.identifier}
                     </span>{" "}
-                    {dataGroup.name}{" "}
-                    <small className="text-muted">v{dataGroup.version}</small>
+                    {rule.name}{" "}
+                    <small className="text-muted">v{rule.version}</small>
                   </h6>
                   <small>
                     <span className="text-muted">Erstellt von</span>{" "}
-                    {dataGroup.creator ?? "Unbekannt"}
+                    {rule.creator ?? "Unbekannt"}
                   </small>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>

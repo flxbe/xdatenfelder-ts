@@ -108,6 +108,14 @@ export interface BasicData {
   // releaseDate
 }
 
+export interface Rule extends BasicData {
+  script: string;
+}
+
+export interface Rule extends BasicData {
+  script: string;
+}
+
 export interface ElementData extends BasicData {
   // type
   inputHint?: string;
@@ -116,18 +124,18 @@ export interface ElementData extends BasicData {
 
 export interface DataField extends ElementData {
   input: InputDescription;
-  // rules
+  rules: Array<string>;
 }
 
 export interface DataGroup extends ElementData {
   elements: Array<ElementReference>;
-  // rules
+  rules: Array<string>;
 }
 
 export interface SchemaData extends BasicData {
   elements: Array<ElementReference>;
+  rules: Array<string>;
   // help
-  // rules
   // ableitungsmodifikationenStruktur
   // ableitungsmodifikationenRepraesentation
 }
@@ -139,13 +147,26 @@ export class SchemaError extends Error {
   }
 }
 
-export interface InvalidInputConstraints {
+export interface InvalidInputConstraintsWarning {
   type: "invalidInputConstraints";
   identifier: string;
   value: string;
 }
 
-export type Warning = InvalidInputConstraints;
+export interface MissingAttributeWarning {
+  type: "missingAttribute";
+  identifier: string;
+  attribute: string;
+}
+
+export type Warning = InvalidInputConstraintsWarning | MissingAttributeWarning;
+
+export interface SchemaWarnings {
+  schemaWarnings: Warning[];
+  dataFieldWarnings: Record<string, Warning[]>;
+  dataGroupWarnings: Record<string, Warning[]>;
+  ruleWarnings: Record<string, Warning[]>;
+}
 
 export class Schema {
   public readonly messageId: string;
@@ -153,7 +174,7 @@ export class Schema {
   public readonly schemaData: SchemaData;
   public readonly dataFields: Record<string, DataField>;
   public readonly dataGroups: Record<string, DataGroup>;
-  public readonly warnings: Array<Warning>;
+  public readonly rules: Record<string, Rule>;
 
   constructor(
     messageId: string,
@@ -161,17 +182,24 @@ export class Schema {
     schemaData: SchemaData,
     dataFields: Record<string, DataField>,
     dataGroups: Record<string, DataGroup>,
-    warnings: Array<Warning>
+    rules: Record<string, Rule>
   ) {
     this.messageId = messageId;
     this.createdAt = createdAt;
     this.schemaData = schemaData;
     this.dataFields = dataFields;
     this.dataGroups = dataGroups;
-    this.warnings = warnings;
+    this.rules = rules;
   }
 
   public static fromString(stringData: string): Schema {
+    return Schema.parse(stringData).schema;
+  }
+
+  public static parse(stringData: string): {
+    schema: Schema;
+    warnings: SchemaWarnings;
+  } {
     return new SchemaParser().parseSchema(stringData);
   }
 
@@ -213,9 +241,17 @@ export class Schema {
 }
 
 class SchemaParser {
-  private warnings: Array<Warning> = [];
+  private warnings: SchemaWarnings = {
+    schemaWarnings: [],
+    dataFieldWarnings: {},
+    dataGroupWarnings: {},
+    ruleWarnings: {},
+  };
 
-  public parseSchema(stringData: string): Schema {
+  public parseSchema(stringData: string): {
+    schema: Schema;
+    warnings: SchemaWarnings;
+  } {
     const data = XmlData.fromString(stringData);
 
     const content = data.getChild("xdf:xdatenfelder.stammdatenschema.0102");
@@ -228,37 +264,82 @@ class SchemaParser {
     const messageId = header.getString("xdf:nachrichtID");
     const createdAt = header.getDate("xdf:erstellungszeitpunkt");
 
-    const schema = content.getChild("xdf:stammdatenschema");
-    const basicData = this.parseBasicData(schema);
+    const schemaNode = content.getChild("xdf:stammdatenschema");
+    const basicData = this.parseBasicData(
+      schemaNode,
+      this.warnings.schemaWarnings
+    );
 
-    const structs = schema.getArray("xdf:struktur").asXmlData();
+    const structs = schemaNode.getArray("xdf:struktur").asXmlData();
     const dataFields: Record<string, DataField> = {};
     const dataGroups: Record<string, DataGroup> = {};
+    const rules: Record<string, Rule> = {};
     const elements = this.collectStructs(
       basicData.identifier,
       structs,
       dataFields,
-      dataGroups
+      dataGroups,
+      rules
     );
 
-    return new Schema(
-      messageId,
-      createdAt,
-      {
-        ...basicData,
-        elements,
-      },
-      dataFields,
-      dataGroups,
-      this.warnings
-    );
+    const ruleReferences = this.parseRules(schemaNode, rules);
+
+    return {
+      schema: new Schema(
+        messageId,
+        createdAt,
+        {
+          ...basicData,
+          elements,
+          rules: ruleReferences,
+        },
+        dataFields,
+        dataGroups,
+        rules
+      ),
+      warnings: this.warnings,
+    };
+  }
+
+  private parseRules(
+    data: XmlData,
+    rules: Record<string, Rule>
+  ): Array<string> {
+    const parseResults = data
+      .getArray("xdf:regel")
+      .asXmlData()
+      .map((value) => this.parseRule(value));
+
+    const ruleReferences: Array<string> = [];
+    for (const result of parseResults) {
+      const [rule, warnings] = result;
+      rules[rule.identifier] = rule;
+      ruleReferences.push(rule.identifier);
+      this.warnings.ruleWarnings[rule.identifier] = warnings;
+    }
+
+    return ruleReferences;
+  }
+
+  private parseRule(data: XmlData): [Rule, Warning[]] {
+    const warnings: Warning[] = [];
+    const basicData = this.parseBasicData(data, warnings);
+    const script = data.getString("xdf:script");
+
+    const rule = {
+      ...basicData,
+      script,
+    };
+
+    return [rule, warnings];
   }
 
   private collectStructs(
     identifier: string,
     structs: Array<XmlData>,
     dataFields: Record<string, DataField>,
-    dataGroups: Record<string, DataGroup>
+    dataGroups: Record<string, DataGroup>,
+    rules: Record<string, Rule>
   ): Array<ElementReference> {
     const elements: Array<ElementReference> = [];
 
@@ -267,16 +348,23 @@ class SchemaParser {
 
       if (content.hasKey("xdf:datenfeldgruppe")) {
         const data = content.getChild("xdf:datenfeldgruppe");
-        const group = this.parseDataGroup(data, dataFields, dataGroups);
+        const [group, warnings] = this.parseDataGroup(
+          data,
+          dataFields,
+          dataGroups,
+          rules
+        );
 
         elements.push({ type: "dataGroup", identifier: group.identifier });
         dataGroups[group.identifier] = group;
+        this.warnings.dataGroupWarnings[group.identifier] = warnings;
       } else if (content.hasKey("xdf:datenfeld")) {
         const data = content.getChild("xdf:datenfeld");
-        const dataField = this.parseDataField(data);
+        const [dataField, warnings] = this.parseDataField(data, rules);
 
         elements.push({ type: "dataField", identifier: dataField.identifier });
         dataFields[dataField.identifier] = dataField;
+        this.warnings.dataFieldWarnings[dataField.identifier] = warnings;
       } else {
         content.print();
         throw new SchemaError(`Unknown struct type for ${identifier}`);
@@ -289,38 +377,59 @@ class SchemaParser {
   private parseDataGroup(
     data: XmlData,
     dataFields: Record<string, DataField>,
-    dataGroups: Record<string, DataGroup>
-  ): DataGroup {
-    const elementData = this.parseElementData(data);
+    dataGroups: Record<string, DataGroup>,
+    rules: Record<string, Rule>
+  ): [DataGroup, Warning[]] {
+    const warnings: Warning[] = [];
+    const elementData = this.parseElementData(data, warnings);
 
     const structs = data.getArray("xdf:struktur").asXmlData();
     const elements = this.collectStructs(
       elementData.identifier,
       structs,
       dataFields,
-      dataGroups
+      dataGroups,
+      rules
     );
 
-    return {
+    const ruleReferences = this.parseRules(data, rules);
+
+    const dataGroup = {
       ...elementData,
       elements,
+      rules: ruleReferences,
     };
+
+    return [dataGroup, warnings];
   }
 
-  private parseDataField(data: XmlData): DataField {
-    const elementData = this.parseElementData(data);
+  private parseDataField(
+    data: XmlData,
+    rules: Record<string, Rule>
+  ): [DataField, Warning[]] {
+    const warnings: Warning[] = [];
+    const elementData = this.parseElementData(data, warnings);
 
-    const input = this.parseInputDescription(elementData.identifier, data);
+    const input = this.parseInputDescription(
+      elementData.identifier,
+      data,
+      warnings
+    );
+    const ruleReferences = this.parseRules(data, rules);
 
-    return {
+    const dataField = {
       ...elementData,
+      rules: ruleReferences,
       input,
     };
+
+    return [dataField, warnings];
   }
 
   private parseInputDescription(
     identifier: string,
-    data: XmlData
+    data: XmlData,
+    warnings: Warning[]
   ): InputDescription {
     const type = data.getChild("xdf:feldart").getString("code");
     const dataType = data.getChild("xdf:datentyp").getString("code");
@@ -341,7 +450,11 @@ class SchemaParser {
         // TODO: Log warning if there are constraints not applicable to the specific
         // data type (e.g. `minValue` for a `bool`).
         const constraints = data.getOptionalString("xdf:praezisierung");
-        const inputConstraints = this.parseConstraints(identifier, constraints);
+        const inputConstraints = this.parseConstraints(
+          identifier,
+          constraints,
+          warnings
+        );
 
         switch (dataType) {
           case "text": {
@@ -431,7 +544,8 @@ class SchemaParser {
 
   private parseConstraints(
     identifier: string,
-    value: string | undefined
+    value: string | undefined,
+    warnings: Warning[]
   ): InputConstraints | undefined {
     if (value === undefined) {
       return undefined;
@@ -442,7 +556,7 @@ class SchemaParser {
       data = JSON.parse(value);
     } catch (error) {
       // Log a warning and just ignore the constraints for this input.
-      this.warnings.push({
+      warnings.push({
         type: "invalidInputConstraints",
         identifier,
         value,
@@ -456,7 +570,7 @@ class SchemaParser {
     const maxValueStr = data["maxValue"];
     const pattern = data["pattern"];
     if (pattern !== undefined && typeof pattern !== "string") {
-      this.warnings.push({
+      warnings.push({
         type: "invalidInputConstraints",
         identifier,
         value,
@@ -498,8 +612,8 @@ class SchemaParser {
     };
   }
 
-  private parseElementData(data: XmlData): ElementData {
-    const basicData = this.parseBasicData(data);
+  private parseElementData(data: XmlData, warnings: Warning[]): ElementData {
+    const basicData = this.parseBasicData(data, warnings);
 
     const inputHint = data.getOptionalString("xdf:hilfetextEingabe");
     const outputHint = data.getOptionalString("xdf:hilfetextAusgabe");
@@ -511,7 +625,7 @@ class SchemaParser {
     };
   }
 
-  private parseBasicData(data: XmlData): BasicData {
+  private parseBasicData(data: XmlData, warnings: Warning[]): BasicData {
     const identification = data.getChild("xdf:identifikation");
     const identifier = identification.getString("xdf:id");
     const version = identification.getString("xdf:version");
@@ -521,9 +635,18 @@ class SchemaParser {
     const creator = data.getOptionalString("xdf:fachlicherErsteller");
     const relatedTo = data.getOptionalString("xdf:bezug");
     const description = data.getOptionalString("xdf:beschreibung");
-    const inputLabel = data.getString("xdf:bezeichnungEingabe");
+    let inputLabel = data.getOptionalString("xdf:bezeichnungEingabe");
     const outputLabel = data.getOptionalString("xdf:bezeichnungAusgabe");
     const versionInfo = data.getOptionalString("xdf:versionshinweis");
+
+    if (inputLabel === undefined) {
+      warnings.push({
+        type: "missingAttribute",
+        attribute: "xdf:bezeichnungEingabe",
+        identifier,
+      });
+      inputLabel = name;
+    }
 
     return {
       identifier,
