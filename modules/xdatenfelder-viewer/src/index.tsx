@@ -107,8 +107,7 @@ function UploadPage({ onSchemaUpload }: UploadPageProps) {
     try {
       const measure = performance.measure("loading");
       const data = await loadFile(files[0]);
-      // const schema = FastSchemaParser.parseString(data);
-      const parseResult = Schema.parse(data);
+      const parseResult = FastSchemaParser.parseString(data);
       console.log(measure);
       onSchemaUpload(parseResult);
     } catch (error: any) {

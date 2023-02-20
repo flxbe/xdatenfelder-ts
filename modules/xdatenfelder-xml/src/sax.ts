@@ -9,6 +9,8 @@ import {
   Schema,
   SchemaData,
   Warning,
+  Rule,
+  SchemaWarnings,
 } from "./schema";
 
 interface InputConstraints {
@@ -69,12 +71,17 @@ abstract class State {
   public abstract onCloseTag(tagName: string): State;
 }
 
-class FinishState extends State {
-  public readonly schema: Schema;
+interface ParseResult {
+  schema: Schema;
+  warnings: SchemaWarnings;
+}
 
-  constructor(schema: Schema) {
+class FinishState extends State {
+  public readonly result: ParseResult;
+
+  constructor(result: ParseResult) {
     super();
-    this.schema = schema;
+    this.result = result;
   }
 
   public onOpenTag(tag: sax.QualifiedTag | sax.Tag): State {
@@ -107,7 +114,8 @@ interface SchemaContent {
   data: SchemaData;
   dataFields: Record<string, DataField>;
   dataGroups: Record<string, DataGroup>;
-  warnings: Array<Warning>;
+  rules: Record<string, Rule>;
+  warnings: SchemaWarnings;
 }
 
 class RootSchemaState extends State {
@@ -144,10 +152,10 @@ class RootSchemaState extends State {
       this.schemaContent.data,
       this.schemaContent.dataFields,
       this.schemaContent.dataGroups,
-      this.schemaContent.warnings
+      this.schemaContent.rules
     );
 
-    return new FinishState(schema);
+    return new FinishState({ schema, warnings: this.schemaContent.warnings });
   }
 }
 
@@ -251,7 +259,7 @@ interface ElementDataHolder extends BasicDataHolder {
 interface Context {
   dataFields: Record<string, DataField>;
   dataGroups: Record<string, DataGroup>;
-  warnings: Array<Warning>;
+  warnings: SchemaWarnings;
 }
 
 class SchemaState extends State {
@@ -260,7 +268,12 @@ class SchemaState extends State {
   private context: Context = {
     dataFields: {},
     dataGroups: {},
-    warnings: [],
+    warnings: {
+      schemaWarnings: [],
+      dataFieldWarnings: {},
+      dataGroupWarnings: {},
+      ruleWarnings: {},
+    },
   };
 
   public dataHolder: BasicDataHolder = {};
@@ -280,6 +293,7 @@ class SchemaState extends State {
     switch (tag.name) {
       case "xdf:struktur":
         return new ElementReferenceState(this, this.context);
+      case "xdf:regel":
       case "xdf:ableitungsmodifikationenStruktur":
       case "xdf:ableitungsmodifikationenRepraesentation":
         return new NoOpState(this);
@@ -297,9 +311,11 @@ class SchemaState extends State {
       data: {
         ...basicData,
         elements: this.elements,
+        rules: [],
       },
       dataFields: this.context.dataFields,
       dataGroups: this.context.dataGroups,
+      rules: {},
       warnings: this.context.warnings,
     };
 
@@ -458,6 +474,7 @@ class DataGroupState extends State {
 
   public dataHolder: ElementDataHolder = {};
   public elements: Array<ElementReference> = [];
+  public rules: Array<Rule> = [];
 
   constructor(parent: ElementState, context: Context) {
     super();
@@ -496,6 +513,7 @@ class DataGroupState extends State {
         inputHint: this.dataHolder.inputHint,
         outputHint: this.dataHolder.outputHint,
         elements: this.elements,
+        rules: [],
       },
     };
 
@@ -578,6 +596,7 @@ class DataFieldState extends State {
         inputHint: this.dataHolder.inputHint,
         outputHint: this.dataHolder.outputHint,
         input,
+        rules: [],
       },
     };
 
@@ -948,12 +967,6 @@ function parseInputConstraints(
   try {
     data = JSON.parse(value);
   } catch (error) {
-    // Log a warning and just ignore the constraints for this input.
-    context.warnings.push({
-      type: "invalidInputConstraints",
-      identifier,
-      value,
-    });
     return undefined;
   }
 
@@ -963,11 +976,6 @@ function parseInputConstraints(
   const maxValueStr = data["maxValue"];
   const pattern = data["pattern"];
   if (pattern !== undefined && typeof pattern !== "string") {
-    context.warnings.push({
-      type: "invalidInputConstraints",
-      identifier,
-      value,
-    });
     return undefined;
   }
 
@@ -1136,17 +1144,17 @@ export class FastSchemaParser {
     this.xmlParser.write(data);
   }
 
-  public finish(): Schema {
+  public finish(): ParseResult {
     this.xmlParser.close();
 
     if (!(this.state instanceof FinishState)) {
       throw new ParserError("Unexpected EOF");
     }
 
-    return this.state.schema;
+    return this.state.result;
   }
 
-  public static parseString(value: string): Schema {
+  public static parseString(value: string): ParseResult {
     const parser = new FastSchemaParser();
     parser.write(value);
 

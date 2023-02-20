@@ -13,10 +13,11 @@ module.exports = {
   },
   resolve: {
     extensions: [".tsx", ".ts", ".js"],
+    alias: {
+      stream: path.resolve(__dirname, "src/empty-stream-polyfill"),
+    },
     fallback: {
       string_decoder: false,
-      stream: require.resolve("stream-browserify"),
-      buffer: false,
     },
   },
   output: {

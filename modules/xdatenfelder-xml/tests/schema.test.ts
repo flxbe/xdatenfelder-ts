@@ -152,7 +152,7 @@ async function loadSchema(name: string): Promise<Schema> {
   const data = await file.readFile({ encoding: "utf-8" });
   await file.close();
 
-  return FastSchemaParser.parseString(data);
+  return FastSchemaParser.parseString(data).schema;
 
   // return Schema.fromString(data);
 }
