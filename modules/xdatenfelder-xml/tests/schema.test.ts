@@ -62,6 +62,12 @@ describe("Loading a schema from xml", () => {
     expect(schema.rules).toEqual({});
   });
 
+  test("should fail for duplicate values", async () => {
+    await expect(loadSchema("duplicate-value.xml")).rejects.toThrow(
+      "Duplicate <xdf:name>"
+    );
+  });
+
   test("should parse label fields", async () => {
     const schema = await loadSchema("label.xml");
 

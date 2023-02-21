@@ -78,7 +78,7 @@ export interface ElementReference {
 
 export interface BasicData {
   identifier: string;
-  version: string;
+  version?: string;
   name: string;
   inputLabel: string;
   outputLabel?: string;

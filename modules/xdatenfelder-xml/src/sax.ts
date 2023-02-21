@@ -46,6 +46,48 @@ class MissingContentError extends ParserError {
   }
 }
 
+class DuplicateTagError extends ParserError {
+  constructor(tagName: string) {
+    super(`Duplicate <${tagName}>`);
+    this.name = "DuplicateTagError";
+  }
+}
+
+class Value<T> {
+  private content:
+    | { filled: false; value: undefined }
+    | { filled: true; value: T };
+
+  public readonly tagName: string;
+
+  constructor(tagName: string) {
+    this.tagName = tagName;
+    this.content = { filled: false, value: undefined };
+  }
+
+  public set(value: T) {
+    if (this.content.filled) {
+      throw new DuplicateTagError(this.tagName);
+    }
+
+    this.content = { filled: true, value };
+  }
+
+  public get(): T | undefined {
+    return this.content.value;
+  }
+
+  public unwrap(): T {
+    if (!this.content.filled) {
+      throw new MissingChildNodeError(this.tagName);
+    }
+
+    return this.content.value;
+  }
+}
+
+type FinishFn<T> = (value: T) => void;
+
 function expectTag(got: string, expected: string) {
   if (got !== expected) {
     throw new ParserError(`Expect "${expected}", got: ${got}`);
@@ -154,8 +196,8 @@ class RootSchemaState extends State {
 class SchemaHeaderState extends State {
   private parent: RootSchemaState;
 
-  public messageId?: string = undefined;
-  public createdAt?: Date = undefined;
+  public messageId: Value<string> = new Value("xdf:nachrichtID");
+  public createdAt: Value<string> = new Value("xdf:erstellungszeitpunkt");
 
   constructor(parent: RootSchemaState) {
     super();
@@ -164,15 +206,9 @@ class SchemaHeaderState extends State {
 
   public onOpenTag(tag: sax.QualifiedTag | sax.Tag): State {
     if (tag.name === "xdf:nachrichtID") {
-      return new ValueNodeState(
-        this,
-        "xdf:nachrichtID",
-        (value) => (this.messageId = value)
-      );
+      return new ValueNodeState(this, this.messageId);
     } else if (tag.name === "xdf:erstellungszeitpunkt") {
-      return new ValueNodeState(this, "xdf:erstellungszeitpunkt", (value) => {
-        this.createdAt = new Date(value);
-      });
+      return new ValueNodeState(this, this.createdAt);
     } else {
       throw new UnexpectedTagError(
         tag.name,
@@ -193,8 +229,8 @@ class SchemaHeaderState extends State {
     }
 
     this.parent.header = {
-      messageId: this.messageId,
-      createdAt: this.createdAt,
+      messageId: this.messageId.unwrap(),
+      createdAt: new Date(this.createdAt.unwrap()),
     };
 
     return this.parent;
@@ -202,52 +238,71 @@ class SchemaHeaderState extends State {
 }
 
 interface BasicDataHolder {
-  identifier?: string;
-  version?: string;
-  name?: string;
-  inputLabel?: string;
-  outputLabel?: string;
-  definition?: string;
-  description?: string;
-  relatedTo?: string;
+  identification: Value<[string, string | undefined]>;
+  name: Value<string>;
+  inputLabel: Value<string | undefined>;
+  outputLabel: Value<string | undefined>;
+  definition: Value<string | undefined>;
+  description: Value<string | undefined>;
+  relatedTo: Value<string | undefined>;
   // status
   // validSince
   // validUntil
-  creator?: string;
-  versionInfo?: string;
+  creator: Value<string | undefined>;
+  versionInfo: Value<string | undefined>;
   // releaseDate
 }
 
+function createBasicData(): BasicDataHolder {
+  return {
+    identification: new Value("xdf:identifikation"),
+    name: new Value("xdf:name"),
+    inputLabel: new Value("xdf:bezeichnungEingabe"),
+    outputLabel: new Value("xdf:bezeichnungAusgabe"),
+    definition: new Value("xdf:definition"),
+    description: new Value("xdf:beschreibung"),
+    relatedTo: new Value("xdf:bezug"),
+    creator: new Value("xdf:fachlicherErsteller"),
+    versionInfo: new Value("xdf:versionshinweis"),
+  };
+}
+
 function parseBasicData(holder: BasicDataHolder): BasicData {
-  if (holder.identifier === undefined || holder.version === undefined) {
-    throw new MissingChildNodeError("xdf:identifikation");
-  }
-
-  if (holder.name === undefined) {
-    throw new MissingChildNodeError("xdf:name");
-  }
-
-  if (holder.inputLabel === undefined) {
-    // HACK: Rules do not have an inputLabel, although this is not standard compliant.
-    holder.inputLabel = holder.name;
-    // throw new MissingChildNodeError("xdf:bezeichnungEingabe");
-  }
+  const [identifier, version] = holder.identification.unwrap();
+  const name = holder.name.unwrap();
+  // HACK: Rules do not have an inputLabel, although this is not standard compliant.
+  const inputLabel = holder.inputLabel.get() ?? name;
 
   // Not beautiful, but works: TypeScript does not understand, that returning holder directly
   // would be valid now.
   return {
-    ...holder,
-    identifier: holder.identifier,
-    version: holder.version,
-    name: holder.name,
-    inputLabel: holder.inputLabel,
+    identifier,
+    version,
+    name,
+    inputLabel,
+    outputLabel: holder.outputLabel.get(),
+    definition: holder.definition.get(),
+    description: holder.description.get(),
+    relatedTo: holder.relatedTo.get(),
+    creator: holder.creator.get(),
+    versionInfo: holder.versionInfo.get(),
   };
 }
 
 interface ElementDataHolder extends BasicDataHolder {
   // type
-  inputHint?: string;
-  outputHint?: string;
+  inputHint: Value<string | undefined>;
+  outputHint: Value<string | undefined>;
+}
+
+function createElementData(): ElementDataHolder {
+  const basicData = createBasicData();
+
+  return {
+    ...basicData,
+    inputHint: new Value("xdf:hilfetextEingabe"),
+    outputHint: new Value("xdf:hilfetextAusgabe"),
+  };
 }
 
 interface Context {
@@ -272,7 +327,7 @@ class SchemaState extends State {
     },
   };
 
-  public dataHolder: BasicDataHolder = {};
+  public dataHolder: BasicDataHolder = createBasicData();
   public elements: Array<ElementReference> = [];
   private rules: Array<string> = [];
 
@@ -322,33 +377,25 @@ class SchemaState extends State {
 }
 
 class IdentificationState extends State {
-  private parent: SchemaState | DataGroupState | DataFieldState | RuleState;
+  private parent: State;
+  private value: Value<[string, string | undefined]>;
 
-  private identifier?: string = undefined;
-  private version?: string = undefined;
+  private identifier: Value<string> = new Value("xdf:id");
+  private version: Value<string | undefined> = new Value("xdf:version");
 
-  constructor(
-    parent: SchemaState | DataGroupState | DataFieldState | RuleState
-  ) {
+  constructor(parent: State, value: Value<[string, string | undefined]>) {
     super();
     this.parent = parent;
+    this.value = value;
   }
 
   public onOpenTag(tag: sax.QualifiedTag | sax.Tag): State {
     switch (tag.name) {
       case "xdf:id":
-        return new ValueNodeState(
-          this,
-          "xdf:id",
-          (value) => (this.identifier = value)
-        );
+        return new ValueNodeState(this, this.identifier);
 
       case "xdf:version":
-        return new ValueNodeState(
-          this,
-          "xdf:version",
-          (value) => (this.version = value)
-        );
+        return new OptionalValueNodeState(this, this.version);
 
       default:
         throw new UnexpectedTagError(tag.name);
@@ -358,16 +405,7 @@ class IdentificationState extends State {
   public onCloseTag(tagName: string): State {
     expectTag(tagName, "xdf:identifikation");
 
-    if (this.identifier === undefined) {
-      throw new MissingChildNodeError("xdf:id");
-    }
-
-    if (this.version === undefined) {
-      throw new MissingChildNodeError("xdf:version");
-    }
-
-    this.parent.dataHolder.identifier = this.identifier;
-    this.parent.dataHolder.version = this.version;
+    this.value.set([this.identifier.unwrap(), this.version.get()]);
 
     return this.parent;
   }
@@ -472,7 +510,7 @@ class DataGroupState extends State {
   private parent: ElementState;
   private context: Context;
 
-  public dataHolder: ElementDataHolder = {};
+  public dataHolder: ElementDataHolder = createElementData();
   public elements: Array<ElementReference> = [];
   public rules: Array<string> = [];
 
@@ -513,8 +551,8 @@ class DataGroupState extends State {
       type: "dataGroup",
       dataGroup: {
         ...basicData,
-        inputHint: this.dataHolder.inputHint,
-        outputHint: this.dataHolder.outputHint,
+        inputHint: this.dataHolder.inputHint.get(),
+        outputHint: this.dataHolder.outputHint.get(),
         elements: this.elements,
         rules: this.rules,
       },
@@ -528,12 +566,16 @@ class DataFieldState extends State {
   private parent: ElementState;
   private context: Context;
 
-  public dataHolder: ElementDataHolder = {};
-  private inputType?: string = undefined;
-  private dataType?: string = undefined;
-  private constraints?: string = undefined;
-  private content?: string = undefined;
-  public codeListReference?: CodeListReference = undefined;
+  public dataHolder: ElementDataHolder = createElementData();
+  private inputType: Value<string> = new Value("xdf:feldart");
+  private dataType: Value<string> = new Value("xdf:datentyp");
+  private constraints: Value<string | undefined> = new Value(
+    "xdf:praezisierung"
+  );
+  private content: Value<string | undefined> = new Value("xdf:inhalt");
+  public codeListReference: Value<CodeListReference | undefined> = new Value(
+    "xdf:codelisteReferenz"
+  );
   private rules: Array<string> = [];
 
   constructor(parent: ElementState, context: Context) {
@@ -548,31 +590,21 @@ class DataFieldState extends State {
     if (newState !== undefined) {
       return newState;
     } else if (tag.name === "xdf:feldart") {
-      return new CodeNodeState(
-        this,
-        "xdf:feldart",
-        (value) => (this.inputType = value)
+      return new CodeNodeState(this, "xdf:feldart", (value) =>
+        this.inputType.set(value)
       );
     } else if (tag.name === "xdf:datentyp") {
-      return new CodeNodeState(
-        this,
-        "xdf:datentyp",
-        (value) => (this.dataType = value)
+      return new CodeNodeState(this, "xdf:datentyp", (value) =>
+        this.dataType.set(value)
       );
     } else if (tag.name === "xdf:praezisierung") {
-      return new OptionalValueNodeState(
-        this,
-        "xdf:praezisierung",
-        (value) => (this.constraints = value)
-      );
+      return new OptionalValueNodeState(this, this.constraints);
     } else if (tag.name === "xdf:inhalt") {
-      return new OptionalValueNodeState(
-        this,
-        "xdf:inhalt",
-        (value) => (this.content = value)
-      );
+      return new OptionalValueNodeState(this, this.content);
     } else if (tag.name === "xdf:codelisteReferenz") {
-      return new CodeListReferenceState(this);
+      return new CodeListReferenceState(this, (value) =>
+        this.codeListReference.set(value)
+      );
     } else if (tag.name === "xdf:regel") {
       return new RuleState(this, (rule) => {
         this.context.rules[rule.identifier] = rule;
@@ -591,19 +623,19 @@ class DataFieldState extends State {
     const input = parseInput(
       basicData.identifier,
       this.context,
-      this.inputType,
-      this.dataType,
-      this.constraints,
-      this.content,
-      this.codeListReference
+      this.inputType.unwrap(),
+      this.dataType.unwrap(),
+      this.constraints.get(),
+      this.content.get(),
+      this.codeListReference.get()
     );
 
     this.parent.element = {
       type: "dataField",
       dataField: {
         ...basicData,
-        inputHint: this.dataHolder.inputHint,
-        outputHint: this.dataHolder.outputHint,
+        inputHint: this.dataHolder.inputHint.get(),
+        outputHint: this.dataHolder.outputHint.get(),
         input,
         rules: this.rules,
       },
@@ -615,17 +647,19 @@ class DataFieldState extends State {
 
 class CodeListReferenceState extends State {
   private parent: DataFieldState;
+  private onFinish: FinishFn<CodeListReference>;
 
-  public identifier?: string = undefined;
-  public genericodeData?: {
+  public identifier: Value<string> = new Value("xdf:identifikation");
+  public genericodeData: Value<{
     canonicalUri: string;
     canonicalVersionUri: string;
     version: string;
-  } = undefined;
+  }> = new Value("xdf:genericodeIdentification");
 
-  constructor(parent: DataFieldState) {
+  constructor(parent: DataFieldState, onFinish: FinishFn<CodeListReference>) {
     super();
     this.parent = parent;
+    this.onFinish = onFinish;
   }
 
   public onOpenTag(tag: sax.QualifiedTag | sax.Tag): State {
@@ -642,19 +676,12 @@ class CodeListReferenceState extends State {
   public onCloseTag(tagName: string): State {
     expectTag(tagName, "xdf:codelisteReferenz");
 
-    if (this.identifier === undefined) {
-      throw new MissingChildNodeError("xdf:identifikation");
-    }
-    if (this.genericodeData === undefined) {
-      throw new MissingChildNodeError("xdf:genericodeIdentification");
-    }
-
-    this.parent.codeListReference = {
-      identifier: this.identifier,
-      canonicalUri: this.genericodeData.canonicalUri,
-      canonicalVersionUri: this.genericodeData.canonicalVersionUri,
-      version: this.genericodeData.version,
+    const codeListReference = {
+      identifier: this.identifier.unwrap(),
+      ...this.genericodeData.unwrap(),
     };
+
+    this.onFinish(codeListReference);
 
     return this.parent;
   }
@@ -663,7 +690,7 @@ class CodeListReferenceState extends State {
 class CodeListIdentificationState extends State {
   private parent: CodeListReferenceState;
 
-  private identifier?: string = undefined;
+  private identifier: Value<string> = new Value("xdf:id");
 
   constructor(parent: CodeListReferenceState) {
     super();
@@ -673,11 +700,7 @@ class CodeListIdentificationState extends State {
   public onOpenTag(tag: sax.QualifiedTag | sax.Tag): State {
     expectTag(tag.name, "xdf:id");
 
-    return new ValueNodeState(
-      this,
-      "xdf:id",
-      (value) => (this.identifier = value)
-    );
+    return new ValueNodeState(this, this.identifier);
   }
 
   public onCloseTag(tagName: string): State {
@@ -687,7 +710,7 @@ class CodeListIdentificationState extends State {
       throw new MissingChildNodeError("xdf:id");
     }
 
-    this.parent.identifier = this.identifier;
+    this.parent.identifier.set(this.identifier.unwrap());
 
     return this.parent;
   }
@@ -696,9 +719,13 @@ class CodeListIdentificationState extends State {
 class GenericodeIdentificationState extends State {
   private parent: CodeListReferenceState;
 
-  private version?: string = undefined;
-  private canonicalUri?: string = undefined;
-  private canonicalVersionUri?: string = undefined;
+  private version: Value<string> = new Value("xdf:version");
+  private canonicalUri: Value<string> = new Value(
+    "xdf:canonicalIdentification"
+  );
+  private canonicalVersionUri: Value<string> = new Value(
+    "xdf:canonicalVersionUri"
+  );
 
   constructor(parent: CodeListReferenceState) {
     super();
@@ -708,23 +735,11 @@ class GenericodeIdentificationState extends State {
   public onOpenTag(tag: sax.QualifiedTag | sax.Tag): State {
     switch (tag.name) {
       case "xdf:canonicalIdentification":
-        return new ValueNodeState(
-          this,
-          "xdf:canonicalIdentification",
-          (value) => (this.canonicalUri = value)
-        );
+        return new ValueNodeState(this, this.canonicalUri);
       case "xdf:version":
-        return new ValueNodeState(
-          this,
-          "xdf:version",
-          (value) => (this.version = value)
-        );
+        return new ValueNodeState(this, this.version);
       case "xdf:canonicalVersionUri":
-        return new ValueNodeState(
-          this,
-          "xdf:canonicalVersionUri",
-          (value) => (this.canonicalVersionUri = value)
-        );
+        return new ValueNodeState(this, this.canonicalVersionUri);
       default:
         throw new UnexpectedTagError(tag.name);
     }
@@ -733,21 +748,11 @@ class GenericodeIdentificationState extends State {
   public onCloseTag(tagName: string): State {
     expectTag(tagName, "xdf:genericodeIdentification");
 
-    if (this.version === undefined) {
-      throw new MissingChildNodeError("xdf:version");
-    }
-    if (this.canonicalUri === undefined) {
-      throw new MissingChildNodeError("xdf:canonicalIdentification");
-    }
-    if (this.canonicalVersionUri === undefined) {
-      throw new MissingChildNodeError("xdf:canonicalVersionUri");
-    }
-
-    this.parent.genericodeData = {
-      version: this.version,
-      canonicalUri: this.canonicalUri,
-      canonicalVersionUri: this.canonicalVersionUri,
-    };
+    this.parent.genericodeData.set({
+      version: this.version.unwrap(),
+      canonicalUri: this.canonicalUri.unwrap(),
+      canonicalVersionUri: this.canonicalVersionUri.unwrap(),
+    });
 
     return this.parent;
   }
@@ -755,8 +760,8 @@ class GenericodeIdentificationState extends State {
 
 class RuleState extends State {
   private parent: State;
-  public dataHolder: BasicDataHolder = {};
-  private script?: string = undefined;
+  public dataHolder: BasicDataHolder = createBasicData();
+  private script: Value<string> = new Value("xdf:script");
 
   private readonly onFinish: (rule: Rule) => void;
 
@@ -772,11 +777,7 @@ class RuleState extends State {
     if (newState !== undefined) {
       return newState;
     } else if (tag.name === "xdf:script") {
-      return new ValueNodeState(
-        this,
-        "xdf:script",
-        (value) => (this.script = value)
-      );
+      return new ValueNodeState(this, this.script);
     } else {
       throw new UnexpectedTagError(tag.name);
     }
@@ -785,15 +786,11 @@ class RuleState extends State {
   public onCloseTag(tagName: string): State {
     expectTag(tagName, "xdf:regel");
 
-    if (this.script === undefined) {
-      throw new MissingChildNodeError("xdf:script");
-    }
-
     const basicData = parseBasicData(this.dataHolder);
 
     const rule = {
       ...basicData,
-      script: this.script,
+      script: this.script.unwrap(),
     };
 
     this.onFinish(rule);
@@ -813,17 +810,9 @@ function handleElementData(
 
   switch (tag.name) {
     case "xdf:hilfetextEingabe":
-      return new OptionalValueNodeState(
-        parent,
-        "xdf:hilfetextEingabe",
-        (value) => (parent.dataHolder.inputHint = value)
-      );
+      return new OptionalValueNodeState(parent, parent.dataHolder.inputHint);
     case "xdf:hilfetextAusgabe":
-      return new OptionalValueNodeState(
-        parent,
-        "xdf:hilfetextAusgabe",
-        (value) => (parent.dataHolder.outputHint = value)
-      );
+      return new OptionalValueNodeState(parent, parent.dataHolder.outputHint);
     case "xdf:schemaelementart":
       return new NoOpState(parent);
     default:
@@ -837,55 +826,23 @@ function handleBasicData(
 ): State | undefined {
   switch (tag.name) {
     case "xdf:identifikation":
-      return new IdentificationState(parent);
+      return new IdentificationState(parent, parent.dataHolder.identification);
     case "xdf:name":
-      return new ValueNodeState(
-        parent,
-        "xdf:name",
-        (value) => (parent.dataHolder.name = value)
-      );
+      return new ValueNodeState(parent, parent.dataHolder.name);
     case "xdf:bezeichnungEingabe":
-      return new OptionalValueNodeState(
-        parent,
-        "xdf:bezeichnungEingabe",
-        (value) => (parent.dataHolder.inputLabel = value)
-      );
+      return new OptionalValueNodeState(parent, parent.dataHolder.inputLabel);
     case "xdf:bezeichnungAusgabe":
-      return new ValueNodeState(
-        parent,
-        "xdf:bezeichnungAusgabe",
-        (value) => (parent.dataHolder.outputLabel = value)
-      );
+      return new OptionalValueNodeState(parent, parent.dataHolder.outputLabel);
     case "xdf:beschreibung":
-      return new OptionalValueNodeState(
-        parent,
-        "xdf:beschreibung",
-        (value) => (parent.dataHolder.description = value)
-      );
+      return new OptionalValueNodeState(parent, parent.dataHolder.description);
     case "xdf:definition":
-      return new OptionalValueNodeState(
-        parent,
-        "xdf:definition",
-        (value) => (parent.dataHolder.definition = value)
-      );
+      return new OptionalValueNodeState(parent, parent.dataHolder.definition);
     case "xdf:bezug":
-      return new OptionalValueNodeState(
-        parent,
-        "xdf:bezug",
-        (value) => (parent.dataHolder.relatedTo = value)
-      );
+      return new OptionalValueNodeState(parent, parent.dataHolder.relatedTo);
     case "xdf:fachlicherErsteller":
-      return new ValueNodeState(
-        parent,
-        "xdf:fachlicherErsteller",
-        (value) => (parent.dataHolder.creator = value)
-      );
+      return new OptionalValueNodeState(parent, parent.dataHolder.creator);
     case "xdf:versionshinweis":
-      return new OptionalValueNodeState(
-        parent,
-        "xdf:versionshinweis",
-        (value) => (parent.dataHolder.versionInfo = value)
-      );
+      return new OptionalValueNodeState(parent, parent.dataHolder.versionInfo);
     case "xdf:status":
     case "xdf:freigabedatum":
     case "xdf:veroeffentlichungsdatum":
@@ -898,8 +855,8 @@ function handleBasicData(
 function parseInput(
   identifier: string,
   context: Context,
-  inputType?: string,
-  dataType?: string,
+  inputType: string,
+  dataType: string,
   constraints?: string,
   content?: string,
   codeListReference?: CodeListReference
@@ -1000,21 +957,17 @@ function parseInput(
 
 class ValueNodeState extends State {
   private parent: State;
-  private name: string;
-  private onFinish: (value: string) => void;
+  private value: Value<string>;
 
-  private value?: string = undefined;
-
-  constructor(parent: State, name: string, onFinish: (value: string) => void) {
+  constructor(parent: State, value: Value<string>) {
     super();
 
     this.parent = parent;
-    this.name = name;
-    this.onFinish = onFinish;
+    this.value = value;
   }
 
   public onText(text: string) {
-    this.value = text;
+    this.value.set(text);
   }
 
   public onOpenTag(tag: sax.QualifiedTag | sax.Tag): State {
@@ -1022,13 +975,7 @@ class ValueNodeState extends State {
   }
 
   public onCloseTag(tagName: string): State {
-    expectTag(tagName, this.name);
-
-    if (this.value === undefined) {
-      throw new MissingContentError(this.name);
-    }
-
-    this.onFinish(this.value);
+    expectTag(tagName, this.value.tagName);
 
     return this.parent;
   }
@@ -1036,21 +983,17 @@ class ValueNodeState extends State {
 
 class OptionalValueNodeState extends State {
   private parent: State;
-  private name: string;
-  private onFinish: (value?: string) => void;
+  private value: Value<string | undefined>;
 
-  private value?: string = undefined;
-
-  constructor(parent: State, name: string, onFinish: (value?: string) => void) {
+  constructor(parent: State, value: Value<string | undefined>) {
     super();
 
     this.parent = parent;
-    this.name = name;
-    this.onFinish = onFinish;
+    this.value = value;
   }
 
   public onText(text: string) {
-    this.value = text;
+    this.value.set(text);
   }
 
   public onOpenTag(tag: sax.QualifiedTag | sax.Tag): State {
@@ -1058,9 +1001,7 @@ class OptionalValueNodeState extends State {
   }
 
   public onCloseTag(tagName: string): State {
-    expectTag(tagName, this.name);
-
-    this.onFinish(this.value);
+    expectTag(tagName, this.value.tagName);
 
     return this.parent;
   }
@@ -1071,7 +1012,7 @@ class CodeNodeState extends State {
   private name: string;
   private onFinish: (value: string) => void;
 
-  private value?: string = undefined;
+  private value: Value<string> = new Value("code");
 
   constructor(parent: State, name: string, onFinish: (value: string) => void) {
     super();
@@ -1081,24 +1022,16 @@ class CodeNodeState extends State {
     this.onFinish = onFinish;
   }
 
-  public onText(text: string) {
-    this.value = text;
-  }
-
   public onOpenTag(tag: sax.QualifiedTag | sax.Tag): State {
     expectTag(tag.name, "code");
 
-    return new ValueNodeState(this, "code", (value) => (this.value = value));
+    return new ValueNodeState(this, this.value);
   }
 
   public onCloseTag(tagName: string): State {
     expectTag(tagName, this.name);
 
-    if (this.value === undefined) {
-      throw new MissingContentError(this.name);
-    }
-
-    this.onFinish(this.value);
+    this.onFinish(this.value.unwrap());
 
     return this.parent;
   }
