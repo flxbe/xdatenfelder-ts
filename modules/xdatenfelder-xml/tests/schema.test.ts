@@ -201,6 +201,4 @@ async function loadSchema(name: string): Promise<Schema> {
   await file.close();
 
   return FastSchemaParser.parseString(data).schema;
-
-  // return Schema.fromString(data);
 }
