@@ -196,7 +196,7 @@ describe("Loading a schema from xml", () => {
 });
 
 async function loadSchema(name: string): Promise<Schema> {
-  const file = await open(`./tests/${name}`, "r");
+  const file = await open(`./tests/v2-data/${name}`, "r");
   const data = await file.readFile({ encoding: "utf-8" });
   await file.close();
 
