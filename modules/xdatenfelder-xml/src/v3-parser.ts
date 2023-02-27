@@ -4,7 +4,7 @@ import {
   UnexpectedTagError,
   DuplicateTagError,
   MissingChildNodeError,
-  ParserError,
+  InternalParserError,
   Value,
   State,
   NoOpState,
@@ -172,8 +172,20 @@ class DataGroupState extends State {
             // TODO: Parse datafield
           }
         });
-      default:
+      case "xdf:bezug":
+      case "xdf:statusGesetztAm":
+      case "xdf:statusGesetztDurch":
+      case "xdf:versionshinweis":
+      case "xdf:veroeffentlichungsdatum":
+      case "xdf:letzteAenderung":
+      case "xdf:bezeichnungEingabe":
+      case "xdf:bezeichnungAusgabe":
+      case "xdf:schemaelementart":
+      case "xdf:hilfetextEingabe":
+      case "xdf:hilfetextAusgabe":
         return new NoOpState(this);
+      default:
+        throw new UnexpectedTagError(tag.name);
     }
   }
 
@@ -311,8 +323,15 @@ class RuleState extends State {
         return new ValueNodeState(this, this.name);
       case "xdf:beschreibung":
         return new OptionalValueNodeState(this, this.description);
-      default:
+      case "xdf:freitextRegel":
+      case "xdf:bezug":
+      case "xdf:fachlicherErsteller":
+      case "xdf:letzteAenderung":
+      case "xdf:typ":
+      case "xdf:skript":
         return new NoOpState(this);
+      default:
+        throw new UnexpectedTagError(tag.name);
     }
   }
 
@@ -356,8 +375,9 @@ class IdentificationState extends State {
         return new ValueNodeState(this, this.identifier);
       case "xdf:version":
         return new ValueNodeState(this, this.version);
+      default:
+        throw new UnexpectedTagError(tag.name);
     }
-    return new NoOpState(this);
   }
 
   public onCloseTag(tagName: string): State {
@@ -386,7 +406,7 @@ class DataGroupMessageParser {
     const state = this.stateParser.finish();
 
     if (!(state instanceof RootState)) {
-      throw new ParserError("Unexpected EOF");
+      throw new InternalParserError("Unexpected EOF");
     }
 
     return state.value.unwrap();

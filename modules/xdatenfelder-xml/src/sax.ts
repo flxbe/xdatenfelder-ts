@@ -2,41 +2,53 @@ import sax from "sax";
 import { DataField, DataGroup, Rule } from "./schema-3";
 
 export class ParserError extends Error {
-  constructor(message: string) {
-    super(message);
+  constructor(message: string, line: number, column: number) {
+    super(`${message} (line ${line}, column ${column})`);
     this.name = "ParserError";
+  }
+
+  public static fromInternalError(
+    error: InternalParserError,
+    parser: sax.SAXParser
+  ): ParserError {
+    // The parser starts counting the lines at 0
+    const actualLine = parser.line + 1;
+
+    return new ParserError(error.message, actualLine, parser.column);
   }
 }
 
-export class UnexpectedTagError extends ParserError {
-  constructor(got: string, expected: string | undefined = undefined) {
-    if (expected === undefined) {
-      super(`Unexpected Tag: ${got}`);
-    } else {
-      super(`Expected "${expected}", got: ${got}`);
-    }
+export class InternalParserError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "InternalParserError";
+  }
+}
 
+export class UnexpectedTagError extends InternalParserError {
+  constructor(tagName: string) {
+    super(`Unexpected node <${tagName}>`);
     this.name = "UnexpectedTagError";
   }
 }
 
-export class MissingChildNodeError extends ParserError {
+export class MissingChildNodeError extends InternalParserError {
   constructor(name: string) {
-    super(`Missing child node: ${name}`);
+    super(`Missing child node <${name}>`);
     this.name = "MissingChildNodeError";
   }
 }
 
-export class MissingContentError extends ParserError {
+export class MissingContentError extends InternalParserError {
   constructor(parentName: string) {
-    super(`Missing content in node ${parentName}`);
+    super(`Missing content in node <${parentName}>`);
     this.name = "MissingContentError";
   }
 }
 
-export class DuplicateTagError extends ParserError {
+export class DuplicateTagError extends InternalParserError {
   constructor(tagName: string) {
-    super(`Duplicate <${tagName}>`);
+    super(`Duplicate node <${tagName}>`);
     this.name = "DuplicateTagError";
   }
 }
@@ -71,6 +83,10 @@ export class Value<T> {
     return this.content.value;
   }
 
+  public isFilled(): boolean {
+    return this.content.filled;
+  }
+
   public unwrap(): T {
     if (!this.content.filled) {
       throw new MissingChildNodeError(this.tagName);
@@ -84,13 +100,13 @@ export type FinishFn<T> = (value: T) => void;
 
 export function expectTag(got: string, expected: string) {
   if (got !== expected) {
-    throw new ParserError(`Expect "${expected}", got: ${got}`);
+    throw new InternalParserError(`Expect "${expected}", got: ${got}`);
   }
 }
 
 export abstract class State {
   public onText(text: string): void {
-    throw new ParserError(`Got unexpected text block: ${text}`);
+    throw new InternalParserError(`Got unexpected text block: ${text}`);
   }
 
   public abstract onOpenTag(
@@ -117,11 +133,15 @@ export class ValueNodeState extends State {
   }
 
   public onOpenTag(tag: sax.QualifiedTag | sax.Tag, _context: Context): State {
-    throw new UnexpectedTagError(tag.name, "<None>");
+    throw new UnexpectedTagError(tag.name);
   }
 
   public onCloseTag(tagName: string, _context: Context): State {
     expectTag(tagName, this.value.tagName);
+
+    if (!this.value.isFilled()) {
+      throw new MissingContentError(this.value.tagName);
+    }
 
     return this.parent;
   }
@@ -143,7 +163,7 @@ export class OptionalValueNodeState extends State {
   }
 
   public onOpenTag(tag: sax.QualifiedTag | sax.Tag, _context: Context): State {
-    throw new UnexpectedTagError(tag.name, "<None>");
+    throw new UnexpectedTagError(tag.name);
   }
 
   public onCloseTag(tagName: string, _context: Context): State {
@@ -234,7 +254,15 @@ export class StateParser {
   }
 
   public write(data: string) {
-    this.xmlParser.write(data);
+    try {
+      this.xmlParser.write(data);
+    } catch (error: unknown) {
+      if (error instanceof InternalParserError) {
+        throw ParserError.fromInternalError(error, this.xmlParser);
+      } else {
+        throw error;
+      }
+    }
   }
 
   public finish(): State {

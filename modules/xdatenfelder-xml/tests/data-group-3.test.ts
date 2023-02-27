@@ -56,6 +56,30 @@ describe("Loading a schema from xml", () => {
       },
     });
   });
+
+  test("should fail for empty id node", async () => {
+    await expect(loadMessage("empty-id-node.xml")).rejects.toThrow(
+      "Missing content in node <xdf:id> (line 10, column 29)"
+    );
+  });
+
+  test("should fail for missing id node", async () => {
+    await expect(loadMessage("missing-id-node.xml")).rejects.toThrow(
+      "Missing child node <xdf:id> (line 11, column 29)"
+    );
+  });
+
+  test("should fail for duplicate id node", async () => {
+    await expect(loadMessage("duplicate-id-node.xml")).rejects.toThrow(
+      "Duplicate node <xdf:id> (line 11, column 33)"
+    );
+  });
+
+  test("should fail for unexpected node", async () => {
+    await expect(loadMessage("unexpected-node.xml")).rejects.toThrow(
+      "Unexpected node <xdf:unknown> (line 11, column 25)"
+    );
+  });
 });
 
 async function loadMessage(name: string): Promise<DataGroupMessage3> {
