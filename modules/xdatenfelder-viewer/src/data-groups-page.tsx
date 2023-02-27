@@ -1,8 +1,8 @@
 import * as React from "react";
-import { Schema } from "xdatenfelder-xml";
+import { SchemaMessage } from "xdatenfelder-xml";
 
 export interface DataGroupsPageProps {
-  schema: Schema;
+  schema: SchemaMessage;
 }
 
 export function DataGroupsPage({ schema }: DataGroupsPageProps) {

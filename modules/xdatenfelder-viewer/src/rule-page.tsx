@@ -1,11 +1,11 @@
 import * as React from "react";
 import { useParams } from "react-router-dom";
-import { Schema } from "xdatenfelder-xml";
+import { SchemaMessage } from "xdatenfelder-xml";
 import { NotFoundPage } from "./not-found-page";
 import { multilineToHtml } from "./util";
 
 export interface RulePageProps {
-  schema: Schema;
+  schema: SchemaMessage;
 }
 
 export function RulePage({ schema }: RulePageProps) {

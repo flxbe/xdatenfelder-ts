@@ -6,12 +6,10 @@ import {
   DataGroup,
   ElementReference,
   InputDescription,
-  Schema,
   SchemaData,
-  Warning,
   Rule,
   SchemaWarnings,
-} from "./schema";
+} from "./schema-2";
 
 class ParserError extends Error {
   constructor(message: string) {
@@ -106,7 +104,7 @@ abstract class State {
 }
 
 interface ParseResult {
-  schema: Schema;
+  schema: SchemaMessage;
   warnings: SchemaWarnings;
 }
 
@@ -180,7 +178,7 @@ class RootSchemaState extends State {
       throw new ParserError(`Missing <xdf:stammdatenschema> block`);
     }
 
-    const schema = new Schema(
+    const schema = new SchemaMessage(
       this.header.messageId,
       this.header.createdAt,
       this.schemaContent.data,
@@ -1096,8 +1094,69 @@ export class FastSchemaParser {
 
     return this.state.result;
   }
+}
 
-  public static parseString(value: string): ParseResult {
+export class SchemaMessage {
+  public readonly messageId: string;
+  public readonly createdAt: Date;
+  public readonly schemaData: SchemaData;
+  public readonly dataFields: Record<string, DataField>;
+  public readonly dataGroups: Record<string, DataGroup>;
+  public readonly rules: Record<string, Rule>;
+
+  constructor(
+    messageId: string,
+    createdAt: Date,
+    schemaData: SchemaData,
+    dataFields: Record<string, DataField>,
+    dataGroups: Record<string, DataGroup>,
+    rules: Record<string, Rule>
+  ) {
+    this.messageId = messageId;
+    this.createdAt = createdAt;
+    this.schemaData = schemaData;
+    this.dataFields = dataFields;
+    this.dataGroups = dataGroups;
+    this.rules = rules;
+  }
+
+  public getDataField(identifier: string): DataField {
+    const dataField = this.dataFields[identifier];
+    if (dataField === undefined) {
+      throw new Error(`Could not find data field ${identifier}`);
+    }
+
+    return dataField;
+  }
+
+  public getDataGroup(identifier: string): DataGroup {
+    const dataGroup = this.dataGroups[identifier];
+    if (dataGroup === undefined) {
+      throw new Error(`Could not find data group ${identifier}`);
+    }
+
+    return dataGroup;
+  }
+
+  public get selectFields(): Array<DataField> {
+    return Object.values(this.dataFields).filter(
+      (dataField) => dataField.input.type === "select"
+    );
+  }
+
+  public get codeListReferences(): Array<CodeListReference> {
+    const references: Record<string, CodeListReference> = {};
+    for (const dataField of Object.values(this.dataFields)) {
+      if (dataField.input.type === "select") {
+        const reference = dataField.input.codeListReference;
+        references[reference.canonicalVersionUri] = reference;
+      }
+    }
+
+    return Object.values(references);
+  }
+
+  public static fromString(value: string): ParseResult {
     const parser = new FastSchemaParser();
     parser.write(value);
 

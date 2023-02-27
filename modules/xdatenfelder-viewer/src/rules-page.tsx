@@ -1,9 +1,9 @@
 import * as React from "react";
-import { Schema } from "xdatenfelder-xml";
+import { SchemaMessage } from "xdatenfelder-xml";
 import { Link } from "react-router-dom";
 
 export interface RulesPageProps {
-  schema: Schema;
+  schema: SchemaMessage;
 }
 
 export function RulesPage({ schema }: RulesPageProps) {

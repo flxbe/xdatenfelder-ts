@@ -1,7 +1,4 @@
 import * as React from "react";
-import { Link } from "react-router-dom";
-import { DataField } from "xdatenfelder-xml";
-import { multilineToHtml } from "./util";
 
 const TYPE_TO_COLOR_CLASS: Record<string, string> = {
   select: "text-bg-success",

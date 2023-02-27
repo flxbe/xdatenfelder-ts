@@ -1,7 +1,6 @@
 import { open } from "node:fs/promises";
 import { describe, expect, test } from "@jest/globals";
-import { Schema } from "../src/schema";
-import { FastSchemaParser } from "../src";
+import { SchemaMessage } from "../src";
 
 describe("Loading a schema from xml", () => {
   test("Should correctly load the schema", async () => {
@@ -195,10 +194,10 @@ describe("Loading a schema from xml", () => {
   });
 });
 
-async function loadSchema(name: string): Promise<Schema> {
+async function loadSchema(name: string): Promise<SchemaMessage> {
   const file = await open(`./tests/v2-data/${name}`, "r");
   const data = await file.readFile({ encoding: "utf-8" });
   await file.close();
 
-  return FastSchemaParser.parseString(data).schema;
+  return SchemaMessage.fromString(data).schema;
 }

@@ -1,10 +1,10 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
-import { Schema } from "xdatenfelder-xml";
+import { SchemaMessage } from "xdatenfelder-xml";
 import { DataFieldType } from "./data-field-type";
 
 type DataFieldsPageProps = {
-  schema: Schema;
+  schema: SchemaMessage;
 };
 
 export function DataFieldsPage({ schema }: DataFieldsPageProps) {

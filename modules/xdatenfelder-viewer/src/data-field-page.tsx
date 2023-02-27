@@ -1,12 +1,12 @@
 import * as React from "react";
 import { useParams } from "react-router-dom";
-import { Schema, DataField } from "xdatenfelder-xml";
+import { SchemaMessage, DataField } from "xdatenfelder-xml";
 import { DataFieldType } from "./data-field-type";
 import { NotFoundPage } from "./not-found-page";
 import { multilineToHtml } from "./util";
 
 export interface DataFieldPageProps {
-  schema: Schema;
+  schema: SchemaMessage;
 }
 
 export function DataFieldPage({ schema }: DataFieldPageProps) {

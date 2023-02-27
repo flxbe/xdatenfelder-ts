@@ -2,10 +2,9 @@ import * as React from "react";
 import { createRoot } from "react-dom/client";
 import { Routes, Route, HashRouter, Link, useMatch } from "react-router-dom";
 import {
-  Schema,
-  FastSchemaParser,
   SchemaWarnings,
   Warning as SchemaWarning,
+  SchemaMessage,
 } from "xdatenfelder-xml";
 import { Warning } from "./warning";
 import { DataFieldsPage } from "./data-fields-page";
@@ -19,7 +18,7 @@ import { NotFoundPage } from "./not-found-page";
 import { RulePage } from "./rule-page";
 
 interface State {
-  schema: Schema;
+  schema: SchemaMessage;
   warnings: SchemaWarnings;
 }
 
@@ -107,7 +106,7 @@ function UploadPage({ onSchemaUpload }: UploadPageProps) {
     try {
       const measure = performance.measure("loading");
       const data = await loadFile(files[0]);
-      const parseResult = FastSchemaParser.parseString(data);
+      const parseResult = SchemaMessage.fromString(data);
       console.log(measure);
       onSchemaUpload(parseResult);
     } catch (error: any) {

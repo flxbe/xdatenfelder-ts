@@ -3,12 +3,12 @@ import {
   DataField,
   DataGroup,
   ElementReference,
-  Schema,
+  SchemaMessage,
 } from "xdatenfelder-xml";
 import { multilineToHtml } from "./util";
 
 export interface PreviewPageProps {
-  schema: Schema;
+  schema: SchemaMessage;
 }
 
 export function PreviewPage({ schema }: PreviewPageProps) {
@@ -94,7 +94,7 @@ function NavLink({
   );
 }
 
-function Start({ schema }: { schema: Schema }) {
+function Start({ schema }: { schema: SchemaMessage }) {
   return (
     <div>
       <h3>{schema.schemaData.name}</h3>
@@ -107,7 +107,7 @@ function Step({
   schema,
   element,
 }: {
-  schema: Schema;
+  schema: SchemaMessage;
   element: ElementReference;
 }) {
   const { type, identifier } = element;
@@ -146,7 +146,7 @@ function Section({
   schema,
   element,
 }: {
-  schema: Schema;
+  schema: SchemaMessage;
   element: ElementReference;
 }) {
   const { type, identifier } = element;
@@ -175,7 +175,7 @@ function DataGroupSection({
   schema,
   dataGroup,
 }: {
-  schema: Schema;
+  schema: SchemaMessage;
   dataGroup: DataGroup;
 }) {
   return (
@@ -202,7 +202,7 @@ function DataGroupElement({
   element,
   level,
 }: {
-  schema: Schema;
+  schema: SchemaMessage;
   element: ElementReference;
   level: number;
 }) {
@@ -228,7 +228,7 @@ function DataSubGroupElement({
   dataGroup,
   level,
 }: {
-  schema: Schema;
+  schema: SchemaMessage;
   dataGroup: DataGroup;
   level: number;
 }) {
