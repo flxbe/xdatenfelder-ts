@@ -1,195 +1,21 @@
 import sax from "sax";
-
-class ParserError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "ParserError";
-  }
-}
-
-class UnexpectedTagError extends ParserError {
-  constructor(got: string, expected: string | undefined = undefined) {
-    if (expected === undefined) {
-      super(`Unexpected Tag: ${got}`);
-    } else {
-      super(`Expected "${expected}", got: ${got}`);
-    }
-
-    this.name = "UnexpectedTagError";
-  }
-}
-
-class MissingChildNodeError extends ParserError {
-  constructor(name: string) {
-    super(`Missing child node: ${name}`);
-    this.name = "MissingChildNodeError";
-  }
-}
-
-class MissingContentError extends ParserError {
-  constructor(parentName: string) {
-    super(`Missing content in node ${parentName}`);
-    this.name = "MissingContentError";
-  }
-}
-
-class DuplicateTagError extends ParserError {
-  constructor(tagName: string) {
-    super(`Duplicate <${tagName}>`);
-    this.name = "DuplicateTagError";
-  }
-}
-
-class Value<T> {
-  private content:
-    | { filled: false; value: undefined }
-    | { filled: true; value: T };
-
-  public readonly tagName: string;
-
-  constructor(tagName: string) {
-    this.tagName = tagName;
-    this.content = { filled: false, value: undefined };
-  }
-
-  public set(value: T) {
-    if (this.content.filled) {
-      throw new DuplicateTagError(this.tagName);
-    }
-
-    this.content = { filled: true, value };
-  }
-
-  public get(): T | undefined {
-    return this.content.value;
-  }
-
-  public unwrap(): T {
-    if (!this.content.filled) {
-      throw new MissingChildNodeError(this.tagName);
-    }
-
-    return this.content.value;
-  }
-}
-
-type FinishFn<T> = (value: T) => void;
-
-function expectTag(got: string, expected: string) {
-  if (got !== expected) {
-    throw new ParserError(`Expect "${expected}", got: ${got}`);
-  }
-}
-
-abstract class State {
-  public onText(text: string): void {
-    throw new ParserError(`Got unexpected text block: ${text}`);
-  }
-
-  public abstract onOpenTag(tag: sax.QualifiedTag | sax.Tag): State;
-
-  public abstract onCloseTag(tagName: string): State;
-}
-
-class ValueNodeState extends State {
-  private parent: State;
-  private value: Value<string>;
-
-  constructor(parent: State, value: Value<string>) {
-    super();
-
-    this.parent = parent;
-    this.value = value;
-  }
-
-  public onText(text: string) {
-    this.value.set(text);
-  }
-
-  public onOpenTag(tag: sax.QualifiedTag | sax.Tag): State {
-    throw new UnexpectedTagError(tag.name, "<None>");
-  }
-
-  public onCloseTag(tagName: string): State {
-    expectTag(tagName, this.value.tagName);
-
-    return this.parent;
-  }
-}
-
-class OptionalValueNodeState extends State {
-  private parent: State;
-  private value: Value<string | undefined>;
-
-  constructor(parent: State, value: Value<string | undefined>) {
-    super();
-
-    this.parent = parent;
-    this.value = value;
-  }
-
-  public onText(text: string) {
-    this.value.set(text);
-  }
-
-  public onOpenTag(tag: sax.QualifiedTag | sax.Tag): State {
-    throw new UnexpectedTagError(tag.name, "<None>");
-  }
-
-  public onCloseTag(tagName: string): State {
-    expectTag(tagName, this.value.tagName);
-
-    return this.parent;
-  }
-}
-
-class CodeNodeState extends State {
-  private parent: State;
-
-  private value: Value<string>;
-  private childValue: Value<string> = new Value("code");
-
-  constructor(parent: State, value: Value<string>) {
-    super();
-
-    this.parent = parent;
-    this.value = value;
-  }
-
-  public onOpenTag(tag: sax.QualifiedTag | sax.Tag): State {
-    expectTag(tag.name, "code");
-
-    return new ValueNodeState(this, this.childValue);
-  }
-
-  public onCloseTag(tagName: string): State {
-    expectTag(tagName, this.value.tagName);
-
-    const value = this.childValue.unwrap();
-    this.value.set(value);
-
-    return this.parent;
-  }
-}
-
-class NoOpState extends State {
-  private parent: State;
-
-  constructor(parent: State) {
-    super();
-    this.parent = parent;
-  }
-
-  public onText(text: string) {}
-
-  public onOpenTag(tag: sax.QualifiedTag | sax.Tag): NoOpState {
-    return new NoOpState(this);
-  }
-
-  public onCloseTag(tagName: string): State {
-    return this.parent;
-  }
-}
+import {
+  StateParser,
+  UnexpectedTagError,
+  DuplicateTagError,
+  MissingChildNodeError,
+  ParserError,
+  Value,
+  State,
+  NoOpState,
+  CodeNodeState,
+  ValueNodeState,
+  OptionalValueNodeState,
+  expectTag,
+  FinishFn,
+  Context,
+} from "./sax";
+import { DataGroup, DataField, Rule, ChildRef } from "./schema-3";
 
 class RootState extends State {
   public value: Value<DataGroupMessage3> = new Value(
@@ -213,9 +39,6 @@ class MessageState extends State {
 
   private header: Value<[string, Date]> = new Value("xdf:header");
   private rootDataGroup: Value<string> = new Value("xdf:datenfeldgruppe");
-  private dataGroups: Record<string, DataGroup> = {};
-  private dataFields: Record<string, DataField> = {};
-  private rules: Record<string, Rule> = {};
 
   constructor(parent: State, value: Value<DataGroupMessage3>) {
     super();
@@ -224,41 +47,34 @@ class MessageState extends State {
     this.value = value;
   }
 
-  public onOpenTag(tag: sax.QualifiedTag | sax.Tag): State {
+  public onOpenTag(tag: sax.QualifiedTag | sax.Tag, context: Context): State {
     switch (tag.name) {
       case "xdf:header":
         return new HeaderState(this, this.header);
       case "xdf:datenfeldgruppe":
-        return new DataGroupState(
-          this,
-          this.dataGroups,
-          this.dataFields,
-          this.rules,
-          (dataGroup) => {
-            this.dataGroups[dataGroup.identifier] = dataGroup;
-            this.rootDataGroup.set(dataGroup.identifier);
-          }
-        );
+        return new DataGroupState(this, (dataGroup) => {
+          context.dataGroups[dataGroup.identifier] = dataGroup;
+          this.rootDataGroup.set(dataGroup.identifier);
+        });
       default:
         throw new UnexpectedTagError(tag.name);
     }
   }
 
-  public onCloseTag(tagName: string): State {
+  public onCloseTag(tagName: string, context: Context): State {
     expectTag(tagName, "xdf:xdatenfelder.datenfeldgruppe.0103");
 
     const [messageId, createdAt] = this.header.unwrap();
     const rootDataGroup = this.rootDataGroup.unwrap();
 
-    // todo: actually create the message
     this.value.set(
       new DataGroupMessage3(
         messageId,
         createdAt,
         rootDataGroup,
-        this.dataGroups,
-        this.dataFields,
-        this.rules
+        context.dataGroups,
+        context.dataFields,
+        context.rules
       )
     );
 
@@ -303,16 +119,8 @@ class HeaderState extends State {
   }
 }
 
-interface ChildRef {
-  type: "dataGroup" | "dataField";
-  identifier: string;
-}
-
 class DataGroupState extends State {
   private parent: State;
-  private dataGroups: Record<string, DataGroup>;
-  private dataFields: Record<string, DataField>;
-  private rules: Record<string, Rule>;
   private onFinish: FinishFn<DataGroup>;
 
   private identification: Value<[string, string]> = new Value(
@@ -327,24 +135,14 @@ class DataGroupState extends State {
   private ruleRefs: string[] = [];
   private children: ChildRef[] = [];
 
-  constructor(
-    parent: State,
-    dataGroups: Record<string, DataGroup>,
-    dataFields: Record<string, DataField>,
-    rules: Record<string, Rule>,
-    onFinish: FinishFn<DataGroup>
-  ) {
+  constructor(parent: State, onFinish: FinishFn<DataGroup>) {
     super();
 
     this.parent = parent;
-
-    this.dataGroups = dataGroups;
-    this.dataFields = dataFields;
-    this.rules = rules;
     this.onFinish = onFinish;
   }
 
-  public onOpenTag(tag: sax.QualifiedTag | sax.Tag): State {
+  public onOpenTag(tag: sax.QualifiedTag | sax.Tag, context: Context): State {
     switch (tag.name) {
       case "xdf:identifikation":
         return new IdentificationState(this, this.identification);
@@ -358,28 +156,22 @@ class DataGroupState extends State {
         return new CodeNodeState(this, this.releaseState);
       case "xdf:regel":
         return new RuleState(this, (rule) => {
+          context.rules[rule.identifier] = rule;
           this.ruleRefs.push(rule.identifier);
-          this.rules[rule.identifier] = rule;
         });
       case "xdf:struktur":
-        return new StructureState(
-          this,
-          this.dataGroups,
-          this.dataFields,
-          this.rules,
-          (child) => {
-            if (child.type === "dataGroup") {
-              const { dataGroup } = child;
-              this.dataGroups[dataGroup.identifier] = dataGroup;
-              this.children.push({
-                type: "dataGroup",
-                identifier: dataGroup.identifier,
-              });
-            } else {
-              console.log("datafield");
-            }
+        return new StructureState(this, (child) => {
+          if (child.type === "dataGroup") {
+            const { dataGroup } = child;
+            context.dataGroups[dataGroup.identifier] = dataGroup;
+            this.children.push({
+              type: "dataGroup",
+              identifier: dataGroup.identifier,
+            });
+          } else {
+            // TODO: Parse datafield
           }
-        );
+        });
       default:
         return new NoOpState(this);
     }
@@ -416,48 +208,30 @@ type Child =
 
 class StructureState extends State {
   private parent: State;
-  private dataGroups: Record<string, DataGroup>;
-  private dataFields: Record<string, DataField>;
-  private rules: Record<string, Rule>;
   private onFinish: FinishFn<Child>;
 
   private value: Value<Child> = new Value("xdf:enthaelt");
 
-  constructor(
-    parent: State,
-    dataGroups: Record<string, DataGroup>,
-    dataFields: Record<string, DataField>,
-    rules: Record<string, Rule>,
-    onFinish: FinishFn<Child>
-  ) {
+  constructor(parent: State, onFinish: FinishFn<Child>) {
     super();
 
     this.parent = parent;
-    this.dataGroups = dataGroups;
-    this.dataFields = dataFields;
-    this.rules = rules;
     this.onFinish = onFinish;
   }
 
-  public onOpenTag(tag: sax.QualifiedTag | sax.Tag): State {
+  public onOpenTag(tag: sax.QualifiedTag | sax.Tag, _context: Context): State {
     switch (tag.name) {
       case "xdf:anzahl":
       case "xdf:bezug":
         return new NoOpState(this);
       case "xdf:enthaelt":
-        return new ContainsState(
-          this,
-          this.dataGroups,
-          this.dataFields,
-          this.rules,
-          this.value
-        );
+        return new ContainsState(this, this.value);
       default:
         throw new UnexpectedTagError(tag.name);
     }
   }
 
-  public onCloseTag(tagName: string): State {
+  public onCloseTag(tagName: string, _context: Context): State {
     expectTag(tagName, "xdf:struktur");
 
     const child = this.value.unwrap();
@@ -469,45 +243,27 @@ class StructureState extends State {
 
 class ContainsState extends State {
   private parent: State;
-  private dataGroups: Record<string, DataGroup>;
-  private dataFields: Record<string, DataField>;
-  private rules: Record<string, Rule>;
   private parentValue: Value<Child>;
 
   private value?: Child = undefined;
 
-  constructor(
-    parent: State,
-    dataGroups: Record<string, DataGroup>,
-    dataFields: Record<string, DataField>,
-    rules: Record<string, Rule>,
-    value: Value<Child>
-  ) {
+  constructor(parent: State, value: Value<Child>) {
     super();
 
     this.parent = parent;
-    this.dataGroups = dataGroups;
-    this.dataFields = dataFields;
-    this.rules = rules;
     this.parentValue = value;
   }
 
-  public onOpenTag(tag: sax.QualifiedTag | sax.Tag): State {
+  public onOpenTag(tag: sax.QualifiedTag | sax.Tag, _context: Context): State {
     if (this.value !== undefined) {
       throw new DuplicateTagError("xdf:datenfeld | xdf:datenfeldgruppe");
     }
 
     switch (tag.name) {
       case "xdf:datenfeldgruppe":
-        return new DataGroupState(
-          this,
-          this.dataGroups,
-          this.dataFields,
-          this.rules,
-          (dataGroup) => {
-            this.value = { type: "dataGroup", dataGroup };
-          }
-        );
+        return new DataGroupState(this, (dataGroup) => {
+          this.value = { type: "dataGroup", dataGroup };
+        });
       case "xdf:datenfeld":
         this.value = { type: "dataField" };
         return new NoOpState(this);
@@ -515,7 +271,7 @@ class ContainsState extends State {
         throw new UnexpectedTagError(tag.name);
     }
   }
-  public onCloseTag(tagName: string): State {
+  public onCloseTag(tagName: string, _context: Context): State {
     expectTag(tagName, "xdf:enthaelt");
 
     if (this.value === undefined) {
@@ -616,64 +372,25 @@ class IdentificationState extends State {
 }
 
 class DataGroupMessageParser {
-  private state: State;
-  private xmlParser: sax.SAXParser;
+  private stateParser: StateParser;
 
   constructor() {
-    this.state = new RootState();
-    this.xmlParser = sax.parser(true, { trim: true });
-
-    this.xmlParser.onerror = (error) => {
-      throw error;
-    };
-
-    this.xmlParser.ontext = (text) => {
-      this.state.onText(text);
-    };
-    this.xmlParser.onopentag = (tag) => {
-      this.state = this.state.onOpenTag(tag);
-    };
-    this.xmlParser.onclosetag = (tagName) => {
-      this.state = this.state.onCloseTag(tagName);
-    };
+    this.stateParser = new StateParser(new RootState());
   }
 
   public write(data: string) {
-    this.xmlParser.write(data);
+    this.stateParser.write(data);
   }
 
   public finish(): DataGroupMessage3 {
-    this.xmlParser.close();
+    const state = this.stateParser.finish();
 
-    if (!(this.state instanceof RootState)) {
+    if (!(state instanceof RootState)) {
       throw new ParserError("Unexpected EOF");
     }
 
-    return this.state.value.unwrap();
+    return state.value.unwrap();
   }
-}
-
-interface BaseData {
-  identifier: string;
-  version: string;
-  name: string;
-  description?: string;
-  definition?: string;
-  releaseState: string;
-}
-
-interface DataGroup extends BaseData {
-  rules: string[];
-  children: ChildRef[];
-}
-
-interface DataField extends BaseData {}
-
-interface Rule {
-  identifier: string;
-  version: string;
-  name: string;
-  description?: string;
 }
 
 export class DataGroupMessage3 {
@@ -696,8 +413,8 @@ export class DataGroupMessage3 {
     this.id = id;
     this.createdAt = createdAt;
     this.rootDataGroup = rootDataGroup;
-    this.dataGroups = dataGroups;
     this.dataFields = dataFields;
+    this.dataGroups = dataGroups;
     this.rules = rules;
   }
 
