@@ -1,21 +1,33 @@
 import sax from "sax";
 import {
   StateParser,
-  UnexpectedTagError,
-  DuplicateTagError,
-  MissingChildNodeError,
-  InternalParserError,
   Value,
   State,
   NoOpState,
-  CodeNodeState,
   ValueNodeState,
   OptionalValueNodeState,
+  CodeNodeState,
+  StringNodeState,
+  OptionalStringNodeState,
   expectTag,
   FinishFn,
   Context,
 } from "./sax";
-import { DataGroup, DataField, Rule, ChildRef } from "./schema-3";
+import {
+  UnexpectedTagError,
+  DuplicateTagError,
+  MissingChildNodeError,
+  InternalParserError,
+} from "./errors";
+import {
+  DataGroup,
+  DataField,
+  Rule,
+  ChildRef,
+  parseFreigabeStatus,
+  parseDate,
+  FreigabeStatus,
+} from "./schema-3";
 
 class RootState extends State {
   public value: Value<DataGroupMessage3> = new Value(
@@ -87,7 +99,7 @@ class HeaderState extends State {
   private value: Value<[string, Date]>;
 
   private messageId: Value<string> = new Value("xdf:nachrichtID");
-  private createdAt: Value<string> = new Value("xdf:erstellungszeitpunkt");
+  private createdAt: Value<Date> = new Value("xdf:erstellungszeitpunkt");
 
   constructor(parent: State, value: Value<[string, Date]>) {
     super();
@@ -99,9 +111,9 @@ class HeaderState extends State {
   public onOpenTag(tag: sax.QualifiedTag | sax.Tag): State {
     switch (tag.name) {
       case "xdf:nachrichtID":
-        return new ValueNodeState(this, this.messageId);
+        return new StringNodeState(this, this.messageId);
       case "xdf:erstellungszeitpunkt":
-        return new ValueNodeState(this, this.createdAt);
+        return new ValueNodeState(this, this.createdAt, parseDate);
       default:
         throw new UnexpectedTagError(tag.name);
     }
@@ -131,7 +143,13 @@ class DataGroupState extends State {
     "xdf:beschreibung"
   );
   private definition: Value<string | undefined> = new Value("xdf:definition");
-  private releaseState: Value<string> = new Value("xdf:freigabestatus");
+  private releaseState: Value<FreigabeStatus> = new Value("xdf:freigabestatus");
+  private stateSetAt: Value<Date | undefined> = new Value(
+    "xdf:statusGesetztAm"
+  );
+  private stateSetBy: Value<string | undefined> = new Value(
+    "xdf:statusGesetztDurch"
+  );
   private ruleRefs: string[] = [];
   private children: ChildRef[] = [];
 
@@ -147,13 +165,13 @@ class DataGroupState extends State {
       case "xdf:identifikation":
         return new IdentificationState(this, this.identification);
       case "xdf:name":
-        return new ValueNodeState(this, this.name);
+        return new StringNodeState(this, this.name);
       case "xdf:beschreibung":
-        return new OptionalValueNodeState(this, this.description);
+        return new OptionalStringNodeState(this, this.description);
       case "xdf:definition":
-        return new OptionalValueNodeState(this, this.definition);
+        return new OptionalStringNodeState(this, this.definition);
       case "xdf:freigabestatus":
-        return new CodeNodeState(this, this.releaseState);
+        return new CodeNodeState(this, this.releaseState, parseFreigabeStatus);
       case "xdf:regel":
         return new RuleState(this, (rule) => {
           context.rules[rule.identifier] = rule;
@@ -172,9 +190,11 @@ class DataGroupState extends State {
             // TODO: Parse datafield
           }
         });
-      case "xdf:bezug":
       case "xdf:statusGesetztAm":
+        return new OptionalValueNodeState(this, this.stateSetAt, parseDate);
       case "xdf:statusGesetztDurch":
+        return new OptionalStringNodeState(this, this.stateSetBy);
+      case "xdf:bezug":
       case "xdf:versionshinweis":
       case "xdf:veroeffentlichungsdatum":
       case "xdf:letzteAenderung":
@@ -197,6 +217,8 @@ class DataGroupState extends State {
     const description = this.description.get();
     const definition = this.definition.get();
     const releaseState = this.releaseState.unwrap();
+    const stateSetAt = this.stateSetAt.get();
+    const stateSetBy = this.stateSetBy.get();
 
     const dataGroup = {
       identifier,
@@ -205,6 +227,8 @@ class DataGroupState extends State {
       description,
       definition,
       releaseState,
+      stateSetAt,
+      stateSetBy,
       rules: this.ruleRefs,
       children: this.children,
     };
@@ -320,9 +344,9 @@ class RuleState extends State {
       case "xdf:identifikation":
         return new IdentificationState(this, this.identification);
       case "xdf:name":
-        return new ValueNodeState(this, this.name);
+        return new StringNodeState(this, this.name);
       case "xdf:beschreibung":
-        return new OptionalValueNodeState(this, this.description);
+        return new OptionalStringNodeState(this, this.description);
       case "xdf:freitextRegel":
       case "xdf:bezug":
       case "xdf:fachlicherErsteller":
@@ -372,9 +396,9 @@ class IdentificationState extends State {
   public onOpenTag(tag: sax.QualifiedTag | sax.Tag): State {
     switch (tag.name) {
       case "xdf:id":
-        return new ValueNodeState(this, this.identifier);
+        return new StringNodeState(this, this.identifier);
       case "xdf:version":
-        return new ValueNodeState(this, this.version);
+        return new StringNodeState(this, this.version);
       default:
         throw new UnexpectedTagError(tag.name);
     }

@@ -1,57 +1,13 @@
 import sax from "sax";
 import { DataField, DataGroup, Rule } from "./schema-3";
-
-export class ParserError extends Error {
-  constructor(message: string, line: number, column: number) {
-    super(`${message} (line ${line}, column ${column})`);
-    this.name = "ParserError";
-  }
-
-  public static fromInternalError(
-    error: InternalParserError,
-    parser: sax.SAXParser
-  ): ParserError {
-    // The parser starts counting the lines at 0
-    const actualLine = parser.line + 1;
-
-    return new ParserError(error.message, actualLine, parser.column);
-  }
-}
-
-export class InternalParserError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "InternalParserError";
-  }
-}
-
-export class UnexpectedTagError extends InternalParserError {
-  constructor(tagName: string) {
-    super(`Unexpected node <${tagName}>`);
-    this.name = "UnexpectedTagError";
-  }
-}
-
-export class MissingChildNodeError extends InternalParserError {
-  constructor(name: string) {
-    super(`Missing child node <${name}>`);
-    this.name = "MissingChildNodeError";
-  }
-}
-
-export class MissingContentError extends InternalParserError {
-  constructor(parentName: string) {
-    super(`Missing content in node <${parentName}>`);
-    this.name = "MissingContentError";
-  }
-}
-
-export class DuplicateTagError extends InternalParserError {
-  constructor(tagName: string) {
-    super(`Duplicate node <${tagName}>`);
-    this.name = "DuplicateTagError";
-  }
-}
+import {
+  DuplicateTagError,
+  MissingChildNodeError,
+  MissingContentError,
+  InternalParserError,
+  UnexpectedTagError,
+  ParserError,
+} from "./errors";
 
 export interface Context {
   dataGroups: Record<string, DataGroup>;
@@ -117,7 +73,77 @@ export abstract class State {
   public abstract onCloseTag(tagName: string, context: Context): State;
 }
 
-export class ValueNodeState extends State {
+export class ValueNodeState<T> extends State {
+  private parent: State;
+  private value: Value<T>;
+  private parseValue: (value: string) => T;
+
+  constructor(
+    parent: State,
+    value: Value<T>,
+    parseValue: (value: string) => T
+  ) {
+    super();
+
+    this.parent = parent;
+    this.value = value;
+    this.parseValue = parseValue;
+  }
+
+  public onText(text: string) {
+    const value = this.parseValue(text);
+    this.value.set(value);
+  }
+
+  public onOpenTag(tag: sax.QualifiedTag | sax.Tag, _context: Context): State {
+    throw new UnexpectedTagError(tag.name);
+  }
+
+  public onCloseTag(tagName: string, _context: Context): State {
+    expectTag(tagName, this.value.tagName);
+
+    if (!this.value.isFilled()) {
+      throw new MissingContentError(this.value.tagName);
+    }
+
+    return this.parent;
+  }
+}
+
+export class OptionalValueNodeState<T> extends State {
+  private parent: State;
+  private value: Value<T | undefined>;
+  private parseValue: (value: string) => T;
+
+  constructor(
+    parent: State,
+    value: Value<T | undefined>,
+    parseValue: (value: string) => T
+  ) {
+    super();
+
+    this.parent = parent;
+    this.value = value;
+    this.parseValue = parseValue;
+  }
+
+  public onText(text: string) {
+    const value = this.parseValue(text);
+    this.value.set(value);
+  }
+
+  public onOpenTag(tag: sax.QualifiedTag | sax.Tag, _context: Context): State {
+    throw new UnexpectedTagError(tag.name);
+  }
+
+  public onCloseTag(tagName: string, _context: Context): State {
+    expectTag(tagName, this.value.tagName);
+
+    return this.parent;
+  }
+}
+
+export class StringNodeState extends State {
   private parent: State;
   private value: Value<string>;
 
@@ -147,7 +173,7 @@ export class ValueNodeState extends State {
   }
 }
 
-export class OptionalValueNodeState extends State {
+export class OptionalStringNodeState extends State {
   private parent: State;
   private value: Value<string | undefined>;
 
@@ -173,23 +199,29 @@ export class OptionalValueNodeState extends State {
   }
 }
 
-export class CodeNodeState extends State {
+export class CodeNodeState<T> extends State {
   private parent: State;
+  private parseValue: (value: string) => T;
 
-  private value: Value<string>;
-  private childValue: Value<string> = new Value("code");
+  private value: Value<T>;
+  private childValue: Value<T> = new Value("code");
 
-  constructor(parent: State, value: Value<string>) {
+  constructor(
+    parent: State,
+    value: Value<T>,
+    parseValue: (value: string) => T
+  ) {
     super();
 
     this.parent = parent;
     this.value = value;
+    this.parseValue = parseValue;
   }
 
   public onOpenTag(tag: sax.QualifiedTag | sax.Tag, _context: Context): State {
     expectTag(tag.name, "code");
 
-    return new ValueNodeState(this, this.childValue);
+    return new ValueNodeState(this, this.childValue, this.parseValue);
   }
 
   public onCloseTag(tagName: string, _context: Context): State {

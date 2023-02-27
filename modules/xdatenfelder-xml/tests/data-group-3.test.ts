@@ -18,6 +18,8 @@ describe("Loading a schema from xml", () => {
         description: "Eine Beschreibung",
         definition: "Eine Definition",
         releaseState: "6",
+        stateSetAt: new Date("2021-03-31"),
+        stateSetBy: "FIM Baustein Datenfelder",
         rules: ["R60000000019"],
         children: [
           { type: "dataGroup", identifier: "G60000000086" },
@@ -31,6 +33,8 @@ describe("Loading a schema from xml", () => {
         description: undefined,
         definition: undefined,
         releaseState: "6",
+        stateSetAt: new Date("2021-03-31"),
+        stateSetBy: "FIM-Baustein Datenfelder",
         rules: [],
         children: [],
       },
@@ -42,6 +46,8 @@ describe("Loading a schema from xml", () => {
         definition:
           "Postfachanschrift im Inland mit Postfach(nummer), PLZ und Ort.",
         releaseState: "6",
+        stateSetAt: new Date("2020-11-02"),
+        stateSetBy: "FIM Baustein Datenfelder",
         rules: [],
         children: [],
       },
@@ -78,6 +84,12 @@ describe("Loading a schema from xml", () => {
   test("should fail for unexpected node", async () => {
     await expect(loadMessage("unexpected-node.xml")).rejects.toThrow(
       "Unexpected node <xdf:unknown> (line 11, column 25)"
+    );
+  });
+
+  test("should fail for invalid release state", async () => {
+    await expect(loadMessage("invalid-freigabestatus.xml")).rejects.toThrow(
+      "Invalid value for freigabestatus: 10 (line 18, column 27)"
     );
   });
 });
