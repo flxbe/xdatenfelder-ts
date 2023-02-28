@@ -27,6 +27,9 @@ import {
   parseFreigabeStatus,
   parseDate,
   FreigabeStatus,
+  SchemaElementArt,
+  ElementData,
+  parseSchemaElementArt,
 } from "./schema-3";
 
 class RootState extends State {
@@ -131,25 +134,81 @@ class HeaderState extends State {
   }
 }
 
+interface BaseContainer {
+  identification: Value<[string, string]>;
+  name: Value<string>;
+  description: Value<string | undefined>;
+  definition: Value<string | undefined>;
+  releaseState: Value<FreigabeStatus>;
+  stateSetAt: Value<Date | undefined>;
+  stateSetBy: Value<string | undefined>;
+  validSince: Value<Date | undefined>;
+  validUntil: Value<Date | undefined>;
+  versionHint: Value<string | undefined>;
+  publishedAt: Value<Date | undefined>;
+  lastChangedAt: Value<Date>;
+}
+
+interface ElementContainer extends BaseContainer {
+  inputLabel: Value<string>;
+  outputLabel: Value<string | undefined>;
+  elementType: Value<SchemaElementArt>;
+  inputHelp: Value<string | undefined>;
+  outputHelp: Value<string | undefined>;
+}
+
+function createElementContainer(): ElementContainer {
+  return {
+    identification: new Value("xdf:identifikation"),
+    name: new Value("xdf:name"),
+    description: new Value("xdf:beschreibung"),
+    definition: new Value("xdf:definition"),
+    releaseState: new Value("xdf:freigabestatus"),
+    stateSetAt: new Value("xdf:statusGesetztAm"),
+    stateSetBy: new Value("xdf:statusGesetztDurch"),
+    validSince: new Value("xdf:gueltigAb"),
+    validUntil: new Value("xdf:gueltigBis"),
+    versionHint: new Value("xdf:versionshinweis"),
+    publishedAt: new Value("xdf:veroeffentlichungsdatum"),
+    lastChangedAt: new Value("xdf:letzteAenderung"),
+    inputLabel: new Value("xdf:bezeichnungEingabe"),
+    outputLabel: new Value("xdf:bezeichnungAusgabe"),
+    elementType: new Value("xdf:schemaelementart"),
+    inputHelp: new Value("xdf:hilfetextEingabe"),
+    outputHelp: new Value("xdf:hilfetextAusgabe"),
+  };
+}
+
+function parseElementData(container: ElementContainer): ElementData {
+  const [identifier, version] = container.identification.unwrap();
+
+  return {
+    identifier,
+    version,
+    name: container.name.unwrap(),
+    description: container.description.get(),
+    definition: container.definition.get(),
+    releaseState: container.releaseState.unwrap(),
+    stateSetAt: container.stateSetAt.get(),
+    stateSetBy: container.stateSetBy.get(),
+    validSince: container.validSince.get(),
+    validUntil: container.validUntil.get(),
+    versionHint: container.versionHint.get(),
+    publishedAt: container.publishedAt.get(),
+    lastChangedAt: container.lastChangedAt.unwrap(),
+    inputLabel: container.inputLabel.unwrap(),
+    outputLabel: container.outputLabel.get(),
+    elementType: container.elementType.unwrap(),
+    inputHelp: container.inputHelp.get(),
+    outputHelp: container.outputHelp.get(),
+  };
+}
+
 class DataGroupState extends State {
   private parent: State;
   private onFinish: FinishFn<DataGroup>;
 
-  private identification: Value<[string, string]> = new Value(
-    "xdf:identifikation"
-  );
-  private name: Value<string> = new Value("xdf:name");
-  private description: Value<string | undefined> = new Value(
-    "xdf:beschreibung"
-  );
-  private definition: Value<string | undefined> = new Value("xdf:definition");
-  private releaseState: Value<FreigabeStatus> = new Value("xdf:freigabestatus");
-  private stateSetAt: Value<Date | undefined> = new Value(
-    "xdf:statusGesetztAm"
-  );
-  private stateSetBy: Value<string | undefined> = new Value(
-    "xdf:statusGesetztDurch"
-  );
+  private elementContainer = createElementContainer();
   private ruleRefs: string[] = [];
   private children: ChildRef[] = [];
 
@@ -163,15 +222,28 @@ class DataGroupState extends State {
   public onOpenTag(tag: sax.QualifiedTag | sax.Tag, context: Context): State {
     switch (tag.name) {
       case "xdf:identifikation":
-        return new IdentificationState(this, this.identification);
+        return new IdentificationState(
+          this,
+          this.elementContainer.identification
+        );
       case "xdf:name":
-        return new StringNodeState(this, this.name);
+        return new StringNodeState(this, this.elementContainer.name);
       case "xdf:beschreibung":
-        return new OptionalStringNodeState(this, this.description);
+        return new OptionalStringNodeState(
+          this,
+          this.elementContainer.description
+        );
       case "xdf:definition":
-        return new OptionalStringNodeState(this, this.definition);
+        return new OptionalStringNodeState(
+          this,
+          this.elementContainer.definition
+        );
       case "xdf:freigabestatus":
-        return new CodeNodeState(this, this.releaseState, parseFreigabeStatus);
+        return new CodeNodeState(
+          this,
+          this.elementContainer.releaseState,
+          parseFreigabeStatus
+        );
       case "xdf:regel":
         return new RuleState(this, (rule) => {
           context.rules[rule.identifier] = rule;
@@ -191,19 +263,71 @@ class DataGroupState extends State {
           }
         });
       case "xdf:statusGesetztAm":
-        return new OptionalValueNodeState(this, this.stateSetAt, parseDate);
+        return new OptionalValueNodeState(
+          this,
+          this.elementContainer.stateSetAt,
+          parseDate
+        );
       case "xdf:statusGesetztDurch":
-        return new OptionalStringNodeState(this, this.stateSetBy);
+        return new OptionalStringNodeState(
+          this,
+          this.elementContainer.stateSetBy
+        );
       case "xdf:bezug":
-      case "xdf:versionshinweis":
-      case "xdf:veroeffentlichungsdatum":
-      case "xdf:letzteAenderung":
-      case "xdf:bezeichnungEingabe":
-      case "xdf:bezeichnungAusgabe":
-      case "xdf:schemaelementart":
-      case "xdf:hilfetextEingabe":
-      case "xdf:hilfetextAusgabe":
         return new NoOpState(this);
+      case "xdf:versionshinweis":
+        return new OptionalStringNodeState(
+          this,
+          this.elementContainer.versionHint
+        );
+      case "xdf:veroeffentlichungsdatum":
+        return new OptionalValueNodeState(
+          this,
+          this.elementContainer.publishedAt,
+          parseDate
+        );
+
+      case "xdf:schemaelementart":
+        return new CodeNodeState(
+          this,
+          this.elementContainer.elementType,
+          parseSchemaElementArt
+        );
+      case "xdf:bezeichnungEingabe":
+        return new StringNodeState(this, this.elementContainer.inputLabel);
+      case "xdf:bezeichnungAusgabe":
+        return new OptionalStringNodeState(
+          this,
+          this.elementContainer.outputLabel
+        );
+      case "xdf:hilfetextEingabe":
+        return new OptionalStringNodeState(
+          this,
+          this.elementContainer.inputHelp
+        );
+      case "xdf:hilfetextAusgabe":
+        return new OptionalStringNodeState(
+          this,
+          this.elementContainer.outputHelp
+        );
+      case "xdf:letzteAenderung":
+        return new ValueNodeState(
+          this,
+          this.elementContainer.lastChangedAt,
+          parseDate
+        );
+      case "xdf:gueltigAb":
+        return new ValueNodeState(
+          this,
+          this.elementContainer.validSince,
+          parseDate
+        );
+      case "xdf:gueltigBis":
+        return new ValueNodeState(
+          this,
+          this.elementContainer.validUntil,
+          parseDate
+        );
       default:
         throw new UnexpectedTagError(tag.name);
     }
@@ -212,23 +336,10 @@ class DataGroupState extends State {
   public onCloseTag(tagName: string): State {
     expectTag(tagName, "xdf:datenfeldgruppe");
 
-    const [identifier, version] = this.identification.unwrap();
-    const name = this.name.unwrap();
-    const description = this.description.get();
-    const definition = this.definition.get();
-    const releaseState = this.releaseState.unwrap();
-    const stateSetAt = this.stateSetAt.get();
-    const stateSetBy = this.stateSetBy.get();
+    const data = parseElementData(this.elementContainer);
 
     const dataGroup = {
-      identifier,
-      version,
-      name,
-      description,
-      definition,
-      releaseState,
-      stateSetAt,
-      stateSetBy,
+      ...data,
       rules: this.ruleRefs,
       children: this.children,
     };

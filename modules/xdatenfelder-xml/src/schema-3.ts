@@ -2,6 +2,25 @@
 
 import { ValidationError } from "./errors";
 
+export const enum SchemaElementArt {
+  Abstrakt = "ABS",
+  Harmonisiert = "HAR",
+  Rechtsnormgebunden = "RNG",
+}
+
+export function parseSchemaElementArt(value: string): SchemaElementArt {
+  switch (value) {
+    case "ABS":
+      return SchemaElementArt.Abstrakt;
+    case "HAR":
+      return SchemaElementArt.Harmonisiert;
+    case "RNG":
+      return SchemaElementArt.Rechtsnormgebunden;
+    default:
+      throw new ValidationError(`Invalid value for schemaelementart: ${value}`);
+  }
+}
+
 // Version: 2022-07-12
 export const enum FreigabeStatus {
   InPlanung = "1",
@@ -54,6 +73,21 @@ export interface BaseData {
   releaseState: FreigabeStatus;
   stateSetAt?: Date;
   stateSetBy?: string;
+  validSince?: Date;
+  validUntil?: Date;
+  versionHint?: string;
+  publishedAt?: Date;
+  lastChangedAt: Date;
+  // relation
+  // tags
+}
+
+export interface ElementData extends BaseData {
+  inputLabel: string;
+  outputLabel?: string;
+  elementType: SchemaElementArt;
+  inputHelp?: string;
+  outputHelp?: string;
 }
 
 export interface ChildRef {
@@ -61,12 +95,12 @@ export interface ChildRef {
   identifier: string;
 }
 
-export interface DataGroup extends BaseData {
+export interface DataGroup extends ElementData {
   rules: string[];
   children: ChildRef[];
 }
 
-export interface DataField extends BaseData {}
+export interface DataField extends ElementData {}
 
 export interface Rule {
   identifier: string;

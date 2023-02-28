@@ -1,6 +1,7 @@
 import { open } from "node:fs/promises";
 import { describe, expect, test } from "@jest/globals";
 import { DataGroupMessage3 } from "../src";
+import { FreigabeStatus, SchemaElementArt } from "../src/schema-3";
 
 describe("Loading a schema from xml", () => {
   test("Should correctly load the schema", async () => {
@@ -17,9 +18,19 @@ describe("Loading a schema from xml", () => {
         name: "Anschrift Inland",
         description: "Eine Beschreibung",
         definition: "Eine Definition",
-        releaseState: "6",
-        stateSetAt: new Date("2021-03-31"),
+        releaseState: FreigabeStatus.FachlichFreigegebenGold,
+        stateSetAt: new Date("2021-03-05"),
         stateSetBy: "FIM Baustein Datenfelder",
+        versionHint: "Hausnummerzusatz aufgenommen",
+        validSince: new Date("2021-03-01"),
+        validUntil: new Date("2021-03-02"),
+        publishedAt: new Date("2021-03-03"),
+        lastChangedAt: new Date("2021-03-31T11:51:29Z"),
+        elementType: SchemaElementArt.Harmonisiert,
+        inputLabel: "Anschrift in Deutschland",
+        outputLabel: "Anschrift in Deutschland",
+        inputHelp: "Eingabehilfe",
+        outputHelp: "Ausgabehilfe",
         rules: ["R60000000019"],
         children: [
           { type: "dataGroup", identifier: "G60000000086" },
@@ -35,6 +46,17 @@ describe("Loading a schema from xml", () => {
         releaseState: "6",
         stateSetAt: new Date("2021-03-31"),
         stateSetBy: "FIM-Baustein Datenfelder",
+        validSince: undefined,
+        validUntil: undefined,
+        versionHint: "Hausnummerzusatz aufgenommen",
+        publishedAt: new Date("2021-03-31"),
+        lastChangedAt: new Date("2021-01-01T01:00:00Z"),
+        inputLabel: "Straßenanschrift",
+        outputLabel: "Straßenanschrift",
+        elementType: SchemaElementArt.Harmonisiert,
+        inputHelp:
+          "Geben Sie die Anschrift mit Straße, Hausnummer, Postleitzahl und Ort an. Eine Angabe eines Postfachs ist nicht möglich.",
+        outputHelp: undefined,
         rules: [],
         children: [],
       },
@@ -48,6 +70,16 @@ describe("Loading a schema from xml", () => {
         releaseState: "6",
         stateSetAt: new Date("2020-11-02"),
         stateSetBy: "FIM Baustein Datenfelder",
+        validSince: undefined,
+        validUntil: undefined,
+        publishedAt: new Date("2020-11-02"),
+        lastChangedAt: new Date("2021-01-01T01:00:00Z"),
+        inputLabel: "Anschrift Postfach",
+        outputLabel: "Anschrift Postfach",
+        elementType: SchemaElementArt.Harmonisiert,
+        inputHelp: undefined,
+        outputHelp: undefined,
+        versionHint: undefined,
         rules: [],
         children: [],
       },
