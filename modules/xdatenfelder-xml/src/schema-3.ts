@@ -1,5 +1,3 @@
-// See: https://www.xrepository.de/details/urn:xoev-de:xprozess:codeliste:status
-
 import { ValidationError } from "./errors";
 
 export const enum RegelTyp {
@@ -45,6 +43,7 @@ export function parseSchemaElementArt(value: string): SchemaElementArt {
   }
 }
 
+// See: https://www.xrepository.de/details/urn:xoev-de:xprozess:codeliste:status
 // Version: 2022-07-12
 export const enum FreigabeStatus {
   InPlanung = "1",
@@ -91,8 +90,13 @@ export function parseDate(value: string): Date {
 }
 
 export interface NormReference {
-  link?: string;
   value: string;
+  link?: string;
+}
+
+export interface Keyword {
+  value: string;
+  uri?: string;
 }
 
 export interface BaseData {
@@ -110,7 +114,8 @@ export interface BaseData {
   publishedAt?: Date;
   lastChangedAt: Date;
   normReferences: NormReference[];
-  // tags
+  // relation
+  keywords: Keyword[];
 }
 
 export interface ElementData extends BaseData {
@@ -141,12 +146,12 @@ export interface Rule {
   description?: string;
   freeFormDefinition?: string;
   normReferences: NormReference[];
-  // tags (Stichwort)
+  keywords: Keyword[];
   creator?: string;
   lastChangedAt: Date;
   type: RegelTyp;
   // params
-  // tagets
+  // targets
   script?: string;
   // errors
 }

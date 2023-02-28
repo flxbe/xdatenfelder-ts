@@ -34,6 +34,9 @@
         </xdf:schemaelementart>
         <xdf:hilfetextEingabe>Eingabehilfe</xdf:hilfetextEingabe>
         <xdf:hilfetextAusgabe>Ausgabehilfe</xdf:hilfetextAusgabe>
+        <xdf:stichwort uri="some reference">
+            Ein Stichwort
+        </xdf:stichwort>
         <xdf:regel>
             <xdf:identifikation>
                 <xdf:id>R60000000019</xdf:id>
@@ -41,8 +44,8 @@
             </xdf:identifikation>
             <xdf:name>Anschrift Inland Straßenanschrift / Anschrift Inland Postfachanschrift</xdf:name>
             <xdf:beschreibung>Eine Regelbeschreibung</xdf:beschreibung>
-            <xdf:freitextRegel>Es muss entweder Feldgruppe G60000086 "Anschrift Inland Straßenanschrift" oder Feldgruppe
-G60000087 "Anschrift Inland Postfachanschrift" befüllt werden.
+            <xdf:freitextRegel>
+                Es muss entweder Feldgruppe G60000086 "Anschrift Inland Straßenanschrift" oder Feldgruppe G60000087 "Anschrift Inland Postfachanschrift" befüllt werden.
             </xdf:freitextRegel>
             <xdf:bezug link="some reference link">
                 Eine Bezugsquelle
@@ -53,6 +56,9 @@ G60000087 "Anschrift Inland Postfachanschrift" befüllt werden.
                 <code>V</code>
             </xdf:typ>
             <xdf:skript>some script content</xdf:skript>
+            <xdf:stichwort uri="some reference">
+                Ein Stichwort
+            </xdf:stichwort>
         </xdf:regel>
         <xdf:struktur>
             <xdf:anzahl>0:1</xdf:anzahl>
@@ -247,7 +253,7 @@ G60000087 "Anschrift Inland Postfachanschrift" befüllt werden.
                                 <xdf:beschreibung>Kompatibilität zu EPA in TR XhD v 1.4 sollte Feldlänge min. 44. Laut
                                     PAuswV 2*25 = 50 Zeichen. Laut Xinneres.Meldeanschrift.Wohnort Version 8 = 40
                                     Zeichen.&#xD;
-                                    Laut BSI TR-03123                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <!-- FIXME: Das hier stehende Zeichen '≤' ist bei String.Latin nicht erlaubt! --> 105 Zeichen.
+                                    Laut BSI TR-03123                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <!-- FIXME: Das hier stehende Zeichen '≤' ist bei String.Latin nicht erlaubt! --> 105 Zeichen.
                                 </xdf:beschreibung>
                                 <xdf:definition>Enthält den Namen eines Ortes (Gemeinde, Ortschaft oder Stadt).
                                 </xdf:definition>
@@ -470,7 +476,7 @@ G60000087 "Anschrift Inland Postfachanschrift" befüllt werden.
                                 <xdf:beschreibung>Kompatibilität zu EPA in TR XhD v 1.4 sollte Feldlänge min. 44. Laut
                                     PAuswV 2*25 = 50 Zeichen. Laut Xinneres.Meldeanschrift.Wohnort Version 8 = 40
                                     Zeichen.&#xD;
-                                    Laut BSI TR-03123                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <!-- FIXME: siehe oben ≤ --> 105 Zeichen.
+                                    Laut BSI TR-03123                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <!-- FIXME: siehe oben ≤ --> 105 Zeichen.
                                 </xdf:beschreibung>
                                 <xdf:definition>Enthält den Namen eines Ortes (Gemeinde, Ortschaft oder Stadt).
                                 </xdf:definition>

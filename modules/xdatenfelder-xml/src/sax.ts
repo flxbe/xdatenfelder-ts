@@ -225,7 +225,6 @@ export class StateParser {
     this.xmlParser = sax.parser(true, {
       trim: true,
       xmlns: true,
-      normalize: true,
     });
 
     this.xmlParser.onerror = (error) => {

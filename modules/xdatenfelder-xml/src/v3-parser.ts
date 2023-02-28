@@ -34,6 +34,7 @@ import {
   RegelTyp,
   parseRegelTyp,
   NormReference,
+  Keyword,
 } from "./schema-3";
 import { assert } from "./util";
 
@@ -153,6 +154,7 @@ interface BaseContainer {
   publishedAt: Value<Date | undefined>;
   lastChangedAt: Value<Date>;
   normReferences: NormReference[];
+  keywords: Keyword[];
 }
 
 interface ElementContainer extends BaseContainer {
@@ -178,6 +180,7 @@ function createElementContainer(): ElementContainer {
     publishedAt: new Value("xdf:veroeffentlichungsdatum"),
     lastChangedAt: new Value("xdf:letzteAenderung"),
     normReferences: [],
+    keywords: [],
     inputLabel: new Value("xdf:bezeichnungEingabe"),
     outputLabel: new Value("xdf:bezeichnungAusgabe"),
     elementType: new Value("xdf:schemaelementart"),
@@ -204,6 +207,7 @@ function parseElementData(container: ElementContainer): ElementData {
     publishedAt: container.publishedAt.get(),
     lastChangedAt: container.lastChangedAt.unwrap(),
     normReferences: container.normReferences,
+    keywords: container.keywords,
     inputLabel: container.inputLabel.unwrap(),
     outputLabel: container.outputLabel.get(),
     elementType: container.elementType.unwrap(),
@@ -339,6 +343,10 @@ class DataGroupState extends State {
           this.elementContainer.validUntil,
           parseDate
         );
+      case "xdf:stichwort":
+        return new KeywordState(this, tag, (keyword) =>
+          this.elementContainer.keywords.push(keyword)
+        );
       default:
         throw new UnexpectedTagError(tag.name);
     }
@@ -473,6 +481,7 @@ class RuleState extends State {
   private type: Value<RegelTyp> = new Value("xdf:typ");
   private script: Value<string | undefined> = new Value("xdf:skript");
   private normReferences: NormReference[] = [];
+  private keywords: Keyword[] = [];
 
   constructor(parent: State, onFinish: FinishFn<Rule>) {
     super();
@@ -503,6 +512,11 @@ class RuleState extends State {
         return new NormReferenceState(this, tag, (ref) =>
           this.normReferences.push(ref)
         );
+      case "xdf:stichwort":
+        return new KeywordState(this, tag, (keyword) =>
+          this.keywords.push(keyword)
+        );
+
       default:
         throw new UnexpectedTagError(tag.name);
     }
@@ -524,9 +538,61 @@ class RuleState extends State {
       type: this.type.unwrap(),
       script: this.script.get(),
       normReferences: this.normReferences,
+      keywords: this.keywords,
     };
 
     this.onFinish(rule);
+
+    return this.parent;
+  }
+}
+
+class KeywordState extends State {
+  private parent: State;
+  private uri: string | undefined;
+  private onFinish: FinishFn<Keyword>;
+  private value: Value<string | undefined> = new Value("xdf:stichwort");
+
+  constructor(
+    parent: State,
+    tag: sax.QualifiedTag,
+    onFinish: FinishFn<NormReference>
+  ) {
+    super();
+
+    this.parent = parent;
+    this.onFinish = onFinish;
+
+    const attribute = tag.attributes["uri"];
+    if (attribute === undefined) {
+      this.uri = undefined;
+    } else {
+      assert(typeof attribute === "object");
+      this.uri = attribute.value;
+    }
+  }
+
+  public onText(text: string): void {
+    this.value.set(text);
+  }
+
+  public onOpenTag(tag: sax.QualifiedTag, _context: Context): State {
+    throw new UnexpectedTagError(tag.name);
+  }
+
+  public onCloseTag(tagName: string, _context: Context): State {
+    expectTag(tagName, "xdf:stichwort");
+
+    const value = this.value.get();
+    if (value !== undefined) {
+      this.onFinish({ value, uri: this.uri });
+    } else {
+      if (this.uri !== undefined) {
+        throw new ValidationError(
+          "<xdf:stichwort> with an uri attribute needs a non-empty content"
+        );
+      }
+    }
 
     return this.parent;
   }

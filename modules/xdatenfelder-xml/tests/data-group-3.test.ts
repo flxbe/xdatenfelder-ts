@@ -37,6 +37,12 @@ describe("Loading a schema from xml", () => {
             link: undefined,
           },
         ],
+        keywords: [
+          {
+            value: "Ein Stichwort",
+            uri: "some reference",
+          },
+        ],
         rules: ["R60000000019"],
         children: [
           {
@@ -68,6 +74,7 @@ describe("Loading a schema from xml", () => {
           "Geben Sie die Anschrift mit Straße, Hausnummer, Postleitzahl und Ort an. Eine Angabe eines Postfachs ist nicht möglich.",
         outputHelp: undefined,
         normReferences: [],
+        keywords: [],
         rules: [],
         children: [],
       },
@@ -98,6 +105,7 @@ describe("Loading a schema from xml", () => {
             link: undefined,
           },
         ],
+        keywords: [],
         rules: [],
         children: [],
       },
@@ -119,6 +127,12 @@ describe("Loading a schema from xml", () => {
           {
             link: "some reference link",
             value: "Eine Bezugsquelle",
+          },
+        ],
+        keywords: [
+          {
+            value: "Ein Stichwort",
+            uri: "some reference",
           },
         ],
       },
