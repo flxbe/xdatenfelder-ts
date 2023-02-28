@@ -2,6 +2,28 @@
 
 import { ValidationError } from "./errors";
 
+export const enum RegelTyp {
+  Komplex = "K",
+  Multiplizitaet = "M",
+  Validierung = "V",
+  Berechnung = "B",
+}
+
+export function parseRegelTyp(value: string): RegelTyp {
+  switch (value) {
+    case "K":
+      return RegelTyp.Komplex;
+    case "M":
+      return RegelTyp.Multiplizitaet;
+    case "V":
+      return RegelTyp.Validierung;
+    case "B":
+      return RegelTyp.Berechnung;
+    default:
+      throw new ValidationError(`Invalid value in <xdf:typ>: ${value}`);
+  }
+}
+
 export const enum SchemaElementArt {
   Abstrakt = "ABS",
   Harmonisiert = "HAR",
@@ -17,7 +39,9 @@ export function parseSchemaElementArt(value: string): SchemaElementArt {
     case "RNG":
       return SchemaElementArt.Rechtsnormgebunden;
     default:
-      throw new ValidationError(`Invalid value for schemaelementart: ${value}`);
+      throw new ValidationError(
+        `Invalid value in <xdf:schemaelementart>: ${value}`
+      );
   }
 }
 
@@ -52,7 +76,9 @@ export function parseFreigabeStatus(value: string): FreigabeStatus {
     case "8":
       return FreigabeStatus.VorgesehenZumLoeschen;
     default:
-      throw new ValidationError(`Invalid value for freigabestatus: ${value}`);
+      throw new ValidationError(
+        `Invalid value in <xdf:freigabestatus>: ${value}`
+      );
   }
 }
 
@@ -62,6 +88,11 @@ export function parseDate(value: string): Date {
   } catch (error: unknown) {
     throw new ValidationError(`Invalid date: ${value}`);
   }
+}
+
+export interface NormReference {
+  link?: string;
+  value: string;
 }
 
 export interface BaseData {
@@ -78,7 +109,7 @@ export interface BaseData {
   versionHint?: string;
   publishedAt?: Date;
   lastChangedAt: Date;
-  // relation
+  normReferences: NormReference[];
   // tags
 }
 
@@ -93,6 +124,7 @@ export interface ElementData extends BaseData {
 export interface ChildRef {
   type: "dataGroup" | "dataField";
   identifier: string;
+  normReferences: NormReference[];
 }
 
 export interface DataGroup extends ElementData {
@@ -107,4 +139,14 @@ export interface Rule {
   version: string;
   name: string;
   description?: string;
+  freeFormDefinition?: string;
+  normReferences: NormReference[];
+  // tags (Stichwort)
+  creator?: string;
+  lastChangedAt: Date;
+  type: RegelTyp;
+  // params
+  // tagets
+  script?: string;
+  // errors
 }

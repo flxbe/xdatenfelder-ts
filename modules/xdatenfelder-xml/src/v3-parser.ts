@@ -18,6 +18,7 @@ import {
   DuplicateTagError,
   MissingChildNodeError,
   InternalParserError,
+  ValidationError,
 } from "./errors";
 import {
   DataGroup,
@@ -30,7 +31,11 @@ import {
   SchemaElementArt,
   ElementData,
   parseSchemaElementArt,
+  RegelTyp,
+  parseRegelTyp,
+  NormReference,
 } from "./schema-3";
+import { assert } from "./util";
 
 class RootState extends State {
   public value: Value<DataGroupMessage3> = new Value(
@@ -147,6 +152,7 @@ interface BaseContainer {
   versionHint: Value<string | undefined>;
   publishedAt: Value<Date | undefined>;
   lastChangedAt: Value<Date>;
+  normReferences: NormReference[];
 }
 
 interface ElementContainer extends BaseContainer {
@@ -171,6 +177,7 @@ function createElementContainer(): ElementContainer {
     versionHint: new Value("xdf:versionshinweis"),
     publishedAt: new Value("xdf:veroeffentlichungsdatum"),
     lastChangedAt: new Value("xdf:letzteAenderung"),
+    normReferences: [],
     inputLabel: new Value("xdf:bezeichnungEingabe"),
     outputLabel: new Value("xdf:bezeichnungAusgabe"),
     elementType: new Value("xdf:schemaelementart"),
@@ -196,6 +203,7 @@ function parseElementData(container: ElementContainer): ElementData {
     versionHint: container.versionHint.get(),
     publishedAt: container.publishedAt.get(),
     lastChangedAt: container.lastChangedAt.unwrap(),
+    normReferences: container.normReferences,
     inputLabel: container.inputLabel.unwrap(),
     outputLabel: container.outputLabel.get(),
     elementType: container.elementType.unwrap(),
@@ -219,7 +227,7 @@ class DataGroupState extends State {
     this.onFinish = onFinish;
   }
 
-  public onOpenTag(tag: sax.QualifiedTag | sax.Tag, context: Context): State {
+  public onOpenTag(tag: sax.QualifiedTag, context: Context): State {
     switch (tag.name) {
       case "xdf:identifikation":
         return new IdentificationState(
@@ -257,6 +265,7 @@ class DataGroupState extends State {
             this.children.push({
               type: "dataGroup",
               identifier: dataGroup.identifier,
+              normReferences: child.normReferences,
             });
           } else {
             // TODO: Parse datafield
@@ -274,7 +283,9 @@ class DataGroupState extends State {
           this.elementContainer.stateSetBy
         );
       case "xdf:bezug":
-        return new NoOpState(this);
+        return new NormReferenceState(this, tag, (ref) =>
+          this.elementContainer.normReferences.push(ref)
+        );
       case "xdf:versionshinweis":
         return new OptionalStringNodeState(
           this,
@@ -350,14 +361,15 @@ class DataGroupState extends State {
 }
 
 type Child =
-  | { type: "dataGroup"; dataGroup: DataGroup }
-  | { type: "dataField" };
+  | { type: "dataGroup"; dataGroup: DataGroup; normReferences: NormReference[] }
+  | { type: "dataField"; normReferences: NormReference[] };
 
 class StructureState extends State {
   private parent: State;
   private onFinish: FinishFn<Child>;
 
-  private value: Value<Child> = new Value("xdf:enthaelt");
+  private element: Value<Element> = new Value("xdf:enthaelt");
+  private normReferences: NormReference[] = [];
 
   constructor(parent: State, onFinish: FinishFn<Child>) {
     super();
@@ -366,13 +378,16 @@ class StructureState extends State {
     this.onFinish = onFinish;
   }
 
-  public onOpenTag(tag: sax.QualifiedTag | sax.Tag, _context: Context): State {
+  public onOpenTag(tag: sax.QualifiedTag, _context: Context): State {
     switch (tag.name) {
-      case "xdf:anzahl":
       case "xdf:bezug":
+        return new NormReferenceState(this, tag, (ref) =>
+          this.normReferences.push(ref)
+        );
+      case "xdf:anzahl":
         return new NoOpState(this);
       case "xdf:enthaelt":
-        return new ContainsState(this, this.value);
+        return new ContainsState(this, this.element);
       default:
         throw new UnexpectedTagError(tag.name);
     }
@@ -381,27 +396,33 @@ class StructureState extends State {
   public onCloseTag(tagName: string, _context: Context): State {
     expectTag(tagName, "xdf:struktur");
 
-    const child = this.value.unwrap();
+    const element = this.element.unwrap();
+    const child = { ...element, normReferences: this.normReferences };
+
     this.onFinish(child);
 
     return this.parent;
   }
 }
 
+type Element =
+  | { type: "dataGroup"; dataGroup: DataGroup }
+  | { type: "dataField" };
+
 class ContainsState extends State {
   private parent: State;
-  private parentValue: Value<Child>;
+  private parentValue: Value<Element>;
 
-  private value?: Child = undefined;
+  private value?: Element = undefined;
 
-  constructor(parent: State, value: Value<Child>) {
+  constructor(parent: State, value: Value<Element>) {
     super();
 
     this.parent = parent;
     this.parentValue = value;
   }
 
-  public onOpenTag(tag: sax.QualifiedTag | sax.Tag, _context: Context): State {
+  public onOpenTag(tag: sax.QualifiedTag, _context: Context): State {
     if (this.value !== undefined) {
       throw new DuplicateTagError("xdf:datenfeld | xdf:datenfeldgruppe");
     }
@@ -442,6 +463,16 @@ class RuleState extends State {
   private description: Value<string | undefined> = new Value(
     "xdf:beschreibung"
   );
+  private freeFormDefinition: Value<string | undefined> = new Value(
+    "xdf:freitextRegel"
+  );
+  private creator: Value<string | undefined> = new Value(
+    "xdf:fachlicherErsteller"
+  );
+  private lastChangedAt: Value<Date> = new Value("xdf:letzteAenderung");
+  private type: Value<RegelTyp> = new Value("xdf:typ");
+  private script: Value<string | undefined> = new Value("xdf:skript");
+  private normReferences: NormReference[] = [];
 
   constructor(parent: State, onFinish: FinishFn<Rule>) {
     super();
@@ -450,7 +481,7 @@ class RuleState extends State {
     this.onFinish = onFinish;
   }
 
-  public onOpenTag(tag: sax.QualifiedTag | sax.Tag): State {
+  public onOpenTag(tag: sax.QualifiedTag): State {
     switch (tag.name) {
       case "xdf:identifikation":
         return new IdentificationState(this, this.identification);
@@ -459,12 +490,19 @@ class RuleState extends State {
       case "xdf:beschreibung":
         return new OptionalStringNodeState(this, this.description);
       case "xdf:freitextRegel":
-      case "xdf:bezug":
+        return new OptionalStringNodeState(this, this.freeFormDefinition);
       case "xdf:fachlicherErsteller":
+        return new OptionalStringNodeState(this, this.creator);
       case "xdf:letzteAenderung":
+        return new ValueNodeState(this, this.lastChangedAt, parseDate);
       case "xdf:typ":
+        return new CodeNodeState(this, this.type, parseRegelTyp);
       case "xdf:skript":
-        return new NoOpState(this);
+        return new OptionalStringNodeState(this, this.script);
+      case "xdf:bezug":
+        return new NormReferenceState(this, tag, (ref) =>
+          this.normReferences.push(ref)
+        );
       default:
         throw new UnexpectedTagError(tag.name);
     }
@@ -474,17 +512,72 @@ class RuleState extends State {
     expectTag(tagName, "xdf:regel");
 
     const [identifier, version] = this.identification.unwrap();
-    const name = this.name.unwrap();
-    const description = this.description.get();
 
     const rule = {
       identifier,
       version,
-      name,
-      description,
+      name: this.name.unwrap(),
+      description: this.description.get(),
+      freeFormDefinition: this.freeFormDefinition.get(),
+      creator: this.creator.get(),
+      lastChangedAt: this.lastChangedAt.unwrap(),
+      type: this.type.unwrap(),
+      script: this.script.get(),
+      normReferences: this.normReferences,
     };
 
     this.onFinish(rule);
+
+    return this.parent;
+  }
+}
+
+class NormReferenceState extends State {
+  private parent: State;
+  private link: string | undefined;
+  private onFinish: FinishFn<NormReference>;
+  private value: Value<string | undefined> = new Value("xdf:bezug");
+
+  constructor(
+    parent: State,
+    tag: sax.QualifiedTag,
+    onFinish: FinishFn<NormReference>
+  ) {
+    super();
+
+    this.parent = parent;
+    this.onFinish = onFinish;
+
+    const attribute = tag.attributes["link"];
+    if (attribute === undefined) {
+      this.link = undefined;
+    } else {
+      assert(typeof attribute === "object");
+      this.link = attribute.value;
+    }
+  }
+
+  public onText(text: string): void {
+    this.value.set(text);
+  }
+
+  public onOpenTag(tag: sax.QualifiedTag, _context: Context): State {
+    throw new UnexpectedTagError(tag.name);
+  }
+
+  public onCloseTag(tagName: string, _context: Context): State {
+    expectTag(tagName, "xdf:bezug");
+
+    const value = this.value.get();
+    if (value !== undefined) {
+      this.onFinish({ value, link: this.link });
+    } else {
+      if (this.link !== undefined) {
+        throw new ValidationError(
+          "<xdf:bezug> with a link attribute needs a non-empty content"
+        );
+      }
+    }
 
     return this.parent;
   }

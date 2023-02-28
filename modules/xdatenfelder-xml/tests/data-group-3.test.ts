@@ -1,7 +1,7 @@
 import { open } from "node:fs/promises";
 import { describe, expect, test } from "@jest/globals";
 import { DataGroupMessage3 } from "../src";
-import { FreigabeStatus, SchemaElementArt } from "../src/schema-3";
+import { FreigabeStatus, RegelTyp, SchemaElementArt } from "../src/schema-3";
 
 describe("Loading a schema from xml", () => {
   test("Should correctly load the schema", async () => {
@@ -31,10 +31,20 @@ describe("Loading a schema from xml", () => {
         outputLabel: "Anschrift in Deutschland",
         inputHelp: "Eingabehilfe",
         outputHelp: "Ausgabehilfe",
+        normReferences: [
+          {
+            value: "Rechtsbezug",
+            link: undefined,
+          },
+        ],
         rules: ["R60000000019"],
         children: [
-          { type: "dataGroup", identifier: "G60000000086" },
-          { type: "dataGroup", identifier: "G60000000087" },
+          {
+            type: "dataGroup",
+            normReferences: [{ value: "Rechtsbezug", link: undefined }],
+            identifier: "G60000000086",
+          },
+          { type: "dataGroup", normReferences: [], identifier: "G60000000087" },
         ],
       },
       G60000000086: {
@@ -57,6 +67,7 @@ describe("Loading a schema from xml", () => {
         inputHelp:
           "Geben Sie die Anschrift mit Straße, Hausnummer, Postleitzahl und Ort an. Eine Angabe eines Postfachs ist nicht möglich.",
         outputHelp: undefined,
+        normReferences: [],
         rules: [],
         children: [],
       },
@@ -80,6 +91,13 @@ describe("Loading a schema from xml", () => {
         inputHelp: undefined,
         outputHelp: undefined,
         versionHint: undefined,
+        normReferences: [
+          {
+            value:
+              "XInneres.PostalischeInlandsanschrift.Postfachanschrift Version 8",
+            link: undefined,
+          },
+        ],
         rules: [],
         children: [],
       },
@@ -91,6 +109,18 @@ describe("Loading a schema from xml", () => {
         version: "1.2.0",
         name: "Anschrift Inland Straßenanschrift / Anschrift Inland Postfachanschrift",
         description: "Eine Regelbeschreibung",
+        freeFormDefinition:
+          'Es muss entweder Feldgruppe G60000086 "Anschrift Inland Straßenanschrift" oder Feldgruppe G60000087 "Anschrift Inland Postfachanschrift" befüllt werden.',
+        creator: "FIM Baustein Datenfelder",
+        lastChangedAt: new Date("2021-03-29T10:00:00Z"),
+        type: RegelTyp.Validierung,
+        script: "some script content",
+        normReferences: [
+          {
+            link: "some reference link",
+            value: "Eine Bezugsquelle",
+          },
+        ],
       },
     });
   });
@@ -121,7 +151,7 @@ describe("Loading a schema from xml", () => {
 
   test("should fail for invalid release state", async () => {
     await expect(loadMessage("invalid-freigabestatus.xml")).rejects.toThrow(
-      "Invalid value for freigabestatus: 10 (line 18, column 27)"
+      "Invalid value in <xdf:freigabestatus>: 10 (line 18, column 27)"
     );
   });
 

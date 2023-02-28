@@ -222,7 +222,11 @@ export class StateParser {
       dataGroups: {},
       rules: {},
     };
-    this.xmlParser = sax.parser(true, { trim: true, xmlns: true });
+    this.xmlParser = sax.parser(true, {
+      trim: true,
+      xmlns: true,
+      normalize: true,
+    });
 
     this.xmlParser.onerror = (error) => {
       throw error;
