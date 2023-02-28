@@ -92,6 +92,12 @@ describe("Loading a schema from xml", () => {
       "Invalid value for freigabestatus: 10 (line 18, column 27)"
     );
   });
+
+  test("should fail for unknown namespace", async () => {
+    await expect(loadMessage("unknown-namespace.xml")).rejects.toThrow(
+      "Unknown namespace xdf: urn:xoev-de:fim:standard:xdatenfelder_unknown (line 3, column 144)"
+    );
+  });
 });
 
 async function loadMessage(name: string): Promise<DataGroupMessage3> {

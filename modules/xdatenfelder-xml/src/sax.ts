@@ -7,7 +7,9 @@ import {
   InternalParserError,
   UnexpectedTagError,
   ParserError,
+  UnknownNamespaceError,
 } from "./errors";
+import { assert } from "./util";
 
 export interface Context {
   dataGroups: Record<string, DataGroup>;
@@ -65,10 +67,7 @@ export abstract class State {
     throw new InternalParserError(`Got unexpected text block: ${text}`);
   }
 
-  public abstract onOpenTag(
-    tag: sax.QualifiedTag | sax.Tag,
-    context: Context
-  ): State;
+  public abstract onOpenTag(tag: sax.QualifiedTag, context: Context): State;
 
   public abstract onCloseTag(tagName: string, context: Context): State;
 }
@@ -95,7 +94,7 @@ export class ValueNodeState<T> extends State {
     this.value.set(value);
   }
 
-  public onOpenTag(tag: sax.QualifiedTag | sax.Tag, _context: Context): State {
+  public onOpenTag(tag: sax.QualifiedTag, _context: Context): State {
     throw new UnexpectedTagError(tag.name);
   }
 
@@ -132,7 +131,7 @@ export class OptionalValueNodeState<T> extends State {
     this.value.set(value);
   }
 
-  public onOpenTag(tag: sax.QualifiedTag | sax.Tag, _context: Context): State {
+  public onOpenTag(tag: sax.QualifiedTag, _context: Context): State {
     throw new UnexpectedTagError(tag.name);
   }
 
@@ -143,59 +142,15 @@ export class OptionalValueNodeState<T> extends State {
   }
 }
 
-export class StringNodeState extends State {
-  private parent: State;
-  private value: Value<string>;
-
+export class StringNodeState extends ValueNodeState<string> {
   constructor(parent: State, value: Value<string>) {
-    super();
-
-    this.parent = parent;
-    this.value = value;
-  }
-
-  public onText(text: string) {
-    this.value.set(text);
-  }
-
-  public onOpenTag(tag: sax.QualifiedTag | sax.Tag, _context: Context): State {
-    throw new UnexpectedTagError(tag.name);
-  }
-
-  public onCloseTag(tagName: string, _context: Context): State {
-    expectTag(tagName, this.value.tagName);
-
-    if (!this.value.isFilled()) {
-      throw new MissingContentError(this.value.tagName);
-    }
-
-    return this.parent;
+    super(parent, value, (value) => value);
   }
 }
 
-export class OptionalStringNodeState extends State {
-  private parent: State;
-  private value: Value<string | undefined>;
-
+export class OptionalStringNodeState extends OptionalValueNodeState<string> {
   constructor(parent: State, value: Value<string | undefined>) {
-    super();
-
-    this.parent = parent;
-    this.value = value;
-  }
-
-  public onText(text: string) {
-    this.value.set(text);
-  }
-
-  public onOpenTag(tag: sax.QualifiedTag | sax.Tag, _context: Context): State {
-    throw new UnexpectedTagError(tag.name);
-  }
-
-  public onCloseTag(tagName: string, _context: Context): State {
-    expectTag(tagName, this.value.tagName);
-
-    return this.parent;
+    super(parent, value, (value) => value);
   }
 }
 
@@ -218,7 +173,7 @@ export class CodeNodeState<T> extends State {
     this.parseValue = parseValue;
   }
 
-  public onOpenTag(tag: sax.QualifiedTag | sax.Tag, _context: Context): State {
+  public onOpenTag(tag: sax.QualifiedTag, _context: Context): State {
     expectTag(tag.name, "code");
 
     return new ValueNodeState(this, this.childValue, this.parseValue);
@@ -244,10 +199,7 @@ export class NoOpState extends State {
 
   public onText(text: string) {}
 
-  public onOpenTag(
-    _tag: sax.QualifiedTag | sax.Tag,
-    _context: Context
-  ): NoOpState {
+  public onOpenTag(_tag: sax.QualifiedTag, _context: Context): NoOpState {
     return new NoOpState(this);
   }
 
@@ -258,17 +210,19 @@ export class NoOpState extends State {
 
 export class StateParser {
   private state: State;
+  private namespace: string;
   private context: Context;
   private xmlParser: sax.SAXParser;
 
-  constructor(rootState: State) {
+  constructor(rootState: State, namespace: string) {
     this.state = rootState;
+    this.namespace = namespace;
     this.context = {
       dataFields: {},
       dataGroups: {},
       rules: {},
     };
-    this.xmlParser = sax.parser(true, { trim: true });
+    this.xmlParser = sax.parser(true, { trim: true, xmlns: true });
 
     this.xmlParser.onerror = (error) => {
       throw error;
@@ -277,9 +231,20 @@ export class StateParser {
     this.xmlParser.ontext = (text) => {
       this.state.onText(text);
     };
+
+    this.xmlParser.onopennamespace = (ns) => {
+      if (ns.prefix === "xdf") {
+        if (ns.uri !== this.namespace) {
+          throw new UnknownNamespaceError(ns.prefix, ns.uri);
+        }
+      }
+    };
+
     this.xmlParser.onopentag = (tag) => {
+      assert("ns" in tag);
       this.state = this.state.onOpenTag(tag, this.context);
     };
+
     this.xmlParser.onclosetag = (tagName) => {
       this.state = this.state.onCloseTag(tagName, this.context);
     };

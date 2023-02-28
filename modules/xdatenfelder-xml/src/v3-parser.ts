@@ -419,7 +419,10 @@ class DataGroupMessageParser {
   private stateParser: StateParser;
 
   constructor() {
-    this.stateParser = new StateParser(new RootState());
+    this.stateParser = new StateParser(
+      new RootState(),
+      "urn:xoev-de:fim:standard:xdatenfelder_3.0.0"
+    );
   }
 
   public write(data: string) {

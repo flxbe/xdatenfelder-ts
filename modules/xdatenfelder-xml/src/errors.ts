@@ -24,6 +24,13 @@ export class InternalParserError extends Error {
   }
 }
 
+export class UnknownNamespaceError extends InternalParserError {
+  constructor(prefix: string, uri: string) {
+    super(`Unknown namespace ${prefix}: ${uri}`);
+    this.name = "UnknownNamespaceError";
+  }
+}
+
 export class ValidationError extends InternalParserError {
   constructor(message: string) {
     super(message);
