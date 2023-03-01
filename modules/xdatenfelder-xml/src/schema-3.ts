@@ -2,6 +2,29 @@ import { ValidationError } from "./errors";
 
 export const NS_XD3 = "urn:xoev-de:fim:standard:xdatenfelder_3.0.0";
 
+/**
+ * https://www.xrepository.de/details/urn:xoev-de:fim-datenfelder:codeliste:relation
+ * Version 1.0
+ */
+export const enum RelationType {
+  Abgeleitet = "ABL",
+  Ersetzt = "ERS",
+  Aequivalent = "EQU",
+}
+
+export function parseRelationType(value: string): RelationType {
+  switch (value) {
+    case "ABL":
+      return RelationType.Abgeleitet;
+    case "ERS":
+      return RelationType.Ersetzt;
+    case "EQU":
+      return RelationType.Aequivalent;
+    default:
+      throw new ValidationError(`Invalid value in <xdf:praedikat>: ${value}`);
+  }
+}
+
 export const enum RegelTyp {
   Komplex = "K",
   Multiplizitaet = "M",
@@ -101,6 +124,11 @@ export interface Keyword {
   uri?: string;
 }
 
+export interface Relation {
+  type: RelationType;
+  identifier: string;
+}
+
 export interface BaseData {
   identifier: string;
   id: string;
@@ -117,7 +145,7 @@ export interface BaseData {
   publishedAt?: Date;
   lastChangedAt: Date;
   normReferences: NormReference[];
-  // relation
+  relations: Relation[];
   keywords: Keyword[];
 }
 

@@ -32,10 +32,13 @@ import {
   ElementData,
   parseSchemaElementArt,
   RegelTyp,
+  RelationType,
   parseRegelTyp,
   NormReference,
   Keyword,
   NS_XD3,
+  Relation,
+  parseRelationType,
 } from "./schema-3";
 import { assert } from "./util";
 
@@ -151,6 +154,7 @@ interface BaseContainer {
   lastChangedAt: Value<Date>;
   normReferences: NormReference[];
   keywords: Keyword[];
+  relations: Relation[];
 }
 
 interface ElementContainer extends BaseContainer {
@@ -177,6 +181,7 @@ function createElementContainer(): ElementContainer {
     lastChangedAt: new Value("xdf:letzteAenderung"),
     normReferences: [],
     keywords: [],
+    relations: [],
     inputLabel: new Value("xdf:bezeichnungEingabe"),
     outputLabel: new Value("xdf:bezeichnungAusgabe"),
     elementType: new Value("xdf:schemaelementart"),
@@ -206,6 +211,7 @@ function parseElementData(container: ElementContainer): ElementData {
     lastChangedAt: container.lastChangedAt.unwrap(),
     normReferences: container.normReferences,
     keywords: container.keywords,
+    relations: container.relations,
     inputLabel: container.inputLabel.unwrap(),
     outputLabel: container.outputLabel.get(),
     elementType: container.elementType.unwrap(),
@@ -343,6 +349,10 @@ class DataGroupState extends State {
         return new KeywordState(this, tag, (keyword) =>
           this.elementContainer.keywords.push(keyword)
         );
+      case "xdf:relation":
+        return new RelationState(this, (relation) =>
+          this.elementContainer.relations.push(relation)
+        );
       default:
         throw new UnexpectedTagError(tag.name);
     }
@@ -447,6 +457,42 @@ class ContainsState extends State {
     }
 
     this.parentValue.set(this.value);
+
+    return this.parent;
+  }
+}
+
+class RelationState extends State {
+  private parent: State;
+  private onFinish: FinishFn<Relation>;
+
+  private type: Value<RelationType> = new Value("xdf:praedikat");
+  private identification: Value<[string, string]> = new Value("xdf:objekt");
+
+  constructor(parent: State, onFinish: FinishFn<Relation>) {
+    super();
+
+    this.parent = parent;
+    this.onFinish = onFinish;
+  }
+
+  public onOpenTag(tag: sax.QualifiedTag): State {
+    switch (tag.name) {
+      case "xdf:praedikat":
+        return new CodeNodeState(this, this.type, parseRelationType);
+      case "xdf:objekt":
+        return new IdentificationState(this, this.identification);
+      default:
+        throw new UnexpectedTagError(tag.name);
+    }
+  }
+
+  public onCloseTag(_context: Context): State {
+    const type = this.type.unwrap();
+    const [id, version] = this.identification.unwrap();
+    const identifier = `${id}:${version}`;
+
+    this.onFinish({ type, identifier });
 
     return this.parent;
   }

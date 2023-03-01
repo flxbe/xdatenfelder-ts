@@ -1,7 +1,12 @@
 import { open } from "node:fs/promises";
 import { describe, expect, test } from "@jest/globals";
 import { DataGroupMessage3 } from "../src";
-import { FreigabeStatus, RegelTyp, SchemaElementArt } from "../src/schema-3";
+import {
+  FreigabeStatus,
+  RegelTyp,
+  SchemaElementArt,
+  RelationType,
+} from "../src/schema-3";
 
 describe("Loading a schema from xml", () => {
   test("Should correctly load the schema", async () => {
@@ -57,6 +62,12 @@ describe("Loading a schema from xml", () => {
             identifier: "G60000000087:1.1.0",
           },
         ],
+        relations: [
+          {
+            type: RelationType.Ersetzt,
+            identifier: "G60000000088:1.1.0",
+          },
+        ],
       },
       "G60000000086:1.2.0": {
         identifier: "G60000000086:1.2.0",
@@ -82,6 +93,7 @@ describe("Loading a schema from xml", () => {
         normReferences: [],
         keywords: [],
         rules: [],
+        relations: [],
         children: [],
       },
       "G60000000087:1.1.0": {
@@ -114,6 +126,7 @@ describe("Loading a schema from xml", () => {
         ],
         keywords: [],
         rules: [],
+        relations: [],
         children: [],
       },
     });
