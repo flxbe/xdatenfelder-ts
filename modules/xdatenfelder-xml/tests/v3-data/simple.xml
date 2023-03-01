@@ -142,6 +142,29 @@
                                 <xdf:vorbefuellung>
                                     <code>keine</code>
                                 </xdf:vorbefuellung>
+                                <xdf:regel>
+                                    <xdf:identifikation>
+                                        <xdf:id>R60000000019</xdf:id>
+                                        <xdf:version>1.2.0</xdf:version>
+                                    </xdf:identifikation>
+                                    <xdf:name>Anschrift Inland Straßenanschrift / Anschrift Inland Postfachanschrift</xdf:name>
+                                    <xdf:beschreibung>Eine Regelbeschreibung</xdf:beschreibung>
+                                    <xdf:freitextRegel>
+                                        Es muss entweder Feldgruppe G60000086 "Anschrift Inland Straßenanschrift" oder Feldgruppe G60000087 "Anschrift Inland Postfachanschrift" befüllt werden.
+                                    </xdf:freitextRegel>
+                                    <xdf:bezug link="some reference link">
+                                        Eine Bezugsquelle
+                                    </xdf:bezug>
+                                    <xdf:fachlicherErsteller>FIM Baustein Datenfelder</xdf:fachlicherErsteller>
+                                    <xdf:letzteAenderung>2021-03-29T10:00:00Z</xdf:letzteAenderung>
+                                    <xdf:typ>
+                                        <code>V</code>
+                                    </xdf:typ>
+                                    <xdf:skript>some script content</xdf:skript>
+                                    <xdf:stichwort uri="some reference">
+                                        Ein Stichwort
+                                    </xdf:stichwort>
+                                </xdf:regel>
                             </xdf:datenfeld>
                         </xdf:enthaelt>
                     </xdf:struktur>

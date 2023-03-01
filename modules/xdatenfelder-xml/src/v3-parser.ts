@@ -30,6 +30,7 @@ import {
   FreigabeStatus,
   SchemaElementArt,
   ElementData,
+  Datentyp,
   parseSchemaElementArt,
   RegelTyp,
   RelationType,
@@ -39,6 +40,11 @@ import {
   NS_XD3,
   Relation,
   parseRelationType,
+  Feldart,
+  parseFeldart,
+  parseDatentyp,
+  Vorbefuellung,
+  parseVorbefuellung,
 } from "./schema-3";
 import { assert } from "./util";
 
@@ -361,6 +367,10 @@ class DataFieldState extends State {
   private onFinish: FinishFn<DataField>;
 
   private elementContainer = createElementContainer();
+  private inputType: Value<Feldart> = new Value("xdf:feldart");
+  private dataType: Value<Datentyp> = new Value("xdf:datentyp");
+  private fillType: Value<Vorbefuellung> = new Value("xdf:vorbefuellung");
+  private rules: string[] = [];
 
   constructor(parent: State, onFinish: FinishFn<DataField>) {
     super();
@@ -377,10 +387,22 @@ class DataFieldState extends State {
 
     switch (tag.name) {
       case "xdf:feldart":
+        return new CodeNodeState(this, this.inputType, parseFeldart);
       case "xdf:datentyp":
+        return new CodeNodeState(this, this.dataType, parseDatentyp);
+      case "xdf:regel":
+        return new RuleState(this, (rule) => this.rules.push(rule.identifier));
+      case "xdf:vorbefuellung":
+        return new CodeNodeState(this, this.fillType, parseVorbefuellung);
       case "xdf:praezisierung":
       case "xdf:inhalt":
-      case "xdf:vorbefuellung":
+      case "xdf:werte":
+      case "xdf:codelisteReferenz":
+      case "xdf:codeKey":
+      case "xdf:nameKey":
+      case "xdf:helpKey":
+      case "xdf:maxSize":
+      case "xdf:mediaType":
         return new NoOpState(this);
       default:
         throw new UnexpectedTagError(tag.name);
@@ -390,8 +412,16 @@ class DataFieldState extends State {
   public onCloseTag(context: Context): State {
     const data = parseElementData(this.elementContainer);
 
-    context.dataFields[data.identifier] = data;
-    this.onFinish(data);
+    const dataField = {
+      ...data,
+      inputType: this.inputType.unwrap(),
+      dataType: this.dataType.unwrap(),
+      fillType: this.fillType.unwrap(),
+      rules: this.rules,
+    };
+
+    context.dataFields[dataField.identifier] = dataField;
+    this.onFinish(dataField);
 
     return this.parent;
   }

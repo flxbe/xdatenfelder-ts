@@ -130,6 +130,10 @@ describe("Loading a schema from xml", () => {
             value: "XInneres.Meldeanschrift.strasse Version 8",
           },
         ],
+        inputType: "input",
+        dataType: "text",
+        fillType: "keine",
+        rules: ["R60000000019:1.2.0"],
       },
     });
     expect(message.rules).toEqual({

@@ -2,6 +2,68 @@ import { ValidationError } from "./errors";
 
 export const NS_XD3 = "urn:xoev-de:fim:standard:xdatenfelder_3.0.0";
 
+export type Vorbefuellung = "keine" | "optional" | "verpflichtend";
+
+export function parseVorbefuellung(value: string): Vorbefuellung {
+  switch (value) {
+    case "keine":
+    case "optional":
+    case "verpflichtend":
+      return value;
+    default:
+      throw new ValidationError(
+        `Invalid value in <xdf:vorbefuellung>: ${value}`
+      );
+  }
+}
+
+export type Datentyp =
+  | "text"
+  | "text_latin"
+  | "date"
+  | "time"
+  | "datetime"
+  | "bool"
+  | "num"
+  | "num_int"
+  | "num_currency"
+  | "file"
+  | "obj";
+
+export function parseDatentyp(value: string): Datentyp {
+  switch (value) {
+    case "text":
+    case "text_latin":
+    case "date":
+    case "time":
+    case "datetime":
+    case "bool":
+    case "num":
+    case "num_int":
+    case "num_currency":
+    case "file":
+    case "obj":
+      return value;
+    default:
+      throw new ValidationError(`Invalid value in <xdf:datentyp>: ${value}`);
+  }
+}
+
+export type Feldart = "input" | "select" | "label" | "hidden" | "locked";
+
+export function parseFeldart(value: string): Feldart {
+  switch (value) {
+    case "input":
+    case "select":
+    case "label":
+    case "hidden":
+    case "locked":
+      return value;
+    default:
+      throw new ValidationError(`Invalid value in <xdf:feldart>: ${value}`);
+  }
+}
+
 /**
  * https://www.xrepository.de/details/urn:xoev-de:fim-datenfelder:codeliste:relation
  * Version 1.0
@@ -169,7 +231,12 @@ export interface DataGroup extends ElementData {
   children: ChildRef[];
 }
 
-export interface DataField extends ElementData {}
+export interface DataField extends ElementData {
+  inputType: Feldart;
+  dataType: Datentyp;
+  fillType: Vorbefuellung;
+  rules: string[];
+}
 
 export interface Rule {
   identifier: string;
