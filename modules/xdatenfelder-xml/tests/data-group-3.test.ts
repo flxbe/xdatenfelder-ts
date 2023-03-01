@@ -10,10 +10,11 @@ describe("Loading a schema from xml", () => {
     expect(message.id).toEqual("65FD4FCC3C8D77FC");
     expect(message.createdAt).toEqual(new Date("2021-04-14T12:49:54.848Z"));
 
-    expect(message.rootDataGroup).toEqual("G60000000088");
+    expect(message.rootDataGroup).toEqual("G60000000088:1.2.0");
     expect(message.dataGroups).toEqual({
-      G60000000088: {
-        identifier: "G60000000088",
+      "G60000000088:1.2.0": {
+        identifier: "G60000000088:1.2.0",
+        id: "G60000000088",
         version: "1.2.0",
         name: "Anschrift Inland",
         description: "Eine Beschreibung",
@@ -43,18 +44,23 @@ describe("Loading a schema from xml", () => {
             uri: "some reference",
           },
         ],
-        rules: ["R60000000019"],
+        rules: ["R60000000019:1.2.0"],
         children: [
           {
             type: "dataGroup",
             normReferences: [{ value: "Rechtsbezug", link: undefined }],
-            identifier: "G60000000086",
+            identifier: "G60000000086:1.2.0",
           },
-          { type: "dataGroup", normReferences: [], identifier: "G60000000087" },
+          {
+            type: "dataGroup",
+            normReferences: [],
+            identifier: "G60000000087:1.1.0",
+          },
         ],
       },
-      G60000000086: {
-        identifier: "G60000000086",
+      "G60000000086:1.2.0": {
+        identifier: "G60000000086:1.2.0",
+        id: "G60000000086",
         version: "1.2.0",
         name: "Anschrift Inland Straßenanschrift",
         description: undefined,
@@ -78,8 +84,9 @@ describe("Loading a schema from xml", () => {
         rules: [],
         children: [],
       },
-      G60000000087: {
-        identifier: "G60000000087",
+      "G60000000087:1.1.0": {
+        identifier: "G60000000087:1.1.0",
+        id: "G60000000087",
         version: "1.1.0",
         name: "Anschrift Inland Postfachanschrift",
         description: undefined,
@@ -112,8 +119,9 @@ describe("Loading a schema from xml", () => {
     });
     expect(message.dataFields).toEqual({});
     expect(message.rules).toEqual({
-      R60000000019: {
-        identifier: "R60000000019",
+      "R60000000019:1.2.0": {
+        identifier: "R60000000019:1.2.0",
+        id: "R60000000019",
         version: "1.2.0",
         name: "Anschrift Inland Straßenanschrift / Anschrift Inland Postfachanschrift",
         description: "Eine Regelbeschreibung",

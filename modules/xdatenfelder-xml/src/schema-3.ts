@@ -103,6 +103,7 @@ export interface Keyword {
 
 export interface BaseData {
   identifier: string;
+  id: string;
   version: string;
   name: string;
   description?: string;
@@ -143,6 +144,7 @@ export interface DataField extends ElementData {}
 
 export interface Rule {
   identifier: string;
+  id: string;
   version: string;
   name: string;
   description?: string;

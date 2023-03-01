@@ -186,10 +186,12 @@ function createElementContainer(): ElementContainer {
 }
 
 function parseElementData(container: ElementContainer): ElementData {
-  const [identifier, version] = container.identification.unwrap();
+  const [id, version] = container.identification.unwrap();
+  const identifier = `${id}:${version}`;
 
   return {
     identifier,
+    id,
     version,
     name: container.name.unwrap(),
     description: container.description.get(),
@@ -513,10 +515,12 @@ class RuleState extends State {
   }
 
   public onCloseTag(context: Context): State {
-    const [identifier, version] = this.identification.unwrap();
+    const [id, version] = this.identification.unwrap();
+    const identifier = `${id}:${version}`;
 
     const rule = {
       identifier,
+      id,
       version,
       name: this.name.unwrap(),
       description: this.description.get(),
@@ -638,7 +642,7 @@ class IdentificationState extends State {
   private parent: State;
   private value: Value<[string, string]>;
 
-  private identifier: Value<string> = new Value("xdf:id");
+  private id: Value<string> = new Value("xdf:id");
   private version: Value<string> = new Value("xdf:version");
 
   constructor(parent: State, value: Value<[string, string]>) {
@@ -651,7 +655,7 @@ class IdentificationState extends State {
   public onOpenTag(tag: sax.QualifiedTag | sax.Tag): State {
     switch (tag.name) {
       case "xdf:id":
-        return new StringNodeState(this, this.identifier);
+        return new StringNodeState(this, this.id);
       case "xdf:version":
         return new StringNodeState(this, this.version);
       default:
@@ -660,9 +664,9 @@ class IdentificationState extends State {
   }
 
   public onCloseTag(): State {
-    const identifier = this.identifier.unwrap();
+    const id = this.id.unwrap();
     const version = this.version.unwrap();
-    this.value.set([identifier, version]);
+    this.value.set([id, version]);
 
     return this.parent;
   }
