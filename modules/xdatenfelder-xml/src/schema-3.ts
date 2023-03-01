@@ -160,6 +160,7 @@ export interface ElementData extends BaseData {
 export interface ChildRef {
   type: "dataGroup" | "dataField";
   identifier: string;
+  cardinality: string;
   normReferences: NormReference[];
 }
 

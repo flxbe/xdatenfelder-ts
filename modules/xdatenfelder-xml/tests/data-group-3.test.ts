@@ -54,11 +54,13 @@ describe("Loading a schema from xml", () => {
           {
             type: "dataGroup",
             normReferences: [{ value: "Rechtsbezug", link: undefined }],
+            cardinality: "0:1",
             identifier: "G60000000086:1.2.0",
           },
           {
             type: "dataGroup",
             normReferences: [],
+            cardinality: "0:1",
             identifier: "G60000000087:1.1.0",
           },
         ],

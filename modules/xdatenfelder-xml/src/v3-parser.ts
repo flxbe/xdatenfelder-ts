@@ -271,6 +271,7 @@ class DataGroupState extends State {
             this.children.push({
               type: "dataGroup",
               identifier: dataGroup.identifier,
+              cardinality: child.cardinality,
               normReferences: child.normReferences,
             });
           } else {
@@ -375,8 +376,13 @@ class DataGroupState extends State {
 }
 
 type Child =
-  | { type: "dataGroup"; dataGroup: DataGroup; normReferences: NormReference[] }
-  | { type: "dataField"; normReferences: NormReference[] };
+  | {
+      type: "dataGroup";
+      dataGroup: DataGroup;
+      cardinality: string;
+      normReferences: NormReference[];
+    }
+  | { type: "dataField"; cardinality: string; normReferences: NormReference[] };
 
 class StructureState extends State {
   private parent: State;
@@ -384,6 +390,7 @@ class StructureState extends State {
 
   private element: Value<Element> = new Value("xdf:enthaelt");
   private normReferences: NormReference[] = [];
+  private cardinality: Value<string> = new Value("xdf:anzahl");
 
   constructor(parent: State, onFinish: FinishFn<Child>) {
     super();
@@ -399,7 +406,7 @@ class StructureState extends State {
           this.normReferences.push(ref)
         );
       case "xdf:anzahl":
-        return new NoOpState(this);
+        return new StringNodeState(this, this.cardinality);
       case "xdf:enthaelt":
         return new ContainsState(this, this.element);
       default:
@@ -409,7 +416,11 @@ class StructureState extends State {
 
   public onCloseTag(_context: Context): State {
     const element = this.element.unwrap();
-    const child = { ...element, normReferences: this.normReferences };
+    const child = {
+      ...element,
+      cardinality: this.cardinality.unwrap(),
+      normReferences: this.normReferences,
+    };
 
     this.onFinish(child);
 
