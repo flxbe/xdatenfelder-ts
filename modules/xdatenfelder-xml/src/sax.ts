@@ -56,12 +56,6 @@ export class Value<T> {
 
 export type FinishFn<T> = (value: T) => void;
 
-export function expectTag(got: string, expected: string) {
-  if (got !== expected) {
-    throw new InternalParserError(`Expect "${expected}", got: ${got}`);
-  }
-}
-
 export abstract class State {
   public onText(text: string): void {
     throw new InternalParserError(`Got unexpected text block: ${text}`);
@@ -170,9 +164,12 @@ export class CodeNodeState<T> extends State {
   }
 
   public onOpenTag(tag: sax.QualifiedTag): State {
-    expectTag(tag.name, "code");
-
-    return new ValueNodeState(this, this.childValue, this.parseValue);
+    switch (tag.name) {
+      case "code":
+        return new ValueNodeState(this, this.childValue, this.parseValue);
+      default:
+        throw new UnexpectedTagError(tag.name);
+    }
   }
 
   public onCloseTag(_context: Context): State {
@@ -242,7 +239,7 @@ export class StateParser {
       this.state = this.state.onOpenTag(tag);
     };
 
-    this.xmlParser.onclosetag = (tagName) => {
+    this.xmlParser.onclosetag = () => {
       this.state = this.state.onCloseTag(this.context);
     };
   }

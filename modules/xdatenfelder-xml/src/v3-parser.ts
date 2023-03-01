@@ -9,7 +9,6 @@ import {
   CodeNodeState,
   StringNodeState,
   OptionalStringNodeState,
-  expectTag,
   FinishFn,
   Context,
 } from "./sax";
@@ -55,9 +54,12 @@ class RootState extends State {
   );
 
   public onOpenTag(tag: sax.QualifiedTag): State {
-    expectTag(tag.name, "xdf:xdatenfelder.datenfeldgruppe.0103");
-
-    return new MessageState(this, this.value);
+    switch (tag.name) {
+      case "xdf:xdatenfelder.datenfeldgruppe.0103":
+        return new MessageState(this, this.value);
+      default:
+        throw new UnexpectedTagError(tag.name);
+    }
   }
 
   public onCloseTag(): State {
