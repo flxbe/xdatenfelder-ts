@@ -220,6 +220,75 @@ function parseElementData(container: ElementContainer): ElementData {
   };
 }
 
+function handleElementState(
+  state: State,
+  container: ElementContainer,
+  tag: sax.QualifiedTag
+): State | undefined {
+  switch (tag.name) {
+    case "xdf:identifikation":
+      return new IdentificationState(state, container.identification);
+    case "xdf:name":
+      return new StringNodeState(state, container.name);
+    case "xdf:beschreibung":
+      return new OptionalStringNodeState(state, container.description);
+    case "xdf:definition":
+      return new OptionalStringNodeState(state, container.definition);
+    case "xdf:freigabestatus":
+      return new CodeNodeState(
+        state,
+        container.releaseState,
+        parseFreigabeStatus
+      );
+    case "xdf:statusGesetztAm":
+      return new OptionalValueNodeState(state, container.stateSetAt, parseDate);
+    case "xdf:statusGesetztDurch":
+      return new OptionalStringNodeState(state, container.stateSetBy);
+    case "xdf:bezug":
+      return new NormReferenceState(state, tag, (ref) =>
+        container.normReferences.push(ref)
+      );
+    case "xdf:versionshinweis":
+      return new OptionalStringNodeState(state, container.versionHint);
+    case "xdf:veroeffentlichungsdatum":
+      return new OptionalValueNodeState(
+        state,
+        container.publishedAt,
+        parseDate
+      );
+    case "xdf:schemaelementart":
+      return new CodeNodeState(
+        state,
+        container.elementType,
+        parseSchemaElementArt
+      );
+    case "xdf:bezeichnungEingabe":
+      return new StringNodeState(state, container.inputLabel);
+    case "xdf:bezeichnungAusgabe":
+      return new OptionalStringNodeState(state, container.outputLabel);
+    case "xdf:hilfetextEingabe":
+      return new OptionalStringNodeState(state, container.inputHelp);
+    case "xdf:hilfetextAusgabe":
+      return new OptionalStringNodeState(state, container.outputHelp);
+    case "xdf:letzteAenderung":
+      return new ValueNodeState(state, container.lastChangedAt, parseDate);
+    case "xdf:gueltigAb":
+      return new ValueNodeState(state, container.validSince, parseDate);
+    case "xdf:gueltigBis":
+      return new ValueNodeState(state, container.validUntil, parseDate);
+    case "xdf:stichwort":
+      return new KeywordState(state, tag, (keyword) =>
+        container.keywords.push(keyword)
+      );
+    case "xdf:relation":
+      return new RelationState(state, (relation) =>
+        container.relations.push(relation)
+      );
+    default:
+      return undefined;
+  }
+}
+
 class DataGroupState extends State {
   private parent: State;
   private onFinish: FinishFn<DataGroup>;
@@ -236,30 +305,12 @@ class DataGroupState extends State {
   }
 
   public onOpenTag(tag: sax.QualifiedTag): State {
+    const newState = handleElementState(this, this.elementContainer, tag);
+    if (newState) {
+      return newState;
+    }
+
     switch (tag.name) {
-      case "xdf:identifikation":
-        return new IdentificationState(
-          this,
-          this.elementContainer.identification
-        );
-      case "xdf:name":
-        return new StringNodeState(this, this.elementContainer.name);
-      case "xdf:beschreibung":
-        return new OptionalStringNodeState(
-          this,
-          this.elementContainer.description
-        );
-      case "xdf:definition":
-        return new OptionalStringNodeState(
-          this,
-          this.elementContainer.definition
-        );
-      case "xdf:freigabestatus":
-        return new CodeNodeState(
-          this,
-          this.elementContainer.releaseState,
-          parseFreigabeStatus
-        );
       case "xdf:regel":
         return new RuleState(this, (rule) => {
           this.ruleRefs.push(rule.identifier);
@@ -275,85 +326,15 @@ class DataGroupState extends State {
               normReferences: child.normReferences,
             });
           } else {
-            // TODO: Parse datafield
+            const { dataField } = child;
+            this.children.push({
+              type: "dataField",
+              identifier: dataField.identifier,
+              cardinality: child.cardinality,
+              normReferences: child.normReferences,
+            });
           }
         });
-      case "xdf:statusGesetztAm":
-        return new OptionalValueNodeState(
-          this,
-          this.elementContainer.stateSetAt,
-          parseDate
-        );
-      case "xdf:statusGesetztDurch":
-        return new OptionalStringNodeState(
-          this,
-          this.elementContainer.stateSetBy
-        );
-      case "xdf:bezug":
-        return new NormReferenceState(this, tag, (ref) =>
-          this.elementContainer.normReferences.push(ref)
-        );
-      case "xdf:versionshinweis":
-        return new OptionalStringNodeState(
-          this,
-          this.elementContainer.versionHint
-        );
-      case "xdf:veroeffentlichungsdatum":
-        return new OptionalValueNodeState(
-          this,
-          this.elementContainer.publishedAt,
-          parseDate
-        );
-
-      case "xdf:schemaelementart":
-        return new CodeNodeState(
-          this,
-          this.elementContainer.elementType,
-          parseSchemaElementArt
-        );
-      case "xdf:bezeichnungEingabe":
-        return new StringNodeState(this, this.elementContainer.inputLabel);
-      case "xdf:bezeichnungAusgabe":
-        return new OptionalStringNodeState(
-          this,
-          this.elementContainer.outputLabel
-        );
-      case "xdf:hilfetextEingabe":
-        return new OptionalStringNodeState(
-          this,
-          this.elementContainer.inputHelp
-        );
-      case "xdf:hilfetextAusgabe":
-        return new OptionalStringNodeState(
-          this,
-          this.elementContainer.outputHelp
-        );
-      case "xdf:letzteAenderung":
-        return new ValueNodeState(
-          this,
-          this.elementContainer.lastChangedAt,
-          parseDate
-        );
-      case "xdf:gueltigAb":
-        return new ValueNodeState(
-          this,
-          this.elementContainer.validSince,
-          parseDate
-        );
-      case "xdf:gueltigBis":
-        return new ValueNodeState(
-          this,
-          this.elementContainer.validUntil,
-          parseDate
-        );
-      case "xdf:stichwort":
-        return new KeywordState(this, tag, (keyword) =>
-          this.elementContainer.keywords.push(keyword)
-        );
-      case "xdf:relation":
-        return new RelationState(this, (relation) =>
-          this.elementContainer.relations.push(relation)
-        );
       default:
         throw new UnexpectedTagError(tag.name);
     }
@@ -375,6 +356,47 @@ class DataGroupState extends State {
   }
 }
 
+class DataFieldState extends State {
+  private parent: State;
+  private onFinish: FinishFn<DataField>;
+
+  private elementContainer = createElementContainer();
+
+  constructor(parent: State, onFinish: FinishFn<DataField>) {
+    super();
+
+    this.parent = parent;
+    this.onFinish = onFinish;
+  }
+
+  public onOpenTag(tag: sax.QualifiedTag): State {
+    const newState = handleElementState(this, this.elementContainer, tag);
+    if (newState) {
+      return newState;
+    }
+
+    switch (tag.name) {
+      case "xdf:feldart":
+      case "xdf:datentyp":
+      case "xdf:praezisierung":
+      case "xdf:inhalt":
+      case "xdf:vorbefuellung":
+        return new NoOpState(this);
+      default:
+        throw new UnexpectedTagError(tag.name);
+    }
+  }
+
+  public onCloseTag(context: Context): State {
+    const data = parseElementData(this.elementContainer);
+
+    context.dataFields[data.identifier] = data;
+    this.onFinish(data);
+
+    return this.parent;
+  }
+}
+
 type Child =
   | {
       type: "dataGroup";
@@ -382,7 +404,12 @@ type Child =
       cardinality: string;
       normReferences: NormReference[];
     }
-  | { type: "dataField"; cardinality: string; normReferences: NormReference[] };
+  | {
+      type: "dataField";
+      dataField: DataField;
+      cardinality: string;
+      normReferences: NormReference[];
+    };
 
 class StructureState extends State {
   private parent: State;
@@ -430,7 +457,7 @@ class StructureState extends State {
 
 type Element =
   | { type: "dataGroup"; dataGroup: DataGroup }
-  | { type: "dataField" };
+  | { type: "dataField"; dataField: DataField };
 
 class ContainsState extends State {
   private parent: State;
@@ -456,8 +483,9 @@ class ContainsState extends State {
           this.value = { type: "dataGroup", dataGroup };
         });
       case "xdf:datenfeld":
-        this.value = { type: "dataField" };
-        return new NoOpState(this);
+        return new DataFieldState(this, (dataField) => {
+          this.value = { type: "dataField", dataField };
+        });
       default:
         throw new UnexpectedTagError(tag.name);
     }

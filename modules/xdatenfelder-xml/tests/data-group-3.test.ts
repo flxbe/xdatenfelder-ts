@@ -57,12 +57,6 @@ describe("Loading a schema from xml", () => {
             cardinality: "0:1",
             identifier: "G60000000086:1.2.0",
           },
-          {
-            type: "dataGroup",
-            normReferences: [],
-            cardinality: "0:1",
-            identifier: "G60000000087:1.1.0",
-          },
         ],
         relations: [
           {
@@ -96,43 +90,48 @@ describe("Loading a schema from xml", () => {
         keywords: [],
         rules: [],
         relations: [],
-        children: [],
-      },
-      "G60000000087:1.1.0": {
-        identifier: "G60000000087:1.1.0",
-        id: "G60000000087",
-        version: "1.1.0",
-        name: "Anschrift Inland Postfachanschrift",
-        description: undefined,
-        definition:
-          "Postfachanschrift im Inland mit Postfach(nummer), PLZ und Ort.",
-        releaseState: "6",
-        stateSetAt: new Date("2020-11-02"),
-        stateSetBy: "FIM Baustein Datenfelder",
-        validSince: undefined,
-        validUntil: undefined,
-        publishedAt: new Date("2020-11-02"),
-        lastChangedAt: new Date("2021-01-01T01:00:00Z"),
-        inputLabel: "Anschrift Postfach",
-        outputLabel: "Anschrift Postfach",
-        elementType: SchemaElementArt.Harmonisiert,
-        inputHelp: undefined,
-        outputHelp: undefined,
-        versionHint: undefined,
-        normReferences: [
+        children: [
           {
-            value:
-              "XInneres.PostalischeInlandsanschrift.Postfachanschrift Version 8",
-            link: undefined,
+            type: "dataField",
+            identifier: "F60000000243:1.1.0",
+            normReferences: [],
+            cardinality: "1:1",
           },
         ],
-        keywords: [],
-        rules: [],
-        relations: [],
-        children: [],
       },
     });
-    expect(message.dataFields).toEqual({});
+    expect(message.dataFields).toEqual({
+      "F60000000243:1.1.0": {
+        identifier: "F60000000243:1.1.0",
+        id: "F60000000243",
+        version: "1.1.0",
+        name: "Straße",
+        description:
+          "Kompatibilität zu EPA in TR XhD v 1.4 sollte Feldlänge min. 50. Bei XInneres 8 ist die Feldlänge <= 55 Zeichen.",
+        definition: undefined,
+        releaseState: FreigabeStatus.FachlichFreigegebenGold,
+        stateSetAt: new Date("2020-11-02"),
+        stateSetBy: "FIM-Baustein Datenfelder",
+        validSince: undefined,
+        validUntil: undefined,
+        versionHint: undefined,
+        publishedAt: new Date("2020-11-02"),
+        lastChangedAt: new Date("2021-01-01T01:00:00Z"),
+        inputLabel: "Straße",
+        outputLabel: "Straße",
+        elementType: SchemaElementArt.Harmonisiert,
+        inputHelp: "Geben Sie an, wie die Straße heißt.",
+        outputHelp: undefined,
+        relations: [],
+        keywords: [],
+        normReferences: [
+          {
+            link: undefined,
+            value: "XInneres.Meldeanschrift.strasse Version 8",
+          },
+        ],
+      },
+    });
     expect(message.rules).toEqual({
       "R60000000019:1.2.0": {
         identifier: "R60000000019:1.2.0",
