@@ -67,9 +67,9 @@ export abstract class State {
     throw new InternalParserError(`Got unexpected text block: ${text}`);
   }
 
-  public abstract onOpenTag(tag: sax.QualifiedTag, context: Context): State;
+  public abstract onOpenTag(tag: sax.QualifiedTag): State;
 
-  public abstract onCloseTag(tagName: string, context: Context): State;
+  public abstract onCloseTag(context: Context): State;
 }
 
 export class ValueNodeState<T> extends State {
@@ -94,13 +94,11 @@ export class ValueNodeState<T> extends State {
     this.value.set(value);
   }
 
-  public onOpenTag(tag: sax.QualifiedTag, _context: Context): State {
+  public onOpenTag(tag: sax.QualifiedTag): State {
     throw new UnexpectedTagError(tag.name);
   }
 
-  public onCloseTag(tagName: string, _context: Context): State {
-    expectTag(tagName, this.value.tagName);
-
+  public onCloseTag(_context: Context): State {
     if (!this.value.isFilled()) {
       throw new MissingContentError(this.value.tagName);
     }
@@ -131,13 +129,11 @@ export class OptionalValueNodeState<T> extends State {
     this.value.set(value);
   }
 
-  public onOpenTag(tag: sax.QualifiedTag, _context: Context): State {
+  public onOpenTag(tag: sax.QualifiedTag): State {
     throw new UnexpectedTagError(tag.name);
   }
 
-  public onCloseTag(tagName: string, _context: Context): State {
-    expectTag(tagName, this.value.tagName);
-
+  public onCloseTag(_context: Context): State {
     return this.parent;
   }
 }
@@ -173,15 +169,13 @@ export class CodeNodeState<T> extends State {
     this.parseValue = parseValue;
   }
 
-  public onOpenTag(tag: sax.QualifiedTag, _context: Context): State {
+  public onOpenTag(tag: sax.QualifiedTag): State {
     expectTag(tag.name, "code");
 
     return new ValueNodeState(this, this.childValue, this.parseValue);
   }
 
-  public onCloseTag(tagName: string, _context: Context): State {
-    expectTag(tagName, this.value.tagName);
-
+  public onCloseTag(_context: Context): State {
     const value = this.childValue.unwrap();
     this.value.set(value);
 
@@ -197,13 +191,13 @@ export class NoOpState extends State {
     this.parent = parent;
   }
 
-  public onText(text: string) {}
+  public onText(_text: string) {}
 
-  public onOpenTag(_tag: sax.QualifiedTag, _context: Context): NoOpState {
+  public onOpenTag(_tag: sax.QualifiedTag): NoOpState {
     return new NoOpState(this);
   }
 
-  public onCloseTag(_tagName: string, _context: Context): State {
+  public onCloseTag(_context: Context): State {
     return this.parent;
   }
 }
@@ -245,11 +239,11 @@ export class StateParser {
 
     this.xmlParser.onopentag = (tag) => {
       assert("ns" in tag);
-      this.state = this.state.onOpenTag(tag, this.context);
+      this.state = this.state.onOpenTag(tag);
     };
 
     this.xmlParser.onclosetag = (tagName) => {
-      this.state = this.state.onCloseTag(tagName, this.context);
+      this.state = this.state.onCloseTag(this.context);
     };
   }
 

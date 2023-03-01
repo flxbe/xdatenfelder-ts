@@ -35,6 +35,7 @@ import {
   parseRegelTyp,
   NormReference,
   Keyword,
+  NS_XD3,
 } from "./schema-3";
 import { assert } from "./util";
 
@@ -43,13 +44,13 @@ class RootState extends State {
     "xdf:xdatenfelder.datenfeldgruppe.0103"
   );
 
-  public onOpenTag(tag: sax.QualifiedTag | sax.Tag): State {
+  public onOpenTag(tag: sax.QualifiedTag): State {
     expectTag(tag.name, "xdf:xdatenfelder.datenfeldgruppe.0103");
 
     return new MessageState(this, this.value);
   }
 
-  public onCloseTag(tagName: string): State {
+  public onCloseTag(): State {
     throw new Error("Should not be called.");
   }
 }
@@ -68,13 +69,12 @@ class MessageState extends State {
     this.value = value;
   }
 
-  public onOpenTag(tag: sax.QualifiedTag | sax.Tag, context: Context): State {
+  public onOpenTag(tag: sax.QualifiedTag | sax.Tag): State {
     switch (tag.name) {
       case "xdf:header":
         return new HeaderState(this, this.header);
       case "xdf:datenfeldgruppe":
         return new DataGroupState(this, (dataGroup) => {
-          context.dataGroups[dataGroup.identifier] = dataGroup;
           this.rootDataGroup.set(dataGroup.identifier);
         });
       default:
@@ -82,9 +82,7 @@ class MessageState extends State {
     }
   }
 
-  public onCloseTag(tagName: string, context: Context): State {
-    expectTag(tagName, "xdf:xdatenfelder.datenfeldgruppe.0103");
-
+  public onCloseTag(context: Context): State {
     const [messageId, createdAt] = this.header.unwrap();
     const rootDataGroup = this.rootDataGroup.unwrap();
 
@@ -117,7 +115,7 @@ class HeaderState extends State {
     this.value = value;
   }
 
-  public onOpenTag(tag: sax.QualifiedTag | sax.Tag): State {
+  public onOpenTag(tag: sax.QualifiedTag): State {
     switch (tag.name) {
       case "xdf:nachrichtID":
         return new StringNodeState(this, this.messageId);
@@ -128,9 +126,7 @@ class HeaderState extends State {
     }
   }
 
-  public onCloseTag(tagName: string): State {
-    expectTag(tagName, "xdf:header");
-
+  public onCloseTag(_context: Context): State {
     const messageId = this.messageId.unwrap();
     const createdAt = new Date(this.createdAt.unwrap());
 
@@ -231,7 +227,7 @@ class DataGroupState extends State {
     this.onFinish = onFinish;
   }
 
-  public onOpenTag(tag: sax.QualifiedTag, context: Context): State {
+  public onOpenTag(tag: sax.QualifiedTag): State {
     switch (tag.name) {
       case "xdf:identifikation":
         return new IdentificationState(
@@ -258,14 +254,12 @@ class DataGroupState extends State {
         );
       case "xdf:regel":
         return new RuleState(this, (rule) => {
-          context.rules[rule.identifier] = rule;
           this.ruleRefs.push(rule.identifier);
         });
       case "xdf:struktur":
         return new StructureState(this, (child) => {
           if (child.type === "dataGroup") {
             const { dataGroup } = child;
-            context.dataGroups[dataGroup.identifier] = dataGroup;
             this.children.push({
               type: "dataGroup",
               identifier: dataGroup.identifier,
@@ -352,9 +346,7 @@ class DataGroupState extends State {
     }
   }
 
-  public onCloseTag(tagName: string): State {
-    expectTag(tagName, "xdf:datenfeldgruppe");
-
+  public onCloseTag(context: Context): State {
     const data = parseElementData(this.elementContainer);
 
     const dataGroup = {
@@ -362,6 +354,8 @@ class DataGroupState extends State {
       rules: this.ruleRefs,
       children: this.children,
     };
+
+    context.dataGroups[dataGroup.identifier] = dataGroup;
     this.onFinish(dataGroup);
 
     return this.parent;
@@ -386,7 +380,7 @@ class StructureState extends State {
     this.onFinish = onFinish;
   }
 
-  public onOpenTag(tag: sax.QualifiedTag, _context: Context): State {
+  public onOpenTag(tag: sax.QualifiedTag): State {
     switch (tag.name) {
       case "xdf:bezug":
         return new NormReferenceState(this, tag, (ref) =>
@@ -401,9 +395,7 @@ class StructureState extends State {
     }
   }
 
-  public onCloseTag(tagName: string, _context: Context): State {
-    expectTag(tagName, "xdf:struktur");
-
+  public onCloseTag(_context: Context): State {
     const element = this.element.unwrap();
     const child = { ...element, normReferences: this.normReferences };
 
@@ -430,7 +422,7 @@ class ContainsState extends State {
     this.parentValue = value;
   }
 
-  public onOpenTag(tag: sax.QualifiedTag, _context: Context): State {
+  public onOpenTag(tag: sax.QualifiedTag): State {
     if (this.value !== undefined) {
       throw new DuplicateTagError("xdf:datenfeld | xdf:datenfeldgruppe");
     }
@@ -447,9 +439,7 @@ class ContainsState extends State {
         throw new UnexpectedTagError(tag.name);
     }
   }
-  public onCloseTag(tagName: string, _context: Context): State {
-    expectTag(tagName, "xdf:enthaelt");
-
+  public onCloseTag(_context: Context): State {
     if (this.value === undefined) {
       throw new MissingChildNodeError("xdf:datenfeld | xdf:datenfeldgruppe");
     }
@@ -522,9 +512,7 @@ class RuleState extends State {
     }
   }
 
-  public onCloseTag(tagName: string): State {
-    expectTag(tagName, "xdf:regel");
-
+  public onCloseTag(context: Context): State {
     const [identifier, version] = this.identification.unwrap();
 
     const rule = {
@@ -541,6 +529,7 @@ class RuleState extends State {
       keywords: this.keywords,
     };
 
+    context.rules[identifier] = rule;
     this.onFinish(rule);
 
     return this.parent;
@@ -576,13 +565,11 @@ class KeywordState extends State {
     this.value.set(text);
   }
 
-  public onOpenTag(tag: sax.QualifiedTag, _context: Context): State {
+  public onOpenTag(tag: sax.QualifiedTag): State {
     throw new UnexpectedTagError(tag.name);
   }
 
-  public onCloseTag(tagName: string, _context: Context): State {
-    expectTag(tagName, "xdf:stichwort");
-
+  public onCloseTag(_context: Context): State {
     const value = this.value.get();
     if (value !== undefined) {
       this.onFinish({ value, uri: this.uri });
@@ -627,13 +614,11 @@ class NormReferenceState extends State {
     this.value.set(text);
   }
 
-  public onOpenTag(tag: sax.QualifiedTag, _context: Context): State {
+  public onOpenTag(tag: sax.QualifiedTag): State {
     throw new UnexpectedTagError(tag.name);
   }
 
-  public onCloseTag(tagName: string, _context: Context): State {
-    expectTag(tagName, "xdf:bezug");
-
+  public onCloseTag(_context: Context): State {
     const value = this.value.get();
     if (value !== undefined) {
       this.onFinish({ value, link: this.link });
@@ -674,9 +659,7 @@ class IdentificationState extends State {
     }
   }
 
-  public onCloseTag(tagName: string): State {
-    expectTag(tagName, "xdf:identifikation");
-
+  public onCloseTag(): State {
     const identifier = this.identifier.unwrap();
     const version = this.version.unwrap();
     this.value.set([identifier, version]);
@@ -689,10 +672,7 @@ class DataGroupMessageParser {
   private stateParser: StateParser;
 
   constructor() {
-    this.stateParser = new StateParser(
-      new RootState(),
-      "urn:xoev-de:fim:standard:xdatenfelder_3.0.0"
-    );
+    this.stateParser = new StateParser(new RootState(), NS_XD3);
   }
 
   public write(data: string) {
