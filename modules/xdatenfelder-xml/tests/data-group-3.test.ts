@@ -122,6 +122,13 @@ describe("Loading a schema from xml", () => {
         elementType: SchemaElementArt.Harmonisiert,
         inputHelp: "Geben Sie an, wie die Straße heißt.",
         outputHelp: undefined,
+        codeKey: undefined,
+        nameKey: undefined,
+        helpKey: undefined,
+        constraints: {
+          minLength: 1,
+          maxLength: 55,
+        },
         relations: [],
         keywords: [],
         normReferences: [
@@ -133,6 +140,7 @@ describe("Loading a schema from xml", () => {
         inputType: "input",
         dataType: "text",
         fillType: "keine",
+        mediaTypes: [],
         rules: ["R60000000019:1.2.0"],
       },
     });
@@ -163,6 +171,32 @@ describe("Loading a schema from xml", () => {
         ],
       },
     });
+  });
+
+  test("should correctly load all input attributes", async () => {
+    const message = await loadMessage("input.xml");
+
+    expect(message.dataFields["F60000000243:1.1.0"]).toEqual(
+      expect.objectContaining({
+        inputType: "select",
+        dataType: "text",
+        fillType: "keine",
+        codeKey: "CodeKey",
+        nameKey: "NameKey",
+        helpKey: "HelpKey",
+        constraints: {
+          minLength: 0,
+          maxLength: 1,
+          minValue: "0",
+          maxValue: "1",
+          pattern: "abc",
+          value: "Constraints",
+        },
+        content: "Some Content",
+        maxSize: 10,
+        mediaTypes: ["application/json"],
+      })
+    );
   });
 
   test("should fail for empty id node", async () => {

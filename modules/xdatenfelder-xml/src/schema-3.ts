@@ -231,11 +231,27 @@ export interface DataGroup extends ElementData {
   children: ChildRef[];
 }
 
+export interface Constraints {
+  minLength?: number;
+  maxLength?: number;
+  minValue?: string;
+  maxValue?: string;
+  pattern?: string;
+  value?: string;
+}
+
 export interface DataField extends ElementData {
   inputType: Feldart;
   dataType: Datentyp;
   fillType: Vorbefuellung;
   rules: string[];
+  constraints: Constraints;
+  content?: string;
+  codeKey?: string;
+  nameKey?: string;
+  helpKey?: string;
+  inputSize?: number;
+  mediaTypes: string[];
 }
 
 export interface Rule {

@@ -45,6 +45,7 @@ import {
   parseDatentyp,
   Vorbefuellung,
   parseVorbefuellung,
+  Constraints,
 } from "./schema-3";
 import { assert } from "./util";
 
@@ -370,6 +371,13 @@ class DataFieldState extends State {
   private inputType: Value<Feldart> = new Value("xdf:feldart");
   private dataType: Value<Datentyp> = new Value("xdf:datentyp");
   private fillType: Value<Vorbefuellung> = new Value("xdf:vorbefuellung");
+  private constraints: Value<Constraints> = new Value("xdf:praezisierung");
+  private content: Value<string | undefined> = new Value("xdf:inhalt");
+  private codeKey: Value<string | undefined> = new Value("xdf:codeKey");
+  private nameKey: Value<string | undefined> = new Value("xdf:nameKey");
+  private helpKey: Value<string | undefined> = new Value("xdf:helpKey");
+  private maxSize: Value<number | undefined> = new Value("xdf:maxSize");
+  private mediaTypes: string[] = [];
   private rules: string[] = [];
 
   constructor(parent: State, onFinish: FinishFn<DataField>) {
@@ -395,15 +403,24 @@ class DataFieldState extends State {
       case "xdf:vorbefuellung":
         return new CodeNodeState(this, this.fillType, parseVorbefuellung);
       case "xdf:praezisierung":
+        return new ConstraintsState(this, this.constraints, tag);
+      case "xdf:codeKey":
+        return new OptionalStringNodeState(this, this.codeKey);
+      case "xdf:nameKey":
+        return new OptionalStringNodeState(this, this.nameKey);
+      case "xdf:helpKey":
+        return new OptionalStringNodeState(this, this.helpKey);
       case "xdf:inhalt":
+        return new OptionalStringNodeState(this, this.content);
       case "xdf:werte":
       case "xdf:codelisteReferenz":
-      case "xdf:codeKey":
-      case "xdf:nameKey":
-      case "xdf:helpKey":
-      case "xdf:maxSize":
-      case "xdf:mediaType":
         return new NoOpState(this);
+      case "xdf:maxSize":
+        return new OptionalValueNodeState(this, this.maxSize, parseInt);
+      case "xdf:mediaType":
+        return new MediaTypeState(this, (mediaType) =>
+          this.mediaTypes.push(mediaType)
+        );
       default:
         throw new UnexpectedTagError(tag.name);
     }
@@ -417,11 +434,90 @@ class DataFieldState extends State {
       inputType: this.inputType.unwrap(),
       dataType: this.dataType.unwrap(),
       fillType: this.fillType.unwrap(),
+      constraints: this.constraints.get() ?? {},
+      content: this.content.get(),
+      codeKey: this.codeKey.get(),
+      nameKey: this.nameKey.get(),
+      helpKey: this.helpKey.get(),
+      maxSize: this.maxSize.get(),
+      mediaTypes: this.mediaTypes,
       rules: this.rules,
     };
 
     context.dataFields[dataField.identifier] = dataField;
     this.onFinish(dataField);
+
+    return this.parent;
+  }
+}
+
+class MediaTypeState extends State {
+  private parent: State;
+  private onFinish: FinishFn<string>;
+
+  private value?: string = undefined;
+
+  constructor(parent: State, onFinish: FinishFn<string>) {
+    super();
+
+    this.parent = parent;
+    this.onFinish = onFinish;
+  }
+
+  public onText(text: string): void {
+    this.value = text;
+  }
+
+  public onOpenTag(tag: sax.QualifiedTag): State {
+    throw new UnexpectedTagError(tag.name);
+  }
+
+  public onCloseTag(_context: Context): State {
+    if (this.value) {
+      this.onFinish(this.value);
+    }
+
+    return this.parent;
+  }
+}
+
+class ConstraintsState extends State {
+  private parent: State;
+  private value: Value<Constraints>;
+
+  private constraints: Constraints = {};
+
+  constructor(parent: State, value: Value<Constraints>, tag: sax.QualifiedTag) {
+    super();
+
+    this.parent = parent;
+    this.value = value;
+
+    const minLength = getAttribute(tag, "minLength");
+    if (minLength !== undefined) {
+      this.constraints.minLength = parseInt(minLength);
+    }
+
+    const maxLength = getAttribute(tag, "maxLength");
+    if (maxLength !== undefined) {
+      this.constraints.maxLength = parseInt(maxLength);
+    }
+
+    this.constraints.minValue = getAttribute(tag, "minValue");
+    this.constraints.maxValue = getAttribute(tag, "maxValue");
+    this.constraints.pattern = getAttribute(tag, "pattern");
+  }
+
+  public onText(text: string): void {
+    this.constraints.value = text;
+  }
+
+  public onOpenTag(tag: sax.QualifiedTag): State {
+    throw new UnexpectedTagError(tag.name);
+  }
+
+  public onCloseTag(_context: Context): State {
+    this.value.set(this.constraints);
 
     return this.parent;
   }
@@ -671,13 +767,7 @@ class KeywordState extends State {
     this.parent = parent;
     this.onFinish = onFinish;
 
-    const attribute = tag.attributes["uri"];
-    if (attribute === undefined) {
-      this.uri = undefined;
-    } else {
-      assert(typeof attribute === "object");
-      this.uri = attribute.value;
-    }
+    this.uri = getAttribute(tag, "uri");
   }
 
   public onText(text: string): void {
@@ -720,13 +810,7 @@ class NormReferenceState extends State {
     this.parent = parent;
     this.onFinish = onFinish;
 
-    const attribute = tag.attributes["link"];
-    if (attribute === undefined) {
-      this.link = undefined;
-    } else {
-      assert(typeof attribute === "object");
-      this.link = attribute.value;
-    }
+    this.link = getAttribute(tag, "link");
   }
 
   public onText(text: string): void {
@@ -750,6 +834,16 @@ class NormReferenceState extends State {
     }
 
     return this.parent;
+  }
+}
+
+function getAttribute(tag: sax.QualifiedTag, key: string): string | undefined {
+  const attribute = tag.attributes[key];
+  if (attribute === undefined) {
+    return undefined;
+  } else {
+    assert(typeof attribute === "object");
+    return attribute.value;
   }
 }
 
