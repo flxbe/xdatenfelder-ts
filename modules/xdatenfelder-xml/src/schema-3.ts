@@ -286,3 +286,13 @@ export interface Rule {
   script?: string;
   // errors
 }
+
+export interface Schema extends BaseData {
+  label: string;
+  help?: string;
+  // ableitungsmodifikationStruktur
+  // ableitungsmodifikationRepraesentation
+  // Dokumentsteckbrief
+  rules: Rule[];
+  children: ChildRef[];
+}
