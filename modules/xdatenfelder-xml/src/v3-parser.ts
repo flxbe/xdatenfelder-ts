@@ -45,6 +45,7 @@ import {
   Vorbefuellung,
   parseVorbefuellung,
   Constraints,
+  SchemaContainer,
 } from "./schema-3";
 import { assert } from "./util";
 
@@ -936,5 +937,42 @@ export class DataGroupMessage3 {
     parser.write(value);
 
     return parser.finish();
+  }
+}
+
+export class SchemaMessage3 {
+  public readonly id: string;
+  public readonly createdAt: Date;
+  public readonly container: SchemaContainer;
+
+  constructor(container: SchemaContainer, id: string, createdAt: Date) {
+    this.container = container;
+    this.id = id;
+    this.createdAt = createdAt;
+  }
+
+  public static fromString(value: string): SchemaMessage3 {
+    // TODO: Actually parse the message
+    const container = {
+      schema: {
+        identifier: "S1:1.2.0",
+        id: "S1",
+        version: "1.2.0",
+        name: "Some Schema",
+        label: "Some Label",
+        releaseState: FreigabeStatus.FachlichFreigegebenGold,
+        lastChangedAt: new Date(),
+        rules: [],
+        children: [],
+        relations: [],
+        keywords: [],
+        normReferences: [],
+      },
+      dataGroups: {},
+      dataFields: {},
+      rules: {},
+    };
+
+    return new SchemaMessage3(container, "some-message-id", new Date());
   }
 }

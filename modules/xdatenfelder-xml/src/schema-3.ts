@@ -296,3 +296,11 @@ export interface Schema extends BaseData {
   rules: Rule[];
   children: ChildRef[];
 }
+
+export interface SchemaContainer {
+  schema: Schema;
+
+  dataGroups: Record<string, DataGroup>;
+  dataFields: Record<string, DataField>;
+  rules: Record<string, Rule>;
+}
