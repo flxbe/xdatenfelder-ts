@@ -1,3 +1,4 @@
+import { CodeList } from "./code-list";
 import { ValidationError } from "./errors";
 
 export const NS_XD3 = "urn:xoev-de:fim:standard:xdatenfelder_3.0.0";
@@ -240,6 +241,18 @@ export interface Constraints {
   value?: string;
 }
 
+export interface SelectValue {
+  code: string;
+  name: string;
+  help?: string;
+}
+
+export interface CodeListReference {
+  canonicalIdentification?: string;
+  version?: string;
+  canonicalVersionUri?: string;
+}
+
 export interface DataField extends ElementData {
   inputType: Feldart;
   dataType: Datentyp;
@@ -252,6 +265,8 @@ export interface DataField extends ElementData {
   helpKey?: string;
   inputSize?: number;
   mediaTypes: string[];
+  values: SelectValue[];
+  codeListReference?: CodeListReference;
 }
 
 export interface Rule {

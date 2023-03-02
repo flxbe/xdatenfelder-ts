@@ -142,6 +142,7 @@ describe("Loading a schema from xml", () => {
         fillType: "keine",
         mediaTypes: [],
         rules: ["R60000000019:1.2.0"],
+        values: [],
       },
     });
     expect(message.rules).toEqual({
@@ -195,6 +196,7 @@ describe("Loading a schema from xml", () => {
         content: "Some Content",
         maxSize: 10,
         mediaTypes: ["application/json"],
+        values: [],
       })
     );
   });

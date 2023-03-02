@@ -444,6 +444,7 @@ class DataFieldState extends State {
       maxSize: this.maxSize.get(),
       mediaTypes: this.mediaTypes,
       rules: this.rules,
+      values: [],
     };
 
     context.dataFields[dataField.identifier] = dataField;
