@@ -203,37 +203,37 @@ describe("Loading a schema from xml", () => {
 
   test("should fail for empty id node", async () => {
     await expect(loadMessage("empty-id-node.xml")).rejects.toThrow(
-      "Missing content in node <xdf:id> (line 10, column 29)"
+      "Missing content (node <xdf:id>, line 10, column 29)"
     );
   });
 
   test("should fail for missing id node", async () => {
     await expect(loadMessage("missing-id-node.xml")).rejects.toThrow(
-      "Missing child node <xdf:id> (line 11, column 29)"
+      "Missing <id> (node <xdf:identifikation>, line 11, column 29)"
     );
   });
 
   test("should fail for duplicate id node", async () => {
     await expect(loadMessage("duplicate-id-node.xml")).rejects.toThrow(
-      "Duplicate node <xdf:id> (line 11, column 33)"
+      "Duplicate value (node <xdf:id>, line 11, column 33)"
     );
   });
 
   test("should fail for unexpected node", async () => {
     await expect(loadMessage("unexpected-node.xml")).rejects.toThrow(
-      "Unexpected node <xdf:unknown> (line 11, column 25)"
+      "Unexpected node (node <xdf:unknown>, line 11, column 25)"
     );
   });
 
   test("should fail for invalid release state", async () => {
     await expect(loadMessage("invalid-freigabestatus.xml")).rejects.toThrow(
-      "Invalid value in <xdf:freigabestatus>: 10 (line 18, column 27)"
+      "Invalid FreigabeStatus: 10 (node <code>, line 18, column 27)"
     );
   });
 
   test("should fail for unknown namespace", async () => {
     await expect(loadMessage("unknown-namespace.xml")).rejects.toThrow(
-      "Unknown namespace xdf: urn:xoev-de:fim:standard:xdatenfelder_unknown (line 3, column 144)"
+      "Unknown namespace xdf: urn:xoev-de:fim:standard:xdatenfelder_unknown (node <xdf:xdatenfelder.datenfeldgruppe.0103>, line 3, column 144)"
     );
   });
 });

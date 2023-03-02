@@ -46,7 +46,7 @@ export function parseDatentyp(value: string): Datentyp {
     case "obj":
       return value;
     default:
-      throw new ValidationError(`Invalid value in <xdf:datentyp>: ${value}`);
+      throw new ValidationError(`Invalid value for Datentyp: ${value}`);
   }
 }
 
@@ -61,7 +61,7 @@ export function parseFeldart(value: string): Feldart {
     case "locked":
       return value;
     default:
-      throw new ValidationError(`Invalid value in <xdf:feldart>: ${value}`);
+      throw new ValidationError(`Invalid value for Feldart: ${value}`);
   }
 }
 
@@ -84,7 +84,7 @@ export function parseRelationType(value: string): RelationType {
     case "EQU":
       return RelationType.Aequivalent;
     default:
-      throw new ValidationError(`Invalid value in <xdf:praedikat>: ${value}`);
+      throw new ValidationError(`Invalid value for RelationType: ${value}`);
   }
 }
 
@@ -106,7 +106,7 @@ export function parseRegelTyp(value: string): RegelTyp {
     case "B":
       return RegelTyp.Berechnung;
     default:
-      throw new ValidationError(`Invalid value in <xdf:typ>: ${value}`);
+      throw new ValidationError(`Invalid value for RegelTyp: ${value}`);
   }
 }
 
@@ -125,9 +125,7 @@ export function parseSchemaElementArt(value: string): SchemaElementArt {
     case "RNG":
       return SchemaElementArt.Rechtsnormgebunden;
     default:
-      throw new ValidationError(
-        `Invalid value in <xdf:schemaelementart>: ${value}`
-      );
+      throw new ValidationError(`Invalid value for SchemaElementArt: ${value}`);
   }
 }
 
@@ -163,9 +161,7 @@ export function parseFreigabeStatus(value: string): FreigabeStatus {
     case "8":
       return FreigabeStatus.VorgesehenZumLoeschen;
     default:
-      throw new ValidationError(
-        `Invalid value in <xdf:freigabestatus>: ${value}`
-      );
+      throw new ValidationError(`Invalid FreigabeStatus: ${value}`);
   }
 }
 

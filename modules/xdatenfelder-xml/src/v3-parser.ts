@@ -50,16 +50,14 @@ import {
 import { assert } from "./util";
 
 class RootState extends State {
-  public value: Value<DataGroupMessage3> = new Value(
-    "xdf:xdatenfelder.datenfeldgruppe.0103"
-  );
+  public value: Value<DataGroupMessage3> = new Value();
 
   public onOpenTag(tag: sax.QualifiedTag): State {
     switch (tag.name) {
       case "xdf:xdatenfelder.datenfeldgruppe.0103":
         return new MessageState(this, this.value);
       default:
-        throw new UnexpectedTagError(tag.name);
+        throw new UnexpectedTagError();
     }
   }
 
@@ -72,8 +70,8 @@ class MessageState extends State {
   private parent: State;
   private value: Value<DataGroupMessage3>;
 
-  private header: Value<[string, Date]> = new Value("xdf:header");
-  private rootDataGroup: Value<string> = new Value("xdf:datenfeldgruppe");
+  private header: Value<[string, Date]> = new Value();
+  private rootDataGroup: Value<string> = new Value();
 
   constructor(parent: State, value: Value<DataGroupMessage3>) {
     super();
@@ -91,13 +89,15 @@ class MessageState extends State {
           this.rootDataGroup.set(dataGroup.identifier);
         });
       default:
-        throw new UnexpectedTagError(tag.name);
+        throw new UnexpectedTagError();
     }
   }
 
   public onCloseTag(context: Context): State {
-    const [messageId, createdAt] = this.header.unwrap();
-    const rootDataGroup = this.rootDataGroup.unwrap();
+    const [messageId, createdAt] = this.header.expect("Missing <header>");
+    const rootDataGroup = this.rootDataGroup.expect(
+      "Missing <datenfeldgruppe>"
+    );
 
     this.value.set(
       new DataGroupMessage3(
@@ -118,8 +118,8 @@ class HeaderState extends State {
   private parent: State;
   private value: Value<[string, Date]>;
 
-  private messageId: Value<string> = new Value("xdf:nachrichtID");
-  private createdAt: Value<Date> = new Value("xdf:erstellungszeitpunkt");
+  private messageId: Value<string> = new Value();
+  private createdAt: Value<Date> = new Value();
 
   constructor(parent: State, value: Value<[string, Date]>) {
     super();
@@ -135,13 +135,15 @@ class HeaderState extends State {
       case "xdf:erstellungszeitpunkt":
         return new ValueNodeState(this, this.createdAt, parseDate);
       default:
-        throw new UnexpectedTagError(tag.name);
+        throw new UnexpectedTagError();
     }
   }
 
   public onCloseTag(_context: Context): State {
-    const messageId = this.messageId.unwrap();
-    const createdAt = new Date(this.createdAt.unwrap());
+    const messageId = this.messageId.expect("Missing <nachrichtID>");
+    const createdAt = new Date(
+      this.createdAt.expect("Missing <erstellungszeitpunkt>")
+    );
 
     this.value.set([messageId, createdAt]);
 
@@ -177,54 +179,56 @@ interface ElementContainer extends BaseContainer {
 
 function createElementContainer(): ElementContainer {
   return {
-    identification: new Value("xdf:identifikation"),
-    name: new Value("xdf:name"),
-    description: new Value("xdf:beschreibung"),
-    definition: new Value("xdf:definition"),
-    releaseState: new Value("xdf:freigabestatus"),
-    stateSetAt: new Value("xdf:statusGesetztAm"),
-    stateSetBy: new Value("xdf:statusGesetztDurch"),
-    validSince: new Value("xdf:gueltigAb"),
-    validUntil: new Value("xdf:gueltigBis"),
-    versionHint: new Value("xdf:versionshinweis"),
-    publishedAt: new Value("xdf:veroeffentlichungsdatum"),
-    lastChangedAt: new Value("xdf:letzteAenderung"),
+    identification: new Value(),
+    name: new Value(),
+    description: new Value(),
+    definition: new Value(),
+    releaseState: new Value(),
+    stateSetAt: new Value(),
+    stateSetBy: new Value(),
+    validSince: new Value(),
+    validUntil: new Value(),
+    versionHint: new Value(),
+    publishedAt: new Value(),
+    lastChangedAt: new Value(),
     normReferences: [],
     keywords: [],
     relations: [],
-    inputLabel: new Value("xdf:bezeichnungEingabe"),
-    outputLabel: new Value("xdf:bezeichnungAusgabe"),
-    elementType: new Value("xdf:schemaelementart"),
-    inputHelp: new Value("xdf:hilfetextEingabe"),
-    outputHelp: new Value("xdf:hilfetextAusgabe"),
+    inputLabel: new Value(),
+    outputLabel: new Value(),
+    elementType: new Value(),
+    inputHelp: new Value(),
+    outputHelp: new Value(),
   };
 }
 
 function parseElementData(container: ElementContainer): ElementData {
-  const [id, version] = container.identification.unwrap();
+  const [id, version] = container.identification.expect(
+    "Missing <identifikation>"
+  );
   const identifier = `${id}:${version}`;
 
   return {
     identifier,
     id,
     version,
-    name: container.name.unwrap(),
+    name: container.name.expect("Missing <name>"),
     description: container.description.get(),
     definition: container.definition.get(),
-    releaseState: container.releaseState.unwrap(),
+    releaseState: container.releaseState.expect("Missing <freigabestatus>"),
     stateSetAt: container.stateSetAt.get(),
     stateSetBy: container.stateSetBy.get(),
     validSince: container.validSince.get(),
     validUntil: container.validUntil.get(),
     versionHint: container.versionHint.get(),
     publishedAt: container.publishedAt.get(),
-    lastChangedAt: container.lastChangedAt.unwrap(),
+    lastChangedAt: container.lastChangedAt.expect("Missing <letzteAenderung>"),
     normReferences: container.normReferences,
     keywords: container.keywords,
     relations: container.relations,
-    inputLabel: container.inputLabel.unwrap(),
+    inputLabel: container.inputLabel.expect("Missing <bezeichnungEingabe>"),
     outputLabel: container.outputLabel.get(),
-    elementType: container.elementType.unwrap(),
+    elementType: container.elementType.expect("Missing <schemaelementart>"),
     inputHelp: container.inputHelp.get(),
     outputHelp: container.outputHelp.get(),
   };
@@ -346,7 +350,7 @@ class DataGroupState extends State {
           }
         });
       default:
-        throw new UnexpectedTagError(tag.name);
+        throw new UnexpectedTagError();
     }
   }
 
@@ -371,15 +375,15 @@ class DataFieldState extends State {
   private onFinish: FinishFn<DataField>;
 
   private elementContainer = createElementContainer();
-  private inputType: Value<Feldart> = new Value("xdf:feldart");
-  private dataType: Value<Datentyp> = new Value("xdf:datentyp");
-  private fillType: Value<Vorbefuellung> = new Value("xdf:vorbefuellung");
-  private constraints: Value<Constraints> = new Value("xdf:praezisierung");
-  private content: Value<string | undefined> = new Value("xdf:inhalt");
-  private codeKey: Value<string | undefined> = new Value("xdf:codeKey");
-  private nameKey: Value<string | undefined> = new Value("xdf:nameKey");
-  private helpKey: Value<string | undefined> = new Value("xdf:helpKey");
-  private maxSize: Value<number | undefined> = new Value("xdf:maxSize");
+  private inputType: Value<Feldart> = new Value();
+  private dataType: Value<Datentyp> = new Value();
+  private fillType: Value<Vorbefuellung> = new Value();
+  private constraints: Value<Constraints> = new Value();
+  private content: Value<string | undefined> = new Value();
+  private codeKey: Value<string | undefined> = new Value();
+  private nameKey: Value<string | undefined> = new Value();
+  private helpKey: Value<string | undefined> = new Value();
+  private maxSize: Value<number | undefined> = new Value();
   private mediaTypes: string[] = [];
   private rules: string[] = [];
 
@@ -425,7 +429,7 @@ class DataFieldState extends State {
           this.mediaTypes.push(mediaType)
         );
       default:
-        throw new UnexpectedTagError(tag.name);
+        throw new UnexpectedTagError();
     }
   }
 
@@ -434,9 +438,9 @@ class DataFieldState extends State {
 
     const dataField = {
       ...data,
-      inputType: this.inputType.unwrap(),
-      dataType: this.dataType.unwrap(),
-      fillType: this.fillType.unwrap(),
+      inputType: this.inputType.expect("Missing <feldart>"),
+      dataType: this.dataType.expect("Missing <datentyp>"),
+      fillType: this.fillType.expect("Missing <vorbefuellung>"),
       constraints: this.constraints.get() ?? {},
       content: this.content.get(),
       codeKey: this.codeKey.get(),
@@ -473,7 +477,7 @@ class MediaTypeState extends State {
   }
 
   public onOpenTag(tag: sax.QualifiedTag): State {
-    throw new UnexpectedTagError(tag.name);
+    throw new UnexpectedTagError();
   }
 
   public onCloseTag(_context: Context): State {
@@ -517,7 +521,7 @@ class ConstraintsState extends State {
   }
 
   public onOpenTag(tag: sax.QualifiedTag): State {
-    throw new UnexpectedTagError(tag.name);
+    throw new UnexpectedTagError();
   }
 
   public onCloseTag(_context: Context): State {
@@ -545,9 +549,9 @@ class StructureState extends State {
   private parent: State;
   private onFinish: FinishFn<Child>;
 
-  private element: Value<Element> = new Value("xdf:enthaelt");
+  private element: Value<Element> = new Value();
   private normReferences: NormReference[] = [];
-  private cardinality: Value<string> = new Value("xdf:anzahl");
+  private cardinality: Value<string> = new Value();
 
   constructor(parent: State, onFinish: FinishFn<Child>) {
     super();
@@ -567,15 +571,15 @@ class StructureState extends State {
       case "xdf:enthaelt":
         return new ContainsState(this, this.element);
       default:
-        throw new UnexpectedTagError(tag.name);
+        throw new UnexpectedTagError();
     }
   }
 
   public onCloseTag(_context: Context): State {
-    const element = this.element.unwrap();
+    const element = this.element.expect("Missing <enthaelt>");
     const child = {
       ...element,
-      cardinality: this.cardinality.unwrap(),
+      cardinality: this.cardinality.expect("Missing <anzahl>"),
       normReferences: this.normReferences,
     };
 
@@ -604,7 +608,7 @@ class ContainsState extends State {
 
   public onOpenTag(tag: sax.QualifiedTag): State {
     if (this.value !== undefined) {
-      throw new DuplicateTagError("xdf:datenfeld | xdf:datenfeldgruppe");
+      throw new DuplicateTagError();
     }
 
     switch (tag.name) {
@@ -617,7 +621,7 @@ class ContainsState extends State {
           this.value = { type: "dataField", dataField };
         });
       default:
-        throw new UnexpectedTagError(tag.name);
+        throw new UnexpectedTagError();
     }
   }
   public onCloseTag(_context: Context): State {
@@ -635,8 +639,8 @@ class RelationState extends State {
   private parent: State;
   private onFinish: FinishFn<Relation>;
 
-  private type: Value<RelationType> = new Value("xdf:praedikat");
-  private identification: Value<[string, string]> = new Value("xdf:objekt");
+  private type: Value<RelationType> = new Value();
+  private identification: Value<[string, string]> = new Value();
 
   constructor(parent: State, onFinish: FinishFn<Relation>) {
     super();
@@ -652,13 +656,13 @@ class RelationState extends State {
       case "xdf:objekt":
         return new IdentificationState(this, this.identification);
       default:
-        throw new UnexpectedTagError(tag.name);
+        throw new UnexpectedTagError();
     }
   }
 
   public onCloseTag(_context: Context): State {
-    const type = this.type.unwrap();
-    const [id, version] = this.identification.unwrap();
+    const type = this.type.expect("Missing <praedikat>");
+    const [id, version] = this.identification.expect("Missing <objekt>");
     const identifier = `${id}:${version}`;
 
     this.onFinish({ type, identifier });
@@ -671,22 +675,14 @@ class RuleState extends State {
   private parent: State;
   private onFinish: FinishFn<Rule>;
 
-  private identification: Value<[string, string]> = new Value(
-    "xdf:identifikation"
-  );
-  private name: Value<string> = new Value("xdf:name");
-  private description: Value<string | undefined> = new Value(
-    "xdf:beschreibung"
-  );
-  private freeFormDefinition: Value<string | undefined> = new Value(
-    "xdf:freitextRegel"
-  );
-  private creator: Value<string | undefined> = new Value(
-    "xdf:fachlicherErsteller"
-  );
-  private lastChangedAt: Value<Date> = new Value("xdf:letzteAenderung");
-  private type: Value<RegelTyp> = new Value("xdf:typ");
-  private script: Value<string | undefined> = new Value("xdf:skript");
+  private identification: Value<[string, string]> = new Value();
+  private name: Value<string> = new Value();
+  private description: Value<string | undefined> = new Value();
+  private freeFormDefinition: Value<string | undefined> = new Value();
+  private creator: Value<string | undefined> = new Value();
+  private lastChangedAt: Value<Date> = new Value();
+  private type: Value<RegelTyp> = new Value();
+  private script: Value<string | undefined> = new Value();
   private normReferences: NormReference[] = [];
   private keywords: Keyword[] = [];
 
@@ -725,24 +721,26 @@ class RuleState extends State {
         );
 
       default:
-        throw new UnexpectedTagError(tag.name);
+        throw new UnexpectedTagError();
     }
   }
 
   public onCloseTag(context: Context): State {
-    const [id, version] = this.identification.unwrap();
+    const [id, version] = this.identification.expect(
+      "Missing <identifikation>"
+    );
     const identifier = `${id}:${version}`;
 
     const rule = {
       identifier,
       id,
       version,
-      name: this.name.unwrap(),
+      name: this.name.expect("Missing <name>"),
       description: this.description.get(),
       freeFormDefinition: this.freeFormDefinition.get(),
       creator: this.creator.get(),
-      lastChangedAt: this.lastChangedAt.unwrap(),
-      type: this.type.unwrap(),
+      lastChangedAt: this.lastChangedAt.expect("Missing <letzteAenderung>"),
+      type: this.type.expect("Missing <typ>"),
       script: this.script.get(),
       normReferences: this.normReferences,
       keywords: this.keywords,
@@ -759,7 +757,7 @@ class KeywordState extends State {
   private parent: State;
   private uri: string | undefined;
   private onFinish: FinishFn<Keyword>;
-  private value: Value<string | undefined> = new Value("xdf:stichwort");
+  private value: Value<string | undefined> = new Value();
 
   constructor(
     parent: State,
@@ -779,7 +777,7 @@ class KeywordState extends State {
   }
 
   public onOpenTag(tag: sax.QualifiedTag): State {
-    throw new UnexpectedTagError(tag.name);
+    throw new UnexpectedTagError();
   }
 
   public onCloseTag(_context: Context): State {
@@ -802,7 +800,7 @@ class NormReferenceState extends State {
   private parent: State;
   private link: string | undefined;
   private onFinish: FinishFn<NormReference>;
-  private value: Value<string | undefined> = new Value("xdf:bezug");
+  private value: Value<string | undefined> = new Value();
 
   constructor(
     parent: State,
@@ -822,7 +820,7 @@ class NormReferenceState extends State {
   }
 
   public onOpenTag(tag: sax.QualifiedTag): State {
-    throw new UnexpectedTagError(tag.name);
+    throw new UnexpectedTagError();
   }
 
   public onCloseTag(_context: Context): State {
@@ -855,8 +853,8 @@ class IdentificationState extends State {
   private parent: State;
   private value: Value<[string, string]>;
 
-  private id: Value<string> = new Value("xdf:id");
-  private version: Value<string> = new Value("xdf:version");
+  private id: Value<string> = new Value();
+  private version: Value<string> = new Value();
 
   constructor(parent: State, value: Value<[string, string]>) {
     super();
@@ -872,13 +870,13 @@ class IdentificationState extends State {
       case "xdf:version":
         return new StringNodeState(this, this.version);
       default:
-        throw new UnexpectedTagError(tag.name);
+        throw new UnexpectedTagError();
     }
   }
 
   public onCloseTag(): State {
-    const id = this.id.unwrap();
-    const version = this.version.unwrap();
+    const id = this.id.expect("Missing <id>");
+    const version = this.version.expect("Missing <version>");
     this.value.set([id, version]);
 
     return this.parent;
@@ -903,7 +901,7 @@ class DataGroupMessageParser {
       throw new InternalParserError("Unexpected EOF");
     }
 
-    return state.value.unwrap();
+    return state.value.expect("Missing <xdatenfelder.datenfeldgruppe.0103>");
   }
 }
 
@@ -961,7 +959,7 @@ export class SchemaMessage3 {
         name: "Some Schema",
         label: "Some Label",
         releaseState: FreigabeStatus.FachlichFreigegebenGold,
-        lastChangedAt: new Date(),
+        lastChangedAt: new Date(0),
         rules: [],
         children: [],
         relations: [],

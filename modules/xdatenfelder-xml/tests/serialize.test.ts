@@ -22,7 +22,7 @@ async function loadSchema(): Promise<SchemaContainer> {
       name: "Some Schema",
       label: "Some Label",
       releaseState: FreigabeStatus.FachlichFreigegebenGold,
-      lastChangedAt: new Date(),
+      lastChangedAt: new Date(0),
       rules: [],
       children: [],
       relations: [],

@@ -1,8 +1,8 @@
 import sax from "sax";
 
 export class ParserError extends Error {
-  constructor(message: string, line: number, column: number) {
-    super(`${message} (line ${line}, column ${column})`);
+  constructor(message: string, tag: string, line: number, column: number) {
+    super(`${message} (node <${tag}>, line ${line}, column ${column})`);
     this.name = "ParserError";
   }
 
@@ -13,7 +13,12 @@ export class ParserError extends Error {
     // The parser starts counting the lines at 0
     const actualLine = parser.line + 1;
 
-    return new ParserError(error.message, actualLine, parser.column);
+    return new ParserError(
+      error.message,
+      parser.tag.name,
+      actualLine,
+      parser.column
+    );
   }
 }
 
@@ -39,8 +44,8 @@ export class ValidationError extends InternalParserError {
 }
 
 export class UnexpectedTagError extends InternalParserError {
-  constructor(tagName: string) {
-    super(`Unexpected node <${tagName}>`);
+  constructor() {
+    super(`Unexpected node`);
     this.name = "UnexpectedTagError";
   }
 }
@@ -52,16 +57,23 @@ export class MissingChildNodeError extends InternalParserError {
   }
 }
 
+export class MissingValueError extends InternalParserError {
+  constructor(message: string) {
+    super(message);
+    this.name = "MissingValueError";
+  }
+}
+
 export class MissingContentError extends InternalParserError {
-  constructor(parentName: string) {
-    super(`Missing content in node <${parentName}>`);
+  constructor() {
+    super("Missing content");
     this.name = "MissingContentError";
   }
 }
 
 export class DuplicateTagError extends InternalParserError {
-  constructor(tagName: string) {
-    super(`Duplicate node <${tagName}>`);
+  constructor() {
+    super("Duplicate value");
     this.name = "DuplicateTagError";
   }
 }

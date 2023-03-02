@@ -8,6 +8,7 @@ import {
   UnexpectedTagError,
   ParserError,
   UnknownNamespaceError,
+  MissingValueError,
 } from "./errors";
 import { assert } from "./util";
 
@@ -22,16 +23,13 @@ export class Value<T> {
     | { filled: false; value: undefined }
     | { filled: true; value: T };
 
-  public readonly tagName: string;
-
-  constructor(tagName: string) {
-    this.tagName = tagName;
+  constructor() {
     this.content = { filled: false, value: undefined };
   }
 
   public set(value: T) {
     if (this.content.filled) {
-      throw new DuplicateTagError(this.tagName);
+      throw new DuplicateTagError();
     }
 
     this.content = { filled: true, value };
@@ -45,9 +43,9 @@ export class Value<T> {
     return this.content.filled;
   }
 
-  public unwrap(): T {
+  public expect(errorMessage: string): T {
     if (!this.content.filled) {
-      throw new MissingChildNodeError(this.tagName);
+      throw new MissingValueError(errorMessage);
     }
 
     return this.content.value;
@@ -89,12 +87,12 @@ export class ValueNodeState<T> extends State {
   }
 
   public onOpenTag(tag: sax.QualifiedTag): State {
-    throw new UnexpectedTagError(tag.name);
+    throw new UnexpectedTagError();
   }
 
   public onCloseTag(_context: Context): State {
     if (!this.value.isFilled()) {
-      throw new MissingContentError(this.value.tagName);
+      throw new MissingContentError();
     }
 
     return this.parent;
@@ -124,7 +122,7 @@ export class OptionalValueNodeState<T> extends State {
   }
 
   public onOpenTag(tag: sax.QualifiedTag): State {
-    throw new UnexpectedTagError(tag.name);
+    throw new UnexpectedTagError();
   }
 
   public onCloseTag(_context: Context): State {
@@ -149,7 +147,7 @@ export class CodeNodeState<T> extends State {
   private parseValue: (value: string) => T;
 
   private value: Value<T>;
-  private childValue: Value<T> = new Value("code");
+  private childValue: Value<T> = new Value();
 
   constructor(
     parent: State,
@@ -168,12 +166,12 @@ export class CodeNodeState<T> extends State {
       case "code":
         return new ValueNodeState(this, this.childValue, this.parseValue);
       default:
-        throw new UnexpectedTagError(tag.name);
+        throw new UnexpectedTagError();
     }
   }
 
   public onCloseTag(_context: Context): State {
-    const value = this.childValue.unwrap();
+    const value = this.childValue.expect("Missing <code> node");
     this.value.set(value);
 
     return this.parent;
