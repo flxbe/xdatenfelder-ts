@@ -12,7 +12,7 @@
         <xdf:name>Test</xdf:name>
         <xdf:bezeichnungEingabe>Test</xdf:bezeichnungEingabe>
         <xdf:beschreibung>Eine Beschreibung</xdf:beschreibung>
-        <xdf:definition>Eine Defintion</xdf:definition>
+        <xdf:definition>Eine Definition</xdf:definition>
         <xdf:bezug>Bezug</xdf:bezug>
         <xdf:status listURI="urn:xoev-de:fim:codeliste:xdatenfelder.status" listVersionID="1.0">
             <code>aktiv</code>

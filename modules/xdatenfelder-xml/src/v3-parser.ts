@@ -23,6 +23,7 @@ import {
   DataGroup,
   DataField,
   Rule,
+  BaseData,
   ChildRef,
   parseFreigabeStatus,
   parseDate,
@@ -151,7 +152,7 @@ class HeaderState extends State {
   }
 }
 
-interface BaseContainer {
+export interface BaseContainer {
   identification: Value<[string, string]>;
   name: Value<string>;
   description: Value<string | undefined>;
@@ -169,7 +170,27 @@ interface BaseContainer {
   relations: Relation[];
 }
 
-interface ElementContainer extends BaseContainer {
+export function createBaseContainer(): BaseContainer {
+  return {
+    identification: new Value(),
+    name: new Value(),
+    description: new Value(),
+    definition: new Value(),
+    releaseState: new Value(),
+    stateSetAt: new Value(),
+    stateSetBy: new Value(),
+    validSince: new Value(),
+    validUntil: new Value(),
+    versionHint: new Value(),
+    publishedAt: new Value(),
+    lastChangedAt: new Value(),
+    normReferences: [],
+    keywords: [],
+    relations: [],
+  };
+}
+
+export interface ElementContainer extends BaseContainer {
   inputLabel: Value<string>;
   outputLabel: Value<string | undefined>;
   elementType: Value<SchemaElementArt>;
@@ -199,6 +220,33 @@ function createElementContainer(): ElementContainer {
     elementType: new Value(),
     inputHelp: new Value(),
     outputHelp: new Value(),
+  };
+}
+
+export function parseBaseData(container: BaseContainer): BaseData {
+  const [id, version] = container.identification.expect(
+    "Missing <identifikation>"
+  );
+  const identifier = `${id}:${version}`;
+
+  return {
+    identifier,
+    id,
+    version,
+    name: container.name.expect("Missing <name>"),
+    description: container.description.get(),
+    definition: container.definition.get(),
+    releaseState: container.releaseState.expect("Missing <freigabestatus>"),
+    stateSetAt: container.stateSetAt.get(),
+    stateSetBy: container.stateSetBy.get(),
+    validSince: container.validSince.get(),
+    validUntil: container.validUntil.get(),
+    versionHint: container.versionHint.get(),
+    publishedAt: container.publishedAt.get(),
+    lastChangedAt: container.lastChangedAt.expect("Missing <letzteAenderung>"),
+    normReferences: container.normReferences,
+    keywords: container.keywords,
+    relations: container.relations,
   };
 }
 
