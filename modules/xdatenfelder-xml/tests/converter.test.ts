@@ -45,6 +45,8 @@ describe("Loading a schema from xml", () => {
       lastChangedAt: new Date(0),
     });
   });
+
+  test.todo("should use name if label is undefined");
 });
 
 async function loadMessage(name: string): Promise<SchemaMessage> {

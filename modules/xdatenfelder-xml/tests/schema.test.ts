@@ -15,7 +15,7 @@ describe("Loading a schema from xml", () => {
       inputLabel: "Test",
       outputLabel: undefined,
       description: "Eine Beschreibung",
-      definition: "Eine Defintion",
+      definition: "Eine Definition",
       relatedTo: "Bezug",
       creator: "Test",
       versionInfo: "Ein Versionshinweis",

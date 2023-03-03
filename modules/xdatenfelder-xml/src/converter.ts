@@ -136,7 +136,7 @@ interface SchemaState {
   type: "schema";
   parent: MessageState;
   baseContainer: BaseContainer;
-  label: Value<string>;
+  label: Value<string | undefined>;
 }
 
 function createSchemaState(parent: MessageState): SchemaState {
@@ -235,7 +235,7 @@ function handleOpenTag(
         case "xdf:identifikation":
           return createIdentificationState(state);
         case "xdf:bezeichnungEingabe":
-          return createStringNodeState(state, state.label);
+          return createOptionalStringNodeState(state, state.label);
         case "xdf:name":
           return createStringNodeState(state, state.baseContainer.name);
         case "xdf:beschreibung":
@@ -304,7 +304,7 @@ function handleCloseTag(state: State<unknown>): State<unknown> {
       state.baseContainer.releaseState.set(FreigabeStatus.Inaktiv);
 
       const baseData = parseBaseData(state.baseContainer);
-      const label = state.label.expect("Missing <bezecihnungEingabe>");
+      const label = state.label.get() ?? baseData.name;
 
       state.parent.schema.set({
         ...baseData,
