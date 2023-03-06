@@ -1,4 +1,5 @@
 import { ValidationError } from "./errors";
+import { assert } from "./util";
 
 export const NS_XD3 = "urn:xoev-de:fim:standard:xdatenfelder_3.0.0";
 
@@ -282,6 +283,69 @@ export interface Rule {
   // errors
 }
 
+interface Diff {
+  name: string;
+  left?: string;
+  right?: string;
+}
+
+interface TableItem {
+  identifier: string;
+}
+
+export class Table<T extends TableItem> {
+  private items: Record<string, T> = {};
+  private getDiff: (left: T, right: T) => Diff[];
+
+  constructor(getDiff: (left: T, right: T) => Diff[]) {
+    this.getDiff = getDiff;
+  }
+
+  // TODO: create diffing functions
+  public static DataGroupTable(): Table<DataGroup> {
+    return new Table(() => {
+      return [];
+    });
+  }
+
+  public static DataFieldTable(): Table<DataField> {
+    return new Table(() => {
+      return [];
+    });
+  }
+
+  public static RuleTable(): Table<Rule> {
+    return new Table(() => {
+      return [];
+    });
+  }
+
+  public insert(item: T) {
+    const savedItem = this.items[item.identifier];
+
+    if (savedItem) {
+      const diff = this.getDiff(savedItem, item);
+      assert(diff.length === 0);
+    } else {
+      this.items[item.identifier] = item;
+    }
+  }
+
+  public get(identifier: string): T {
+    const item = this.items[identifier];
+
+    if (item === undefined) {
+      throw new Error(`Unknown identifier: ${identifier}`);
+    }
+
+    return item;
+  }
+
+  public entries(): Record<string, T> {
+    return this.items;
+  }
+}
+
 export interface Schema extends BaseData {
   label: string;
   help?: string;
@@ -295,7 +359,7 @@ export interface Schema extends BaseData {
 export interface SchemaContainer {
   schema: Schema;
 
-  dataGroups: Record<string, DataGroup>;
-  dataFields: Record<string, DataField>;
-  rules: Record<string, Rule>;
+  dataGroups: Table<DataGroup>;
+  dataFields: Table<DataField>;
+  rules: Table<Rule>;
 }

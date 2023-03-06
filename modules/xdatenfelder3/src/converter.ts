@@ -9,6 +9,7 @@ import {
   FreigabeStatus,
   SchemaContainer,
   parseDate,
+  Table,
 } from "./schema";
 import {
   ParserError,
@@ -411,9 +412,9 @@ export class SchemaConverter {
     const container: SchemaContainer = {
       schema,
 
-      dataFields: {},
-      dataGroups: {},
-      rules: {},
+      dataGroups: Table.DataGroupTable(),
+      dataFields: Table.DataFieldTable(),
+      rules: Table.RuleTable(),
     };
 
     return {

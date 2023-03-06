@@ -16,7 +16,7 @@ describe("Loading a schema from xml", () => {
     expect(message.createdAt).toEqual(new Date("2021-04-14T12:49:54.848Z"));
 
     expect(message.rootDataGroup).toEqual("G60000000088:1.2.0");
-    expect(message.dataGroups).toEqual({
+    expect(message.dataGroups.entries()).toEqual({
       "G60000000088:1.2.0": {
         identifier: "G60000000088:1.2.0",
         id: "G60000000088",
@@ -100,7 +100,7 @@ describe("Loading a schema from xml", () => {
         ],
       },
     });
-    expect(message.dataFields).toEqual({
+    expect(message.dataFields.entries()).toEqual({
       "F60000000243:1.1.0": {
         identifier: "F60000000243:1.1.0",
         id: "F60000000243",
@@ -145,7 +145,7 @@ describe("Loading a schema from xml", () => {
         values: [],
       },
     });
-    expect(message.rules).toEqual({
+    expect(message.rules.entries()).toEqual({
       "R60000000019:1.2.0": {
         identifier: "R60000000019:1.2.0",
         id: "R60000000019",
@@ -177,7 +177,7 @@ describe("Loading a schema from xml", () => {
   test("should correctly load all input attributes", async () => {
     const message = await loadMessage("input.xml");
 
-    expect(message.dataFields["F60000000243:1.1.0"]).toEqual(
+    expect(message.dataFields.get("F60000000243:1.1.0")).toEqual(
       expect.objectContaining({
         inputType: "select",
         dataType: "text",

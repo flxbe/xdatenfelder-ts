@@ -1,6 +1,6 @@
 import { describe, expect, test } from "@jest/globals";
 import { serializeSchema, SchemaMessage3 } from "../src";
-import { FreigabeStatus, SchemaContainer } from "../src/schema";
+import { FreigabeStatus, SchemaContainer, Table } from "../src/schema";
 
 describe("Serializing a schema", () => {
   test("should return the correct xml string", async () => {
@@ -9,7 +9,16 @@ describe("Serializing a schema", () => {
     const xml = serializeSchema(container);
     const message = SchemaMessage3.fromString(xml);
 
-    expect(message.container).toEqual(container);
+    expect(message.container.schema).toEqual(container.schema);
+    expect(message.container.dataGroups.entries()).toEqual(
+      container.dataGroups.entries()
+    );
+    expect(message.container.dataFields.entries()).toEqual(
+      container.dataFields.entries()
+    );
+    expect(message.container.rules.entries()).toEqual(
+      container.rules.entries()
+    );
   });
 });
 
@@ -29,8 +38,8 @@ async function loadSchema(): Promise<SchemaContainer> {
       keywords: [],
       normReferences: [],
     },
-    dataGroups: {},
-    dataFields: {},
-    rules: {},
+    dataGroups: Table.DataGroupTable(),
+    dataFields: Table.DataFieldTable(),
+    rules: Table.RuleTable(),
   };
 }

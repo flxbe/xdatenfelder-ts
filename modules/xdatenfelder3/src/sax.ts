@@ -1,5 +1,5 @@
 import sax from "sax";
-import { DataField, DataGroup, Rule } from "./schema";
+import { Table, DataField, DataGroup, Rule } from "./schema";
 import {
   DuplicateTagError,
   MissingChildNodeError,
@@ -13,9 +13,9 @@ import {
 import { assert } from "./util";
 
 export interface Context {
-  dataGroups: Record<string, DataGroup>;
-  dataFields: Record<string, DataField>;
-  rules: Record<string, Rule>;
+  dataGroups: Table<DataGroup>;
+  dataFields: Table<DataField>;
+  rules: Table<Rule>;
 }
 
 export class Value<T> {
@@ -207,9 +207,9 @@ export class StateParser {
     this.state = rootState;
     this.namespace = namespace;
     this.context = {
-      dataFields: {},
-      dataGroups: {},
-      rules: {},
+      dataGroups: Table.DataGroupTable(),
+      dataFields: Table.DataFieldTable(),
+      rules: Table.RuleTable(),
     };
     this.xmlParser = sax.parser(true, {
       trim: true,

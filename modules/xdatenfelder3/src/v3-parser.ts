@@ -21,6 +21,7 @@ import {
 } from "./errors";
 import {
   DataGroup,
+  Table,
   DataField,
   Rule,
   BaseData,
@@ -411,7 +412,7 @@ class DataGroupState extends State {
       children: this.children,
     };
 
-    context.dataGroups[dataGroup.identifier] = dataGroup;
+    context.dataGroups.insert(dataGroup);
     this.onFinish(dataGroup);
 
     return this.parent;
@@ -500,7 +501,7 @@ class DataFieldState extends State {
       values: [],
     };
 
-    context.dataFields[dataField.identifier] = dataField;
+    context.dataFields.insert(dataField);
     this.onFinish(dataField);
 
     return this.parent;
@@ -794,7 +795,7 @@ class RuleState extends State {
       keywords: this.keywords,
     };
 
-    context.rules[identifier] = rule;
+    context.rules.insert(rule);
     this.onFinish(rule);
 
     return this.parent;
@@ -958,17 +959,17 @@ export class DataGroupMessage3 {
   public createdAt: Date;
 
   public rootDataGroup: string;
-  public dataGroups: Record<string, DataGroup>;
-  public dataFields: Record<string, DataField>;
-  public rules: Record<string, Rule>;
+  public dataGroups: Table<DataGroup>;
+  public dataFields: Table<DataField>;
+  public rules: Table<Rule>;
 
   constructor(
     id: string,
     createdAt: Date,
     rootDataGroup: string,
-    dataGroups: Record<string, DataGroup>,
-    dataFields: Record<string, DataField>,
-    rules: Record<string, Rule>
+    dataGroups: Table<DataGroup>,
+    dataFields: Table<DataField>,
+    rules: Table<Rule>
   ) {
     this.id = id;
     this.createdAt = createdAt;
@@ -1014,9 +1015,9 @@ export class SchemaMessage3 {
         keywords: [],
         normReferences: [],
       },
-      dataGroups: {},
-      dataFields: {},
-      rules: {},
+      dataGroups: Table.DataGroupTable(),
+      dataFields: Table.DataFieldTable(),
+      rules: Table.RuleTable(),
     };
 
     return new SchemaMessage3(container, "some-message-id", new Date());
