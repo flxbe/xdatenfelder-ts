@@ -4,7 +4,8 @@ A collection of TypeScript modules to work with the german eGov standard [xDaten
 
 ## Modules
 
-- `xdatenfelder-xml`: Parser for xDatenfelder `.xml` files.
+- `xdatenfelder3`: Parser for XDatenfelder 3.0.0 files. Converter from v2.0 to v3.0.0.
+- `xdatenfelder-xml`: Parser for xDatenfelder v2.0 files.
 - `xdatenfelder-viewer`: A web application to load and inspect xDatenfelder files locally ([Hosted via Github Pages](https://flxbe.github.io/xdatenfelder-ts/)).
 - `xdatenfelder-cg`: Code generation tool that emits TypeScript for a given xDatenfelder file.
 - `xdatenfelder-react`: Experimental react bindings for the code generated via `xdatenfelder-cg`.
