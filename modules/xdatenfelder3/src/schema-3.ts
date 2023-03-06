@@ -1,5 +1,3 @@
-import { CodeList } from "./code-list";
-import { SchemaConverter } from "./converter";
 import { ValidationError } from "./errors";
 
 export const NS_XD3 = "urn:xoev-de:fim:standard:xdatenfelder_3.0.0";
