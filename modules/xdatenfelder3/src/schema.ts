@@ -320,6 +320,10 @@ export class Table<T extends TableItem> {
     });
   }
 
+  public import(other: Table<T>) {
+    Object.values(other.items).forEach((item) => this.insert(item));
+  }
+
   public insert(item: T) {
     const savedItem = this.items[item.identifier];
 

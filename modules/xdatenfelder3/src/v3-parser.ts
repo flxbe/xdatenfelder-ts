@@ -580,7 +580,7 @@ class ConstraintsState extends State {
   }
 }
 
-type Child =
+export type Child =
   | {
       type: "dataGroup";
       dataGroup: DataGroup;
