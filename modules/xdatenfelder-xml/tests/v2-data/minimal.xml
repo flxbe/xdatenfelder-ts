@@ -17,10 +17,10 @@
         <xdf:status listURI="urn:xoev-de:fim:codeliste:xdatenfelder.status" listVersionID="1.0">
             <code>aktiv</code>
         </xdf:status>
-        <xdf:fachlicherErsteller>Test</xdf:fachlicherErsteller>
+        <xdf:fachlicherErsteller></xdf:fachlicherErsteller>
         <xdf:versionshinweis></xdf:versionshinweis>
-        <xdf:freigabedatum>2023-01-01</xdf:freigabedatum>
-        <xdf:veroeffentlichungsdatum>2023-01-01</xdf:veroeffentlichungsdatum>
+        <xdf:freigabedatum></xdf:freigabedatum>
+        <xdf:veroeffentlichungsdatum></xdf:veroeffentlichungsdatum>
         <xdf:ableitungsmodifikationenStruktur listURI="urn:xoev-de:fim:codeliste:xdatenfelder.ableitungsmodifikationenStruktur" listVersionID="1.0">
             <code>3</code>
         </xdf:ableitungsmodifikationenStruktur>
