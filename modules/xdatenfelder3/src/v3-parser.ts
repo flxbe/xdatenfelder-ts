@@ -47,7 +47,7 @@ import {
   parseVorbefuellung,
   Constraints,
   SchemaContainer,
-} from "./schema-3";
+} from "./schema";
 import { assert } from "./util";
 
 class RootState extends State {

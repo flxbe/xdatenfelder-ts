@@ -6,7 +6,7 @@ import {
   RegelTyp,
   SchemaElementArt,
   RelationType,
-} from "../src/schema-3";
+} from "../src/schema";
 
 describe("Loading a schema from xml", () => {
   test("Should correctly load the schema", async () => {

@@ -9,7 +9,7 @@ import {
   FreigabeStatus,
   SchemaContainer,
   parseDate,
-} from "./schema-3";
+} from "./schema";
 import {
   ParserError,
   UnexpectedTagError,

@@ -1,4 +1,4 @@
-import { SchemaContainer } from "./schema-3";
+import { SchemaContainer } from "./schema";
 import { SchemaConverter } from "./converter";
 
 export class SchemaMessage {

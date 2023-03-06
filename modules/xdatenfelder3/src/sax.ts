@@ -1,5 +1,5 @@
 import sax from "sax";
-import { DataField, DataGroup, Rule } from "./schema-3";
+import { DataField, DataGroup, Rule } from "./schema";
 import {
   DuplicateTagError,
   MissingChildNodeError,
