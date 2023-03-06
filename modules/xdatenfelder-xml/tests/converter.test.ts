@@ -1,7 +1,7 @@
 import { open } from "node:fs/promises";
 import { describe, expect, test } from "@jest/globals";
-import { FreigabeStatus, SchemaElementArt } from "../src/schema";
-import { SchemaMessage } from "../src/messages";
+import { FreigabeStatus, SchemaElementArt } from "../src/v3/schema";
+import { SchemaMessage } from "../src/v3/messages";
 
 describe("Loading a schema from xml", () => {
   test("should parse a full example", async () => {

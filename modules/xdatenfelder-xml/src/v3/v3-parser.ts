@@ -11,14 +11,14 @@ import {
   OptionalStringNodeState,
   FinishFn,
   Context,
-} from "./sax";
+} from "../sax";
 import {
   UnexpectedTagError,
   DuplicateTagError,
   MissingChildNodeError,
   InternalParserError,
   ValidationError,
-} from "./errors";
+} from "../errors";
 import {
   DataGroup,
   Table,
@@ -49,7 +49,7 @@ import {
   Constraints,
   SchemaContainer,
 } from "./schema";
-import { assert } from "./util";
+import { assert } from "../util";
 
 class RootState extends State {
   public value: Value<DataGroupMessage3> = new Value();

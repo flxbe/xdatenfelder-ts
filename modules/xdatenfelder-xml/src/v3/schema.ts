@@ -1,5 +1,5 @@
-import { ValidationError } from "./errors";
-import { assert } from "./util";
+import { ValidationError } from "../errors";
+import { assert } from "../util";
 
 export const NS_XD3 = "urn:xoev-de:fim:standard:xdatenfelder_3.0.0";
 

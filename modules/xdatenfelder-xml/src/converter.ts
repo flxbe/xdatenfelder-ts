@@ -19,7 +19,7 @@ import {
   Datentyp,
   parseFeldart,
   parseDatentyp,
-} from "./schema";
+} from "./v3/schema";
 import {
   ParserError,
   UnexpectedTagError,

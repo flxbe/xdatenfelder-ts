@@ -1,5 +1,5 @@
 import { SchemaContainer } from "./schema";
-import { SchemaConverter } from "./converter";
+import { SchemaConverter } from "../converter";
 
 export class SchemaMessage {
   public readonly messageId: string;

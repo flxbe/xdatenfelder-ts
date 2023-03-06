@@ -1,6 +1,7 @@
 import { describe, expect, test } from "@jest/globals";
-import { serializeSchema, SchemaMessage3 } from "../src";
-import { FreigabeStatus, SchemaContainer, Table } from "../src/schema";
+import { serializeSchema } from "../src/v3/serialize";
+import { SchemaMessage3 } from "../src/v3/v3-parser";
+import { FreigabeStatus, SchemaContainer, Table } from "../src/v3/schema";
 
 describe("Serializing a schema", () => {
   test("should return the correct xml string", async () => {
