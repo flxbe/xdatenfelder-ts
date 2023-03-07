@@ -46,17 +46,38 @@ interface Context {
   regeln: Table<Regel>;
 }
 
-interface NoOpState {
-  type: "noOp";
-  parent: State<unknown>;
+const enum StateType {
+  // NoOp,
+  Value,
+  OptionalValue,
+  String,
+  OptionalString,
+  Code,
+  Root,
+  Message,
+  Header,
+  Schema,
+  Identification,
+  Struct,
+  Contains,
+  DataGroup,
+  DataField,
+  Rule,
+  CodeList,
+  Genericode,
 }
 
-function createNoOpState(parent: State<unknown>): NoOpState {
-  return { type: "noOp", parent };
-}
+//interface NoOpState {
+//type: StateType.NoOp;
+//parent: State<unknown>;
+//}
+
+//function createNoOpState(parent: State<unknown>): NoOpState {
+//return { type: StateType.NoOp, parent };
+//}
 
 interface ValueNodeState<T> {
-  type: "value";
+  type: StateType.Value;
   parent: State<unknown>;
   value: Value<T>;
   parse: (raw: string) => T;
@@ -68,7 +89,7 @@ function createValueNodeState<T>(
   parse: (raw: string) => T
 ): ValueNodeState<T> {
   return {
-    type: "value",
+    type: StateType.Value,
     parent,
     value,
     parse,
@@ -76,7 +97,7 @@ function createValueNodeState<T>(
 }
 
 interface OptionalValueNodeState<T> {
-  type: "opt_value";
+  type: StateType.OptionalValue;
   parent: State<unknown>;
   value: Value<T>;
   parse: (raw: string) => T;
@@ -88,7 +109,7 @@ function createOptionalValueNodeState<T>(
   parse: (raw: string) => T
 ): OptionalValueNodeState<T> {
   return {
-    type: "opt_value",
+    type: StateType.OptionalValue,
     parent,
     value,
     parse,
@@ -96,7 +117,7 @@ function createOptionalValueNodeState<T>(
 }
 
 interface CodeNodeState<T> {
-  type: "code";
+  type: StateType.Code;
   parent: State<unknown>;
   value: Value<T>;
   parse: (raw: string) => T;
@@ -108,7 +129,7 @@ function createCodeNodeState<T>(
   parse: (raw: string) => T
 ): CodeNodeState<T> {
   return {
-    type: "code",
+    type: StateType.Code,
     parent,
     value,
     parse,
@@ -116,7 +137,7 @@ function createCodeNodeState<T>(
 }
 
 interface StringNodeState {
-  type: "string";
+  type: StateType.String;
   parent: State<unknown>;
   value: Value<string>;
 }
@@ -126,14 +147,14 @@ function createStringNodeState(
   value: Value<string>
 ): StringNodeState {
   return {
-    type: "string",
+    type: StateType.String,
     parent,
     value,
   };
 }
 
 interface OptionalStringNodeState {
-  type: "opt_string";
+  type: StateType.OptionalString;
   parent: State<unknown>;
   value: Value<string>;
 }
@@ -143,26 +164,26 @@ function createOptionalStringNodeState(
   value: Value<string>
 ): OptionalStringNodeState {
   return {
-    type: "opt_string",
+    type: StateType.OptionalString,
     parent,
     value,
   };
 }
 
 interface RootState {
-  type: "root";
+  type: StateType.Root;
   value: Value<[string, Date, Stammdatenschema]>;
 }
 
 function createRootState(): RootState {
   return {
-    type: "root",
+    type: StateType.Root,
     value: new Value(),
   };
 }
 
 interface MessageState {
-  type: "message";
+  type: StateType.Message;
   parent: RootState;
   header: Value<[string, Date]>;
   schema: Value<Stammdatenschema>;
@@ -170,7 +191,7 @@ interface MessageState {
 
 function createMessageState(parent: RootState): MessageState {
   return {
-    type: "message",
+    type: StateType.Message,
     parent,
     header: new Value(),
     schema: new Value(),
@@ -178,7 +199,7 @@ function createMessageState(parent: RootState): MessageState {
 }
 
 interface HeaderState {
-  type: "header";
+  type: StateType.Header;
   parent: MessageState;
   messageId: Value<string>;
   createdAt: Value<Date>;
@@ -186,7 +207,7 @@ interface HeaderState {
 
 function createHeaderState(parent: MessageState): HeaderState {
   return {
-    type: "header",
+    type: StateType.Header,
     parent,
     messageId: new Value(),
     createdAt: new Value(),
@@ -194,7 +215,7 @@ function createHeaderState(parent: MessageState): HeaderState {
 }
 
 interface SchemaState {
-  type: "schema";
+  type: StateType.Schema;
   parent: MessageState;
   dataContainer: BaseContainer;
   hilfetext: Value<string>;
@@ -206,7 +227,7 @@ interface SchemaState {
 
 function createSchemaState(parent: MessageState): SchemaState {
   return {
-    type: "schema",
+    type: StateType.Schema,
     parent,
     dataContainer: createBaseContainer(),
     hilfetext: new Value(),
@@ -218,7 +239,7 @@ function createSchemaState(parent: MessageState): SchemaState {
 }
 
 interface IdentificationState {
-  type: "identification";
+  type: StateType.Identification;
   parent: State<unknown>;
   parentValue: Value<[string, string?]>;
   id: Value<string>;
@@ -230,7 +251,7 @@ function createIdentificationState(
   value: Value<[string, string?]>
 ): IdentificationState {
   return {
-    type: "identification",
+    type: StateType.Identification,
     parent,
     parentValue: value,
     id: new Value(),
@@ -243,7 +264,7 @@ type Element =
   | { type: "dataField"; dataField: Datenfeld };
 
 interface StructState {
-  type: "struct";
+  type: StateType.Struct;
   parent: SchemaState | DataGroupState;
   anzahl: Value<string>;
   bezug: Value<string>;
@@ -252,7 +273,7 @@ interface StructState {
 
 function createStructState(parent: SchemaState | DataGroupState): StructState {
   return {
-    type: "struct",
+    type: StateType.Struct,
     parent,
     anzahl: new Value(),
     bezug: new Value(),
@@ -261,12 +282,12 @@ function createStructState(parent: SchemaState | DataGroupState): StructState {
 }
 
 interface ContainsState {
-  type: "contains";
+  type: StateType.Contains;
   parent: StructState;
 }
 
 interface DataGroupState {
-  type: "dataGroup";
+  type: StateType.DataGroup;
   parent: ContainsState;
   dataContainer: ElementContainer;
   elemente: ElementReference[];
@@ -275,7 +296,7 @@ interface DataGroupState {
 
 function createDataGroupState(parent: ContainsState): DataGroupState {
   return {
-    type: "dataGroup",
+    type: StateType.DataGroup,
     parent,
     dataContainer: createElementContainer(),
     elemente: [],
@@ -284,7 +305,7 @@ function createDataGroupState(parent: ContainsState): DataGroupState {
 }
 
 interface DataFieldState {
-  type: "dataField";
+  type: StateType.DataField;
   parent: ContainsState;
   dataContainer: ElementContainer;
   feldart: Value<Feldart>;
@@ -297,7 +318,7 @@ interface DataFieldState {
 
 function createDataFieldState(parent: ContainsState): DataFieldState {
   return {
-    type: "dataField",
+    type: StateType.DataField,
     parent,
     dataContainer: createElementContainer(),
     feldart: new Value(),
@@ -310,7 +331,7 @@ function createDataFieldState(parent: ContainsState): DataFieldState {
 }
 
 interface RuleState {
-  type: "rule";
+  type: StateType.Rule;
   parent: State<unknown>;
   regeln: string[];
   dataContainer: BaseContainer;
@@ -319,7 +340,7 @@ interface RuleState {
 
 function createRuleState(parent: State<unknown>, regeln: string[]): RuleState {
   return {
-    type: "rule",
+    type: StateType.Rule,
     parent,
     regeln,
     dataContainer: createBaseContainer(),
@@ -328,7 +349,7 @@ function createRuleState(parent: State<unknown>, regeln: string[]): RuleState {
 }
 
 interface CodeListState {
-  type: "codeList";
+  type: StateType.CodeList;
   parent: DataFieldState;
   identification: Value<[string, string?]>;
   genericode: Value<GenericodeIdentification>;
@@ -336,7 +357,7 @@ interface CodeListState {
 
 function createCodeListState(parent: DataFieldState): CodeListState {
   return {
-    type: "codeList",
+    type: StateType.CodeList,
     parent,
     identification: new Value(),
     genericode: new Value(),
@@ -344,7 +365,7 @@ function createCodeListState(parent: DataFieldState): CodeListState {
 }
 
 interface GenericodeState {
-  type: "genericode";
+  type: StateType.Genericode;
   parent: CodeListState;
   canonicalIdentification: Value<string>;
   version: Value<string>;
@@ -353,7 +374,7 @@ interface GenericodeState {
 
 function createGenericodeState(parent: CodeListState): GenericodeState {
   return {
-    type: "genericode",
+    type: StateType.Genericode,
     parent,
     canonicalIdentification: new Value(),
     version: new Value(),
@@ -366,7 +387,7 @@ type State<T> =
   | MessageState
   | HeaderState
   | SchemaState
-  | NoOpState
+  // | NoOpState
   | OptionalStringNodeState
   | StringNodeState
   | IdentificationState
@@ -383,18 +404,18 @@ type State<T> =
 
 function handleText(state: State<unknown>, text: string) {
   switch (state.type) {
-    case "string":
-    case "opt_string":
+    case StateType.String:
+    case StateType.OptionalString:
       state.value.set(text);
       break;
 
-    case "value":
-    case "opt_value":
+    case StateType.Value:
+    case StateType.OptionalValue:
       state.value.set(state.parse(text));
       break;
 
-    case "noOp":
-      break;
+    // case StateType.NoOp:
+    // break;
 
     default:
       throw new InternalParserError(`Got unexpected text block: ${text}`);
@@ -406,38 +427,38 @@ function handleOpenTag(
   tag: sax.QualifiedTag
 ): State<unknown> {
   switch (state.type) {
-    case "root": {
-      switch (tag.name) {
-        case "xdf:xdatenfelder.stammdatenschema.0102":
+    case StateType.Root: {
+      switch (tag.local) {
+        case "xdatenfelder.stammdatenschema.0102":
           return createMessageState(state);
         default:
           throw new UnexpectedTagError();
       }
     }
 
-    case "message": {
-      switch (tag.name) {
-        case "xdf:header":
+    case StateType.Message: {
+      switch (tag.local) {
+        case "header":
           return createHeaderState(state);
-        case "xdf:stammdatenschema":
+        case "stammdatenschema":
           return createSchemaState(state);
         default:
           throw new UnexpectedTagError();
       }
     }
 
-    case "header": {
-      switch (tag.name) {
-        case "xdf:nachrichtID":
+    case StateType.Header: {
+      switch (tag.local) {
+        case "nachrichtID":
           return createStringNodeState(state, state.messageId);
-        case "xdf:erstellungszeitpunkt":
+        case "erstellungszeitpunkt":
           return createValueNodeState(state, state.createdAt, parseDate);
         default:
           throw new UnexpectedTagError();
       }
     }
 
-    case "schema": {
+    case StateType.Schema: {
       switch (tag.local) {
         case "hilfetext":
           return createOptionalStringNodeState(state, state.hilfetext);
@@ -462,31 +483,31 @@ function handleOpenTag(
       }
     }
 
-    case "struct": {
-      switch (tag.name) {
-        case "xdf:anzahl":
+    case StateType.Struct: {
+      switch (tag.local) {
+        case "anzahl":
           return createStringNodeState(state, state.anzahl);
-        case "xdf:bezug":
+        case "bezug":
           return createOptionalStringNodeState(state, state.bezug);
-        case "xdf:enthaelt":
-          return { type: "contains", parent: state };
+        case "enthaelt":
+          return { type: StateType.Contains, parent: state };
         default:
           throw new UnexpectedTagError();
       }
     }
 
-    case "contains": {
-      switch (tag.name) {
-        case "xdf:datenfeld":
+    case StateType.Contains: {
+      switch (tag.local) {
+        case "datenfeld":
           return createDataFieldState(state);
-        case "xdf:datenfeldgruppe":
+        case "datenfeldgruppe":
           return createDataGroupState(state);
         default:
           throw new UnexpectedTagError();
       }
     }
 
-    case "dataGroup": {
+    case StateType.DataGroup: {
       switch (tag.local) {
         case "struktur":
           return createStructState(state);
@@ -497,7 +518,7 @@ function handleOpenTag(
       }
     }
 
-    case "dataField": {
+    case StateType.DataField: {
       switch (tag.local) {
         case "feldart":
           return createCodeNodeState(state, state.feldart, parseFeldart);
@@ -516,7 +537,7 @@ function handleOpenTag(
       }
     }
 
-    case "rule": {
+    case StateType.Rule: {
       switch (tag.local) {
         case "script":
           return createOptionalStringNodeState(state, state.script);
@@ -525,7 +546,7 @@ function handleOpenTag(
       }
     }
 
-    case "codeList": {
+    case StateType.CodeList: {
       switch (tag.local) {
         case "identifikation":
           return createIdentificationState(state, state.identification);
@@ -536,7 +557,7 @@ function handleOpenTag(
       }
     }
 
-    case "identification": {
+    case StateType.Identification: {
       switch (tag.local) {
         case "id":
           return createStringNodeState(state, state.id);
@@ -547,7 +568,7 @@ function handleOpenTag(
       }
     }
 
-    case "genericode": {
+    case StateType.Genericode: {
       switch (tag.local) {
         case "canonicalIdentification":
           return createStringNodeState(state, state.canonicalIdentification);
@@ -560,7 +581,7 @@ function handleOpenTag(
       }
     }
 
-    case "code": {
+    case StateType.Code: {
       switch (tag.local) {
         case "code":
           return createValueNodeState(state, state.value, state.parse);
@@ -569,14 +590,17 @@ function handleOpenTag(
       }
     }
 
-    case "string":
+    case StateType.String:
+    case StateType.Value:
+    case StateType.OptionalString:
+    case StateType.OptionalValue:
       throw new UnexpectedTagError();
 
-    case "noOp":
-      return createNoOpState(state);
+    //case StateType.NoOp:
+    //return createNoOpState(state);
 
     default:
-      throw new Error(`Unknown state: ${state.type}`);
+      throw new Error("Unknown state");
   }
 }
 
@@ -585,10 +609,10 @@ function handleCloseTag(
   context: Context
 ): State<unknown> {
   switch (state.type) {
-    case "root":
+    case StateType.Root:
       throw new UnexpectedTagError();
 
-    case "message": {
+    case StateType.Message: {
       const [messageId, createdAt] = state.header.expect("Missing <header>");
       const schema = state.schema.expect("Missing <stammdatenschema>");
 
@@ -596,7 +620,7 @@ function handleCloseTag(
       return state.parent;
     }
 
-    case "header": {
+    case StateType.Header: {
       const messageId = state.messageId.expect("Missing <nachrichtID>");
       const createdAt = state.createdAt.expect(
         "Missing <erstellungszeitpunkt>"
@@ -606,7 +630,7 @@ function handleCloseTag(
       return state.parent;
     }
 
-    case "schema": {
+    case StateType.Schema: {
       const baseData = parseBaseData(state.dataContainer);
 
       const schema = {
@@ -628,7 +652,7 @@ function handleCloseTag(
       return state.parent;
     }
 
-    case "struct": {
+    case StateType.Struct: {
       const anzahl = state.anzahl.expect("Missing <anzahl>");
       const bezug = state.bezug.get();
       const element = state.element.expect("Missing <enthaelt>");
@@ -652,7 +676,7 @@ function handleCloseTag(
       return state.parent;
     }
 
-    case "contains": {
+    case StateType.Contains: {
       if (state.parent.element.isEmpty()) {
         throw new MissingValueError("Missing <datenfeld> or <datenfeldgruppe>");
       }
@@ -660,7 +684,7 @@ function handleCloseTag(
       return state.parent;
     }
 
-    case "dataGroup": {
+    case StateType.DataGroup: {
       const elementData = parseElementData(state.dataContainer);
 
       const dataGroup: Datenfeldgruppe = {
@@ -675,7 +699,7 @@ function handleCloseTag(
       return state.parent;
     }
 
-    case "dataField": {
+    case StateType.DataField: {
       const elementData = parseElementData(state.dataContainer);
 
       const dataField: Datenfeld = {
@@ -694,7 +718,7 @@ function handleCloseTag(
       return state.parent;
     }
 
-    case "rule": {
+    case StateType.Rule: {
       const baseData = parseBaseData(state.dataContainer);
 
       const rule: Regel = {
@@ -708,7 +732,7 @@ function handleCloseTag(
       return state.parent;
     }
 
-    case "codeList": {
+    case StateType.CodeList: {
       const [id, version] = state.identification.expect(
         "Missing <identifikation>"
       );
@@ -720,7 +744,7 @@ function handleCloseTag(
       return state.parent;
     }
 
-    case "identification": {
+    case StateType.Identification: {
       const id = state.id.expect("Missing <id>");
       const version = state.version.get();
 
@@ -728,7 +752,7 @@ function handleCloseTag(
       return state.parent;
     }
 
-    case "genericode": {
+    case StateType.Genericode: {
       const canonicalIdentification = state.canonicalIdentification.expect(
         "Missing <canonicalIdentification>"
       );
@@ -745,36 +769,36 @@ function handleCloseTag(
       return state.parent;
     }
 
-    case "string": {
+    case StateType.String: {
       if (state.value.isEmpty()) {
         throw new MissingContentError();
       }
       return state.parent;
     }
 
-    case "value": {
+    case StateType.Value: {
       if (state.value.isEmpty()) {
         throw new MissingContentError();
       }
       return state.parent;
     }
 
-    case "code": {
+    case StateType.Code: {
       if (state.value.isEmpty()) {
         throw new MissingValueError("Missing <code>");
       }
       return state.parent;
     }
 
-    case "opt_string":
-    case "opt_value":
+    case StateType.OptionalString:
+    case StateType.OptionalValue:
       if (state.value.isEmpty()) {
         state.value.set(undefined);
       }
       return state.parent;
 
-    case "noOp":
-      return state.parent;
+    // case StateType.NoOp:
+    // return state.parent;
 
     default:
       throw new Error("Unknown state");
@@ -837,7 +861,7 @@ export class SchemaMessageParser {
   public finish(): ParseResult {
     this.xmlParser.close();
 
-    if (this.state.type !== "root") {
+    if (this.state.type !== StateType.Root) {
       throw new InternalParserError("Unexpected EOF");
     }
 
@@ -1009,7 +1033,20 @@ interface ElementContainer extends BaseContainer {
 
 function createElementContainer(): ElementContainer {
   return {
-    ...createBaseContainer(),
+    identification: new Value(),
+    name: new Value(),
+    bezeichnungEingabe: new Value(),
+    bezeichnungAusgabe: new Value(),
+    beschreibung: new Value(),
+    definition: new Value(),
+    bezug: new Value(),
+    status: new Value(),
+    gueltigAb: new Value(),
+    gueltigBis: new Value(),
+    fachlicherErsteller: new Value(),
+    versionshinweis: new Value(),
+    freigabedatum: new Value(),
+    veroeffentlichungsdatum: new Value(),
     schemaelementart: new Value(),
     hilfetextEingabe: new Value(),
     hilfetextAusgabe: new Value(),

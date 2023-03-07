@@ -1,5 +1,5 @@
 import { open } from "node:fs/promises";
-import { SchemaMessage } from "../src";
+import { SchemaMessage } from "../src/v2";
 
 const RUNS = 10;
 
