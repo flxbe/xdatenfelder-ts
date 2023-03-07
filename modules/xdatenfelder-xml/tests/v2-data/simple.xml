@@ -20,13 +20,35 @@
         <xdf:fachlicherErsteller>Test</xdf:fachlicherErsteller>
         <xdf:versionshinweis>Ein Versionshinweis</xdf:versionshinweis>
         <xdf:freigabedatum>2023-01-01</xdf:freigabedatum>
-        <xdf:veroeffentlichungsdatum>2023-01-01</xdf:veroeffentlichungsdatum>
+        <xdf:veroeffentlichungsdatum>2023-01-02</xdf:veroeffentlichungsdatum>
+        <xdf:gueltigAb>2020-11-04</xdf:gueltigAb>
+        <xdf:gueltigBis>2020-11-05</xdf:gueltigBis>
         <xdf:ableitungsmodifikationenStruktur listURI="urn:xoev-de:fim:codeliste:xdatenfelder.ableitungsmodifikationenStruktur" listVersionID="1.0">
             <code>3</code>
         </xdf:ableitungsmodifikationenStruktur>
         <xdf:ableitungsmodifikationenRepraesentation listURI="urn:xoev-de:fim:codeliste:xdatenfelder.ableitungsmodifikationenRepraesentation" listVersionID="1.0">
             <code>1</code>
         </xdf:ableitungsmodifikationenRepraesentation>
+        <xdf:regel>
+            <xdf:identifikation>
+                <xdf:id>R60000037</xdf:id>
+                <xdf:version>1.2</xdf:version>
+            </xdf:identifikation>
+            <xdf:name>MindestEineAngabe</xdf:name>
+            <xdf:bezeichnungEingabe>MindestEineAngabe</xdf:bezeichnungEingabe>
+            <xdf:beschreibung></xdf:beschreibung>
+            <xdf:definition>Eine Definition</xdf:definition>
+            <xdf:bezug></xdf:bezug>
+            <xdf:status listURI="urn:xoev-de:fim:codeliste:xdatenfelder.status" listVersionID="1.0">
+                <code>aktiv</code>
+            </xdf:status>
+            <xdf:gueltigAb>2020-11-04</xdf:gueltigAb>
+            <xdf:gueltigBis>2020-11-05</xdf:gueltigBis>
+            <xdf:fachlicherErsteller>Bundesredaktion</xdf:fachlicherErsteller>
+            <xdf:freigabedatum>2023-01-01</xdf:freigabedatum>
+            <xdf:veroeffentlichungsdatum>2023-01-02</xdf:veroeffentlichungsdatum>
+            <xdf:script>function script() {}</xdf:script>
+        </xdf:regel>
         <xdf:struktur>
             <xdf:anzahl>1:1</xdf:anzahl>
             <xdf:bezug></xdf:bezug>
@@ -47,6 +69,8 @@
                     </xdf:status>
                     <xdf:fachlicherErsteller>FIM Baustein Datenfelder</xdf:fachlicherErsteller>
                     <xdf:versionshinweis>Versionshinweis</xdf:versionshinweis>
+                    <xdf:gueltigAb>2020-11-04</xdf:gueltigAb>
+                    <xdf:gueltigBis>2020-11-05</xdf:gueltigBis>
                     <xdf:schemaelementart listURI="urn:xoev-de:fim:codeliste:xdatenfelder.schemaelementart" listVersionID="1.0">
                         <code>ABS</code>
                     </xdf:schemaelementart>
@@ -72,7 +96,9 @@
                                 </xdf:status>
                                 <xdf:fachlicherErsteller>FIM-Baustein Datenfelder</xdf:fachlicherErsteller>
                                 <xdf:freigabedatum>2020-11-02</xdf:freigabedatum>
-                                <xdf:veroeffentlichungsdatum>2020-11-02</xdf:veroeffentlichungsdatum>
+                                <xdf:veroeffentlichungsdatum>2020-11-03</xdf:veroeffentlichungsdatum>
+                                <xdf:gueltigAb>2020-11-04</xdf:gueltigAb>
+                                <xdf:gueltigBis>2020-11-05</xdf:gueltigBis>
                                 <xdf:schemaelementart listURI="urn:xoev-de:fim:codeliste:xdatenfelder.schemaelementart" listVersionID="1.0">
                                     <code>HAR</code>
                                 </xdf:schemaelementart>

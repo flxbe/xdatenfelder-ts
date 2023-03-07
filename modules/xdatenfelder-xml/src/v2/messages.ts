@@ -1,5 +1,5 @@
 import { SchemaContainer } from "./schema";
-import { SchemaConverter } from "../converter";
+import { SchemaConverter } from "./parser";
 
 export class SchemaMessage {
   public readonly messageId: string;
@@ -16,7 +16,7 @@ export class SchemaMessage {
     this.schemaContainer = schemaContainer;
   }
 
-  public static fromV2String(value: string): SchemaMessage {
+  public static fromString(value: string): SchemaMessage {
     const converter = new SchemaConverter();
 
     converter.write(value);

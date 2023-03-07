@@ -1,7 +1,8 @@
 import { describe, expect, test } from "@jest/globals";
 import { serializeSchema } from "../src/v3/serialize";
-import { SchemaMessage3 } from "../src/v3/v3-parser";
-import { FreigabeStatus, SchemaContainer, Table } from "../src/v3/schema";
+import { SchemaMessage3 } from "../src/v3/parser";
+import { FreigabeStatus, SchemaContainer } from "../src/v3/schema";
+import { Table } from "../src/table";
 
 describe("Serializing a schema", () => {
   test("should return the correct xml string", async () => {
@@ -39,8 +40,8 @@ async function loadSchema(): Promise<SchemaContainer> {
       keywords: [],
       normReferences: [],
     },
-    dataGroups: Table.DataGroupTable(),
-    dataFields: Table.DataFieldTable(),
-    rules: Table.RuleTable(),
+    dataGroups: new Table(),
+    dataFields: new Table(),
+    rules: new Table(),
   };
 }

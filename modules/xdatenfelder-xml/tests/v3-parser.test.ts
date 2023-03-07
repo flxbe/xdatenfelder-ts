@@ -1,12 +1,8 @@
 import { open } from "node:fs/promises";
 import { describe, expect, test } from "@jest/globals";
 import { DataGroupMessage3 } from "../src";
-import {
-  FreigabeStatus,
-  RegelTyp,
-  SchemaElementArt,
-  RelationType,
-} from "../src/v3/schema";
+import { FreigabeStatus, RegelTyp, RelationType } from "../src/v3/schema";
+import { SchemaElementArt } from "../src";
 
 describe("Loading a schema from xml", () => {
   test("Should correctly load the schema", async () => {

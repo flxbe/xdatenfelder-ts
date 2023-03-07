@@ -1,38 +1,49 @@
 import sax from "sax";
-import { assert } from "./util";
-import { Value, Context } from "./sax";
-import {
-  DataField,
-  DataGroup,
-  Rule,
-  Schema,
-  FreigabeStatus,
-  SchemaContainer,
-  SchemaElementArt,
-  parseDate,
-  Table,
-  BaseData,
-  ChildRef,
-  ElementData,
-  parseSchemaElementArt,
-  Feldart,
-  Datentyp,
-  parseFeldart,
-  parseDatentyp,
-} from "./v3/schema";
+import { assert, parseDate, Value } from "../util";
 import {
   ParserError,
   UnexpectedTagError,
   UnknownNamespaceError,
   MissingContentError,
   MissingValueError,
-} from "./errors";
-import { InternalParserError } from "./errors";
+  InternalParserError,
+} from "../errors";
+import {
+  Datenfeld,
+  Datenfeldgruppe,
+  ElementReference,
+  SchemaContainer,
+  Stammdatenschema,
+  Feldart,
+  Datentyp,
+  Regel,
+  SchemaElementArt,
+  BaseData,
+  ElementData,
+  ElementStatus,
+  parseElementStatus,
+  parseSchemaElementArt,
+  CodelisteReferenz,
+  AbleitungsmodifikationenRepraesentation,
+  AbleitungsmodifikationenStruktur,
+  parseDatentyp,
+  parseFeldart,
+  parseAbleitungsmodifikationenRepraesentation,
+  parseAbleitungsmodifikationenStruktur,
+  GenericodeIdentification,
+} from "./schema";
+import { Table } from "../table";
 
 export interface ParseResult {
   messageId: string;
   createdAt: Date;
   schemaContainer: SchemaContainer;
+}
+
+interface Context {
+  datenfeldgruppen: Table<Datenfeldgruppe>;
+  datenfelder: Table<Datenfeld>;
+  regeln: Table<Regel>;
 }
 
 interface NoOpState {
@@ -67,13 +78,13 @@ function createValueNodeState<T>(
 interface OptionalValueNodeState<T> {
   type: "opt_value";
   parent: State<unknown>;
-  value: Value<T | undefined>;
+  value: Value<T>;
   parse: (raw: string) => T;
 }
 
 function createOptionalValueNodeState<T>(
   parent: State<unknown>,
-  value: Value<T | undefined>,
+  value: Value<T>,
   parse: (raw: string) => T
 ): OptionalValueNodeState<T> {
   return {
@@ -124,12 +135,12 @@ function createStringNodeState(
 interface OptionalStringNodeState {
   type: "opt_string";
   parent: State<unknown>;
-  value: Value<string | undefined>;
+  value: Value<string>;
 }
 
 function createOptionalStringNodeState(
   parent: State<unknown>,
-  value: Value<string | undefined>
+  value: Value<string>
 ): OptionalStringNodeState {
   return {
     type: "opt_string",
@@ -140,7 +151,7 @@ function createOptionalStringNodeState(
 
 interface RootState {
   type: "root";
-  value: Value<[string, Date, Schema]>;
+  value: Value<[string, Date, Stammdatenschema]>;
 }
 
 function createRootState(): RootState {
@@ -154,7 +165,7 @@ interface MessageState {
   type: "message";
   parent: RootState;
   header: Value<[string, Date]>;
-  schema: Value<Schema>;
+  schema: Value<Stammdatenschema>;
 }
 
 function createMessageState(parent: RootState): MessageState {
@@ -186,8 +197,11 @@ interface SchemaState {
   type: "schema";
   parent: MessageState;
   dataContainer: BaseContainer;
-  label: Value<string | undefined>;
-  children: ChildRef[];
+  hilfetext: Value<string>;
+  ableitungsmodifikationenStruktur: Value<AbleitungsmodifikationenStruktur>;
+  ableitungsmodifikationenRepraesentation: Value<AbleitungsmodifikationenRepraesentation>;
+  regeln: string[];
+  elemente: ElementReference[];
 }
 
 function createSchemaState(parent: MessageState): SchemaState {
@@ -195,37 +209,44 @@ function createSchemaState(parent: MessageState): SchemaState {
     type: "schema",
     parent,
     dataContainer: createBaseContainer(),
-    label: new Value(),
-    children: [],
+    hilfetext: new Value(),
+    ableitungsmodifikationenStruktur: new Value(),
+    ableitungsmodifikationenRepraesentation: new Value(),
+    regeln: [],
+    elemente: [],
   };
 }
 
 interface IdentificationState {
   type: "identification";
-  parent: SchemaState | DataGroupState | DataFieldState;
+  parent: State<unknown>;
+  parentValue: Value<[string, string?]>;
   id: Value<string>;
   version: Value<string>;
 }
 
 function createIdentificationState(
-  parent: SchemaState | DataGroupState | DataFieldState
+  parent: State<unknown>,
+  value: Value<[string, string?]>
 ): IdentificationState {
   return {
     type: "identification",
     parent,
+    parentValue: value,
     id: new Value(),
     version: new Value(),
   };
 }
 
 type Element =
-  | { type: "dataGroup"; dataGroup: DataGroup }
-  | { type: "dataField"; dataField: DataField };
+  | { type: "dataGroup"; dataGroup: Datenfeldgruppe }
+  | { type: "dataField"; dataField: Datenfeld };
 
 interface StructState {
   type: "struct";
   parent: SchemaState | DataGroupState;
-  cardinality: Value<string>;
+  anzahl: Value<string>;
+  bezug: Value<string>;
   element: Value<Element>;
 }
 
@@ -233,7 +254,8 @@ function createStructState(parent: SchemaState | DataGroupState): StructState {
   return {
     type: "struct",
     parent,
-    cardinality: new Value(),
+    anzahl: new Value(),
+    bezug: new Value(),
     element: new Value(),
   };
 }
@@ -247,7 +269,8 @@ interface DataGroupState {
   type: "dataGroup";
   parent: ContainsState;
   dataContainer: ElementContainer;
-  children: ChildRef[];
+  elemente: ElementReference[];
+  regeln: string[];
 }
 
 function createDataGroupState(parent: ContainsState): DataGroupState {
@@ -255,7 +278,8 @@ function createDataGroupState(parent: ContainsState): DataGroupState {
     type: "dataGroup",
     parent,
     dataContainer: createElementContainer(),
-    children: [],
+    elemente: [],
+    regeln: [],
   };
 }
 
@@ -263,9 +287,12 @@ interface DataFieldState {
   type: "dataField";
   parent: ContainsState;
   dataContainer: ElementContainer;
-  inputType: Value<Feldart>;
-  dataType: Value<Datentyp>;
-  content: Value<string | undefined>;
+  feldart: Value<Feldart>;
+  datentyp: Value<Datentyp>;
+  praezisierung: Value<string>;
+  inhalt: Value<string>;
+  codelisteReferenz: Value<CodelisteReferenz>;
+  regeln: string[];
 }
 
 function createDataFieldState(parent: ContainsState): DataFieldState {
@@ -273,9 +300,64 @@ function createDataFieldState(parent: ContainsState): DataFieldState {
     type: "dataField",
     parent,
     dataContainer: createElementContainer(),
-    inputType: new Value(),
-    dataType: new Value(),
-    content: new Value(),
+    feldart: new Value(),
+    datentyp: new Value(),
+    praezisierung: new Value(),
+    inhalt: new Value(),
+    codelisteReferenz: new Value(),
+    regeln: [],
+  };
+}
+
+interface RuleState {
+  type: "rule";
+  parent: State<unknown>;
+  regeln: string[];
+  dataContainer: BaseContainer;
+  script: Value<string>;
+}
+
+function createRuleState(parent: State<unknown>, regeln: string[]): RuleState {
+  return {
+    type: "rule",
+    parent,
+    regeln,
+    dataContainer: createBaseContainer(),
+    script: new Value(),
+  };
+}
+
+interface CodeListState {
+  type: "codeList";
+  parent: DataFieldState;
+  identification: Value<[string, string?]>;
+  genericode: Value<GenericodeIdentification>;
+}
+
+function createCodeListState(parent: DataFieldState): CodeListState {
+  return {
+    type: "codeList",
+    parent,
+    identification: new Value(),
+    genericode: new Value(),
+  };
+}
+
+interface GenericodeState {
+  type: "genericode";
+  parent: CodeListState;
+  canonicalIdentification: Value<string>;
+  version: Value<string>;
+  canonicalVersionUri: Value<string>;
+}
+
+function createGenericodeState(parent: CodeListState): GenericodeState {
+  return {
+    type: "genericode",
+    parent,
+    canonicalIdentification: new Value(),
+    version: new Value(),
+    canonicalVersionUri: new Value(),
   };
 }
 
@@ -292,6 +374,9 @@ type State<T> =
   | ContainsState
   | DataGroupState
   | DataFieldState
+  | RuleState
+  | CodeListState
+  | GenericodeState
   | ValueNodeState<T>
   | OptionalValueNodeState<T>
   | CodeNodeState<T>;
@@ -353,14 +438,25 @@ function handleOpenTag(
     }
 
     case "schema": {
-      switch (tag.name) {
-        case "xdf:bezeichnungEingabe":
-          return createOptionalStringNodeState(state, state.label);
-        case "xdf:struktur":
+      switch (tag.local) {
+        case "hilfetext":
+          return createOptionalStringNodeState(state, state.hilfetext);
+        case "ableitungsmodifikationenStruktur":
+          return createCodeNodeState(
+            state,
+            state.ableitungsmodifikationenStruktur,
+            parseAbleitungsmodifikationenStruktur
+          );
+        case "ableitungsmodifikationenRepraesentation":
+          return createCodeNodeState(
+            state,
+            state.ableitungsmodifikationenRepraesentation,
+            parseAbleitungsmodifikationenRepraesentation
+          );
+        case "regel":
+          return createRuleState(state, state.regeln);
+        case "struktur":
           return createStructState(state);
-        case "xdf:ableitungsmodifikationenStruktur":
-        case "xdf:ableitungsmodifikationenRepraesentation":
-          return createNoOpState(state);
         default:
           return handleBaseData(state, tag);
       }
@@ -369,9 +465,9 @@ function handleOpenTag(
     case "struct": {
       switch (tag.name) {
         case "xdf:anzahl":
-          return createStringNodeState(state, state.cardinality);
+          return createStringNodeState(state, state.anzahl);
         case "xdf:bezug":
-          return createNoOpState(state);
+          return createOptionalStringNodeState(state, state.bezug);
         case "xdf:enthaelt":
           return { type: "contains", parent: state };
         default:
@@ -391,42 +487,81 @@ function handleOpenTag(
     }
 
     case "dataGroup": {
-      switch (tag.name) {
-        case "xdf:struktur":
+      switch (tag.local) {
+        case "struktur":
           return createStructState(state);
+        case "regel":
+          return createRuleState(state, state.regeln);
         default:
           return handleElementData(state, tag);
       }
     }
 
     case "dataField": {
-      switch (tag.name) {
-        case "xdf:feldart":
-          return createCodeNodeState(state, state.inputType, parseFeldart);
-        case "xdf:datentyp":
-          return createCodeNodeState(state, state.dataType, parseDatentyp);
-        case "xdf:inhalt":
-          return createOptionalStringNodeState(state, state.content);
-        case "xdf:praezisierung":
-          return createNoOpState(state);
+      switch (tag.local) {
+        case "feldart":
+          return createCodeNodeState(state, state.feldart, parseFeldart);
+        case "datentyp":
+          return createCodeNodeState(state, state.datentyp, parseDatentyp);
+        case "praezisierung":
+          return createOptionalStringNodeState(state, state.praezisierung);
+        case "inhalt":
+          return createOptionalStringNodeState(state, state.inhalt);
+        case "codelisteReferenz":
+          return createCodeListState(state);
+        case "regel":
+          return createRuleState(state, state.regeln);
         default:
           return handleElementData(state, tag);
       }
     }
 
+    case "rule": {
+      switch (tag.local) {
+        case "script":
+          return createOptionalStringNodeState(state, state.script);
+        default:
+          return handleBaseData(state, tag);
+      }
+    }
+
+    case "codeList": {
+      switch (tag.local) {
+        case "identifikation":
+          return createIdentificationState(state, state.identification);
+        case "genericodeIdentification":
+          return createGenericodeState(state);
+        default:
+          throw new UnexpectedTagError();
+      }
+    }
+
     case "identification": {
-      switch (tag.name) {
-        case "xdf:id":
+      switch (tag.local) {
+        case "id":
           return createStringNodeState(state, state.id);
-        case "xdf:version":
+        case "version":
+          return createOptionalStringNodeState(state, state.version);
+        default:
+          throw new UnexpectedTagError();
+      }
+    }
+
+    case "genericode": {
+      switch (tag.local) {
+        case "canonicalIdentification":
+          return createStringNodeState(state, state.canonicalIdentification);
+        case "version":
           return createStringNodeState(state, state.version);
+        case "canonicalVersionUri":
+          return createStringNodeState(state, state.canonicalVersionUri);
         default:
           throw new UnexpectedTagError();
       }
     }
 
     case "code": {
-      switch (tag.name) {
+      switch (tag.local) {
         case "code":
           return createValueNodeState(state, state.value, state.parse);
         default:
@@ -473,34 +608,44 @@ function handleCloseTag(
 
     case "schema": {
       const baseData = parseBaseData(state.dataContainer);
-      const label = state.label.get() ?? baseData.name;
 
-      state.parent.schema.set({
+      const schema = {
         ...baseData,
-        label,
-        rules: [],
-        children: state.children,
-      });
+        hilfetext: state.hilfetext.get(),
+        ableitungsmodifikationenStruktur:
+          state.ableitungsmodifikationenStruktur.expect(
+            "Missing <ableitungsmodifikationenStruktur>"
+          ),
+        ableitungsmodifikationenRepraesentation:
+          state.ableitungsmodifikationenRepraesentation.expect(
+            "Missing <ableitungsmodifikationenRepraesentation>"
+          ),
+        regeln: state.regeln,
+        elemente: state.elemente,
+      };
+
+      state.parent.schema.set(schema);
       return state.parent;
     }
 
     case "struct": {
-      const cardinality = state.cardinality.expect("Missing <anzahl>");
+      const anzahl = state.anzahl.expect("Missing <anzahl>");
+      const bezug = state.bezug.get();
       const element = state.element.expect("Missing <enthaelt>");
 
       if (element.type === "dataGroup") {
-        state.parent.children.push({
+        state.parent.elemente.push({
           type: "dataGroup",
           identifier: element.dataGroup.identifier,
-          cardinality,
-          normReferences: [],
+          anzahl,
+          bezug,
         });
       } else {
-        state.parent.children.push({
+        state.parent.elemente.push({
           type: "dataField",
           identifier: element.dataField.identifier,
-          cardinality,
-          normReferences: [],
+          anzahl,
+          bezug,
         });
       }
 
@@ -508,7 +653,7 @@ function handleCloseTag(
     }
 
     case "contains": {
-      if (!state.parent.element.isFilled()) {
+      if (state.parent.element.isEmpty()) {
         throw new MissingValueError("Missing <datenfeld> or <datenfeldgruppe>");
       }
 
@@ -518,13 +663,13 @@ function handleCloseTag(
     case "dataGroup": {
       const elementData = parseElementData(state.dataContainer);
 
-      const dataGroup: DataGroup = {
+      const dataGroup: Datenfeldgruppe = {
         ...elementData,
-        rules: [],
-        children: state.children,
+        regeln: state.regeln,
+        elemente: state.elemente,
       };
 
-      context.dataGroups.insert(dataGroup);
+      context.datenfeldgruppen.insert(dataGroup);
       state.parent.parent.element.set({ type: "dataGroup", dataGroup });
 
       return state.parent;
@@ -533,55 +678,102 @@ function handleCloseTag(
     case "dataField": {
       const elementData = parseElementData(state.dataContainer);
 
-      const dataField: DataField = {
+      const dataField: Datenfeld = {
         ...elementData,
-        inputType: state.inputType.expect("Missing <feldart>"),
-        dataType: "text",
-        rules: [],
-        constraints: {},
-        fillType: "keine",
-        mediaTypes: [],
-        values: [],
+        feldart: state.feldart.expect("Missing <feldart>"),
+        datentyp: state.datentyp.expect("Missing <datentyp>"),
+        praezisierung: state.praezisierung.get(),
+        inhalt: state.inhalt.get(),
+        codelisteReferenz: state.codelisteReferenz.get(),
+        regeln: state.regeln,
       };
 
-      context.dataFields.insert(dataField);
+      context.datenfelder.insert(dataField);
       state.parent.parent.element.set({ type: "dataField", dataField });
 
       return state.parent;
     }
 
+    case "rule": {
+      const baseData = parseBaseData(state.dataContainer);
+
+      const rule: Regel = {
+        ...baseData,
+        script: state.script.get(),
+      };
+
+      context.regeln.insert(rule);
+      state.regeln.push(rule.identifier);
+
+      return state.parent;
+    }
+
+    case "codeList": {
+      const [id, version] = state.identification.expect(
+        "Missing <identifikation>"
+      );
+      const genericode = state.genericode.expect(
+        "Missing <genericodeIdentification"
+      );
+
+      state.parent.codelisteReferenz.set({ id, version, genericode });
+      return state.parent;
+    }
+
     case "identification": {
       const id = state.id.expect("Missing <id>");
-      const version = state.version.expect("Missing <version>");
+      const version = state.version.get();
 
-      state.parent.dataContainer.identification.set([id, version]);
+      state.parentValue.set([id, version]);
+      return state.parent;
+    }
+
+    case "genericode": {
+      const canonicalIdentification = state.canonicalIdentification.expect(
+        "Missing <canonicalIdentification>"
+      );
+      const version = state.version.expect("Missing <version>");
+      const canonicalVersionUri = state.canonicalVersionUri.expect(
+        "Missing <canonicalVersionUri>"
+      );
+
+      state.parent.genericode.set({
+        canonicalIdentification,
+        version,
+        canonicalVersionUri,
+      });
       return state.parent;
     }
 
     case "string": {
-      if (!state.value.isFilled()) {
+      if (state.value.isEmpty()) {
         throw new MissingContentError();
       }
       return state.parent;
     }
 
     case "value": {
-      if (!state.value.isFilled()) {
+      if (state.value.isEmpty()) {
         throw new MissingContentError();
       }
       return state.parent;
     }
 
     case "code": {
-      if (!state.value.isFilled()) {
+      if (state.value.isEmpty()) {
         throw new MissingValueError("Missing <code>");
       }
       return state.parent;
     }
 
-    case "noOp":
     case "opt_string":
     case "opt_value":
+      if (state.value.isEmpty()) {
+        state.value.set(undefined);
+      }
+      return state.parent;
+
+    case "noOp":
       return state.parent;
 
     default:
@@ -593,9 +785,9 @@ export class SchemaConverter {
   private xmlParser: sax.SAXParser;
   private state: State<unknown> = createRootState();
   private context: Context = {
-    dataGroups: Table.DataGroupTable(),
-    dataFields: Table.DataFieldTable(),
-    rules: Table.RuleTable(),
+    datenfeldgruppen: new Table(),
+    datenfelder: new Table(),
+    regeln: new Table(),
   };
 
   constructor() {
@@ -669,24 +861,36 @@ export class SchemaConverter {
 interface BaseContainer {
   identification: Value<[string, string]>;
   name: Value<string>;
-  description: Value<string | undefined>;
-  definition: Value<string | undefined>;
-  versionHint: Value<string | undefined>;
-  stateSetAt: Value<Date | undefined>;
-  stateSetBy: Value<string | undefined>;
-  releasedAt: Value<Date | undefined>;
+  bezeichnungEingabe: Value<string>;
+  bezeichnungAusgabe: Value<string>;
+  beschreibung: Value<string>;
+  definition: Value<string>;
+  bezug: Value<string>;
+  status: Value<ElementStatus>;
+  gueltigAb: Value<Date>;
+  gueltigBis: Value<Date>;
+  fachlicherErsteller: Value<string>;
+  versionshinweis: Value<string>;
+  freigabedatum: Value<Date>;
+  veroeffentlichungsdatum: Value<Date>;
 }
 
 function createBaseContainer(): BaseContainer {
   return {
     identification: new Value(),
     name: new Value(),
-    description: new Value(),
+    bezeichnungEingabe: new Value(),
+    bezeichnungAusgabe: new Value(),
+    beschreibung: new Value(),
     definition: new Value(),
-    versionHint: new Value(),
-    stateSetAt: new Value(),
-    stateSetBy: new Value(),
-    releasedAt: new Value(),
+    bezug: new Value(),
+    status: new Value(),
+    gueltigAb: new Value(),
+    gueltigBis: new Value(),
+    fachlicherErsteller: new Value(),
+    versionshinweis: new Value(),
+    freigabedatum: new Value(),
+    veroeffentlichungsdatum: new Value(),
   };
 }
 
@@ -694,94 +898,119 @@ function parseBaseData(container: BaseContainer): BaseData {
   const [id, version] = container.identification.expect(
     "Missing <identifikation>"
   );
-  const identifier = `${id}:${version}`;
+  const name = container.name.expect("Missing <name>");
 
   return {
-    identifier,
+    identifier: `${id}:${version}`,
     id,
     version,
-    name: container.name.expect("Missing <name>"),
-    description: container.description.get(),
+    name,
+    bezeichnungEingabe: container.bezeichnungEingabe.get() ?? name,
+    bezeichnungAusgabe: container.bezeichnungAusgabe.get(),
+    beschreibung: container.beschreibung.get(),
     definition: container.definition.get(),
-    releaseState: FreigabeStatus.Inaktiv,
-    stateSetAt: container.stateSetAt.get(),
-    stateSetBy: container.stateSetBy.get(),
-    validSince: undefined,
-    validUntil: undefined,
-    versionHint: container.versionHint.get(),
-    publishedAt: container.releasedAt.get(),
-    lastChangedAt: new Date(0),
-    normReferences: [],
-    keywords: [],
-    relations: [],
+    status: container.status.expect("Missing <status>"),
+    bezug: container.bezug.get(),
+    gueltigAb: container.gueltigAb.get(),
+    gueltigBis: container.gueltigBis.get(),
+    fachlicherErsteller: container.fachlicherErsteller.get(),
+    versionshinweis: container.versionshinweis.get(),
+    freigabedatum: container.freigabedatum.get(),
+    veroeffentlichungsdatum: container.veroeffentlichungsdatum.get(),
   };
 }
 
 function handleBaseData(
-  state: SchemaState | DataGroupState | DataFieldState,
+  state: SchemaState | DataGroupState | DataFieldState | RuleState,
   tag: sax.QualifiedTag
 ): State<unknown> {
-  switch (tag.name) {
-    case "xdf:identifikation":
-      return createIdentificationState(state);
-    case "xdf:name":
+  switch (tag.local) {
+    case "identifikation":
+      return createIdentificationState(
+        state,
+        state.dataContainer.identification
+      );
+    case "name":
       return createStringNodeState(state, state.dataContainer.name);
-    case "xdf:beschreibung":
+    case "bezeichnungEingabe":
       return createOptionalStringNodeState(
         state,
-        state.dataContainer.description
+        state.dataContainer.bezeichnungEingabe
       );
-    case "xdf:definition":
+    case "bezeichnungAusgabe":
+      return createOptionalStringNodeState(
+        state,
+        state.dataContainer.bezeichnungAusgabe
+      );
+    case "beschreibung":
+      return createOptionalStringNodeState(
+        state,
+        state.dataContainer.beschreibung
+      );
+    case "definition":
       return createOptionalStringNodeState(
         state,
         state.dataContainer.definition
       );
-    case "xdf:versionshinweis":
-      return createOptionalStringNodeState(
+    case "bezug":
+      return createOptionalStringNodeState(state, state.dataContainer.bezug);
+    case "status":
+      return createCodeNodeState(
         state,
-        state.dataContainer.versionHint
+        state.dataContainer.status,
+        parseElementStatus
       );
-    case "xdf:freigabedatum":
+    case "gueltigAb":
       return createOptionalValueNodeState(
         state,
-        state.dataContainer.stateSetAt,
+        state.dataContainer.gueltigAb,
         parseDate
       );
-    case "xdf:fachlicherErsteller":
-      return createOptionalStringNodeState(
-        state,
-        state.dataContainer.stateSetBy
-      );
-    case "xdf:veroeffentlichungsdatum":
+    case "gueltigBis":
       return createOptionalValueNodeState(
         state,
-        state.dataContainer.releasedAt,
+        state.dataContainer.gueltigBis,
         parseDate
       );
-    case "xdf:bezug":
-    case "xdf:status":
-      return createNoOpState(state);
+    case "fachlicherErsteller":
+      return createOptionalStringNodeState(
+        state,
+        state.dataContainer.fachlicherErsteller
+      );
+    case "versionshinweis":
+      return createOptionalStringNodeState(
+        state,
+        state.dataContainer.versionshinweis
+      );
+    case "freigabedatum":
+      return createOptionalValueNodeState(
+        state,
+        state.dataContainer.freigabedatum,
+        parseDate
+      );
+    case "veroeffentlichungsdatum":
+      return createOptionalValueNodeState(
+        state,
+        state.dataContainer.veroeffentlichungsdatum,
+        parseDate
+      );
     default:
       throw new UnexpectedTagError();
   }
 }
 
 interface ElementContainer extends BaseContainer {
-  inputLabel: Value<string | undefined>;
-  outputLabel: Value<string | undefined>;
-  inputHelp: Value<string | undefined>;
-  outputHelp: Value<string | undefined>;
-  elementType: Value<SchemaElementArt>;
+  schemaelementart: Value<SchemaElementArt>;
+  hilfetextEingabe: Value<string>;
+  hilfetextAusgabe: Value<string>;
 }
 
 function createElementContainer(): ElementContainer {
   return {
     ...createBaseContainer(),
-    inputLabel: new Value(),
-    outputLabel: new Value(),
-    inputHelp: new Value(),
-    outputHelp: new Value(),
-    elementType: new Value(),
+    schemaelementart: new Value(),
+    hilfetextEingabe: new Value(),
+    hilfetextAusgabe: new Value(),
   };
 }
 
@@ -790,11 +1019,11 @@ function parseElementData(container: ElementContainer): ElementData {
 
   return {
     ...baseData,
-    inputLabel: container.inputLabel.get() ?? baseData.name,
-    outputLabel: container.outputLabel.get(),
-    inputHelp: container.inputHelp.get(),
-    outputHelp: container.outputHelp.get(),
-    elementType: container.elementType.expect("Missing <schemaelementart>"),
+    schemaelementart: container.schemaelementart.expect(
+      "Missing <schemaelementart>"
+    ),
+    hilfetextEingabe: container.hilfetextEingabe.get(),
+    hilfetextAusgabe: container.hilfetextAusgabe.get(),
   };
 }
 
@@ -802,32 +1031,22 @@ function handleElementData(
   state: DataGroupState | DataFieldState,
   tag: sax.QualifiedTag
 ): State<unknown> {
-  switch (tag.name) {
-    case "xdf:bezeichnungEingabe":
-      return createOptionalStringNodeState(
-        state,
-        state.dataContainer.inputLabel
-      );
-    case "xdf:bezeichnungAusgabe":
-      return createOptionalStringNodeState(
-        state,
-        state.dataContainer.outputLabel
-      );
-    case "xdf:hilfetextEingabe":
-      return createOptionalStringNodeState(
-        state,
-        state.dataContainer.inputHelp
-      );
-    case "xdf:hilfetextAusgabe":
-      return createOptionalStringNodeState(
-        state,
-        state.dataContainer.outputHelp
-      );
-    case "xdf:schemaelementart":
+  switch (tag.local) {
+    case "schemaelementart":
       return createCodeNodeState(
         state,
-        state.dataContainer.elementType,
+        state.dataContainer.schemaelementart,
         parseSchemaElementArt
+      );
+    case "hilfetextEingabe":
+      return createOptionalStringNodeState(
+        state,
+        state.dataContainer.hilfetextEingabe
+      );
+    case "hilfetextAusgabe":
+      return createOptionalStringNodeState(
+        state,
+        state.dataContainer.hilfetextAusgabe
       );
     default:
       return handleBaseData(state, tag);

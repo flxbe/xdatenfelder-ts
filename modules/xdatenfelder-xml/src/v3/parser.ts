@@ -1,7 +1,6 @@
 import sax from "sax";
 import {
   StateParser,
-  Value,
   State,
   NoOpState,
   ValueNodeState,
@@ -21,18 +20,14 @@ import {
 } from "../errors";
 import {
   DataGroup,
-  Table,
   DataField,
   Rule,
   BaseData,
   ChildRef,
   parseFreigabeStatus,
-  parseDate,
   FreigabeStatus,
-  SchemaElementArt,
   ElementData,
   Datentyp,
-  parseSchemaElementArt,
   RegelTyp,
   RelationType,
   parseRegelTyp,
@@ -49,7 +44,9 @@ import {
   Constraints,
   SchemaContainer,
 } from "./schema";
-import { assert } from "../util";
+import { Table } from "../table";
+import { SchemaElementArt, parseSchemaElementArt } from "../v2/schema";
+import { assert, parseDate, Value } from "../util";
 
 class RootState extends State {
   public value: Value<DataGroupMessage3> = new Value();
@@ -1015,9 +1012,9 @@ export class SchemaMessage3 {
         keywords: [],
         normReferences: [],
       },
-      dataGroups: Table.DataGroupTable(),
-      dataFields: Table.DataFieldTable(),
-      rules: Table.RuleTable(),
+      dataGroups: new Table<DataGroup>(),
+      dataFields: new Table<DataField>(),
+      rules: new Table<Rule>(),
     };
 
     return new SchemaMessage3(container, "some-message-id", new Date());

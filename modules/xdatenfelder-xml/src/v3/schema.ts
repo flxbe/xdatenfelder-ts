@@ -1,5 +1,6 @@
 import { ValidationError } from "../errors";
-import { assert } from "../util";
+import { SchemaElementArt } from "../v2/schema";
+import { Table } from "../table";
 
 export const NS_XD3 = "urn:xoev-de:fim:standard:xdatenfelder_3.0.0";
 
@@ -110,25 +111,6 @@ export function parseRegelTyp(value: string): RegelTyp {
   }
 }
 
-export const enum SchemaElementArt {
-  Abstrakt = "ABS",
-  Harmonisiert = "HAR",
-  Rechtsnormgebunden = "RNG",
-}
-
-export function parseSchemaElementArt(value: string): SchemaElementArt {
-  switch (value) {
-    case "ABS":
-      return SchemaElementArt.Abstrakt;
-    case "HAR":
-      return SchemaElementArt.Harmonisiert;
-    case "RNG":
-      return SchemaElementArt.Rechtsnormgebunden;
-    default:
-      throw new ValidationError(`Invalid value for SchemaElementArt: ${value}`);
-  }
-}
-
 // See: https://www.xrepository.de/details/urn:xoev-de:xprozess:codeliste:status
 // Version: 2022-07-12
 export const enum FreigabeStatus {
@@ -162,14 +144,6 @@ export function parseFreigabeStatus(value: string): FreigabeStatus {
       return FreigabeStatus.VorgesehenZumLoeschen;
     default:
       throw new ValidationError(`Invalid FreigabeStatus: ${value}`);
-  }
-}
-
-export function parseDate(value: string): Date {
-  try {
-    return new Date(value);
-  } catch (error: unknown) {
-    throw new ValidationError(`Invalid date: ${value}`);
   }
 }
 
@@ -281,73 +255,6 @@ export interface Rule {
   // targets
   script?: string;
   // errors
-}
-
-interface Diff {
-  name: string;
-  left?: string;
-  right?: string;
-}
-
-interface TableItem {
-  identifier: string;
-}
-
-export class Table<T extends TableItem> {
-  private items: Record<string, T> = {};
-  private getDiff: (left: T, right: T) => Diff[];
-
-  constructor(getDiff: (left: T, right: T) => Diff[]) {
-    this.getDiff = getDiff;
-  }
-
-  // TODO: create diffing functions
-  public static DataGroupTable(): Table<DataGroup> {
-    return new Table(() => {
-      return [];
-    });
-  }
-
-  public static DataFieldTable(): Table<DataField> {
-    return new Table(() => {
-      return [];
-    });
-  }
-
-  public static RuleTable(): Table<Rule> {
-    return new Table(() => {
-      return [];
-    });
-  }
-
-  public import(other: Table<T>) {
-    Object.values(other.items).forEach((item) => this.insert(item));
-  }
-
-  public insert(item: T) {
-    const savedItem = this.items[item.identifier];
-
-    if (savedItem) {
-      const diff = this.getDiff(savedItem, item);
-      assert(diff.length === 0);
-    } else {
-      this.items[item.identifier] = item;
-    }
-  }
-
-  public get(identifier: string): T {
-    const item = this.items[identifier];
-
-    if (item === undefined) {
-      throw new Error(`Unknown identifier: ${identifier}`);
-    }
-
-    return item;
-  }
-
-  public entries(): Record<string, T> {
-    return this.items;
-  }
 }
 
 export interface Schema extends BaseData {

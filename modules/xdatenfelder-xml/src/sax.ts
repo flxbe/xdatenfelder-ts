@@ -1,55 +1,19 @@
 import sax from "sax";
-import { Table, DataField, DataGroup, Rule } from "./v3/schema";
+import { DataField, DataGroup, Rule } from "./v3/schema";
+import { Table } from "./table";
 import {
-  DuplicateTagError,
-  MissingChildNodeError,
   MissingContentError,
   InternalParserError,
   UnexpectedTagError,
   ParserError,
   UnknownNamespaceError,
-  MissingValueError,
 } from "./errors";
-import { assert } from "./util";
+import { assert, Value } from "./util";
 
 export interface Context {
   dataGroups: Table<DataGroup>;
   dataFields: Table<DataField>;
   rules: Table<Rule>;
-}
-
-export class Value<T> {
-  private content:
-    | { filled: false; value: undefined }
-    | { filled: true; value: T };
-
-  constructor() {
-    this.content = { filled: false, value: undefined };
-  }
-
-  public set(value: T) {
-    if (this.content.filled) {
-      throw new DuplicateTagError();
-    }
-
-    this.content = { filled: true, value };
-  }
-
-  public get(): T | undefined {
-    return this.content.value;
-  }
-
-  public isFilled(): boolean {
-    return this.content.filled;
-  }
-
-  public expect(errorMessage: string): T {
-    if (!this.content.filled) {
-      throw new MissingValueError(errorMessage);
-    }
-
-    return this.content.value;
-  }
 }
 
 export type FinishFn<T> = (value: T) => void;
@@ -91,7 +55,7 @@ export class ValueNodeState<T> extends State {
   }
 
   public onCloseTag(_context: Context): State {
-    if (!this.value.isFilled()) {
+    if (this.value.isEmpty()) {
       throw new MissingContentError();
     }
 
@@ -207,9 +171,9 @@ export class StateParser {
     this.state = rootState;
     this.namespace = namespace;
     this.context = {
-      dataGroups: Table.DataGroupTable(),
-      dataFields: Table.DataFieldTable(),
-      rules: Table.RuleTable(),
+      dataGroups: new Table(),
+      dataFields: new Table(),
+      rules: new Table(),
     };
     this.xmlParser = sax.parser(true, {
       trim: true,
