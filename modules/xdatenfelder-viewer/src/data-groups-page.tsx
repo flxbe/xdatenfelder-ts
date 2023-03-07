@@ -1,12 +1,12 @@
 import * as React from "react";
-import { SchemaMessage } from "xdatenfelder-xml";
+import { SchemaContainer } from "xdatenfelder-xml/src/v2";
 
 export interface DataGroupsPageProps {
-  schema: SchemaMessage;
+  container: SchemaContainer;
 }
 
-export function DataGroupsPage({ schema }: DataGroupsPageProps) {
-  const dataGroups = Object.values(schema.dataGroups);
+export function DataGroupsPage({ container }: DataGroupsPageProps) {
+  const dataGroups = Object.values(container.datenfeldgruppen.entries());
 
   return (
     <div className="container-xxl">
@@ -34,7 +34,7 @@ export function DataGroupsPage({ schema }: DataGroupsPageProps) {
                   </h6>
                   <small>
                     <span className="text-muted">Erstellt von</span>{" "}
-                    {dataGroup.creator ?? "Unbekannt"}
+                    {dataGroup.fachlicherErsteller ?? "Unbekannt"}
                   </small>
                 </div>
               </div>

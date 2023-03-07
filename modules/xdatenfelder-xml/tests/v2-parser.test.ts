@@ -241,5 +241,5 @@ async function loadMessage(name: string): Promise<SchemaMessage> {
   const data = await file.readFile({ encoding: "utf-8" });
   await file.close();
 
-  return SchemaMessage.fromString(data);
+  return SchemaMessage.fromString(data).message;
 }

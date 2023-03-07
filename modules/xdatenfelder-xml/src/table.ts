@@ -32,6 +32,10 @@ export class Table<T extends TableItem> {
     return identifier in this.items;
   }
 
+  public count(): number {
+    return Object.keys(this.items).length;
+  }
+
   public get(identifier: string): T {
     const item = this.items[identifier];
 

@@ -1,23 +1,24 @@
 import * as React from "react";
 import { useParams } from "react-router-dom";
-import { SchemaMessage } from "xdatenfelder-xml";
+import { SchemaContainer } from "xdatenfelder-xml/src/v2";
 import { NotFoundPage } from "./not-found-page";
 import { multilineToHtml } from "./util";
 
 export interface RulePageProps {
-  schema: SchemaMessage;
+  container: SchemaContainer;
 }
 
-export function RulePage({ schema }: RulePageProps) {
+export function RulePage({ container }: RulePageProps) {
   let { identifier } = useParams();
   if (identifier === undefined) {
     throw new Error("identifier is undefined");
   }
 
-  const rule = schema.rules[identifier];
-  if (rule === undefined) {
+  if (!container.regeln.has(identifier)) {
     return <NotFoundPage />;
   }
+
+  const rule = container.regeln.get(identifier);
 
   return (
     <div className="container-xxl">
@@ -42,19 +43,21 @@ export function RulePage({ schema }: RulePageProps) {
 
       <dl className="row">
         <dt className="col-sm-3">Versionshinweis</dt>
-        <dd className="col-sm-9">{rule.versionInfo ?? "-"}</dd>
+        <dd className="col-sm-9">{rule.versionshinweis ?? "-"}</dd>
 
         <dt className="col-sm-3">Fachlicher Ersteller</dt>
-        <dd className="col-sm-9">{rule.creator}</dd>
+        <dd className="col-sm-9">{rule.fachlicherErsteller}</dd>
 
         <dt className="col-sm-3">Bezug</dt>
-        <dd className="col-sm-9">{multilineToHtml(rule.relatedTo ?? "-")}</dd>
+        <dd className="col-sm-9">{multilineToHtml(rule.bezug ?? "-")}</dd>
 
         <dt className="col-sm-3">Definition</dt>
         <dd className="col-sm-9">{multilineToHtml(rule.definition ?? "-")}</dd>
 
         <dt className="col-sm-3">Beschreibung</dt>
-        <dd className="col-sm-9">{multilineToHtml(rule.description ?? "-")}</dd>
+        <dd className="col-sm-9">
+          {multilineToHtml(rule.beschreibung ?? "-")}
+        </dd>
 
         <dt className="col-sm-3">Script</dt>
         <dd className="col-sm-9">

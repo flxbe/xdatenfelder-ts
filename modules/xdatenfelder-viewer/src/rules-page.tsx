@@ -1,13 +1,13 @@
 import * as React from "react";
-import { SchemaMessage } from "xdatenfelder-xml";
+import { SchemaContainer } from "xdatenfelder-xml/src/v2";
 import { Link } from "react-router-dom";
 
 export interface RulesPageProps {
-  schema: SchemaMessage;
+  container: SchemaContainer;
 }
 
-export function RulesPage({ schema }: RulesPageProps) {
-  const rules = Object.values(schema.rules);
+export function RulesPage({ container }: RulesPageProps) {
+  const rules = Object.values(container.regeln.entries());
 
   return (
     <div className="container-xxl">
@@ -36,7 +36,7 @@ export function RulesPage({ schema }: RulesPageProps) {
                   </h6>
                   <small>
                     <span className="text-muted">Erstellt von</span>{" "}
-                    {rule.creator ?? "Unbekannt"}
+                    {rule.fachlicherErsteller ?? "Unbekannt"}
                   </small>
                 </div>
               </Link>

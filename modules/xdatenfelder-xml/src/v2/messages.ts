@@ -1,5 +1,5 @@
-import { SchemaContainer } from "./schema";
-import { SchemaConverter } from "./parser";
+import { SchemaContainer, SchemaWarnings } from "./schema";
+import { SchemaMessageParser } from "./parser";
 
 export class SchemaMessage {
   public readonly messageId: string;
@@ -16,12 +16,23 @@ export class SchemaMessage {
     this.schemaContainer = schemaContainer;
   }
 
-  public static fromString(value: string): SchemaMessage {
-    const converter = new SchemaConverter();
+  public static fromString(value: string): {
+    message: SchemaMessage;
+    warnings: SchemaWarnings;
+  } {
+    const parser = new SchemaMessageParser();
+    parser.write(value);
+    const { messageId, createdAt, schemaContainer } = parser.finish();
 
-    converter.write(value);
-    const { messageId, createdAt, schemaContainer } = converter.finish();
+    const warnings: SchemaWarnings = {
+      schemaWarnings: [],
+      dataGroupWarnings: {},
+      dataFieldWarnings: {},
+      ruleWarnings: {},
+    };
 
-    return new SchemaMessage(messageId, createdAt, schemaContainer);
+    const message = new SchemaMessage(messageId, createdAt, schemaContainer);
+
+    return { message, warnings };
   }
 }

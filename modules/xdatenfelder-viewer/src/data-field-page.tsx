@@ -1,24 +1,25 @@
 import * as React from "react";
 import { useParams } from "react-router-dom";
-import { SchemaMessage, DataField } from "xdatenfelder-xml";
+import { SchemaContainer, Datenfeld } from "xdatenfelder-xml/src/v2";
 import { DataFieldType } from "./data-field-type";
 import { NotFoundPage } from "./not-found-page";
 import { multilineToHtml } from "./util";
 
 export interface DataFieldPageProps {
-  schema: SchemaMessage;
+  container: SchemaContainer;
 }
 
-export function DataFieldPage({ schema }: DataFieldPageProps) {
+export function DataFieldPage({ container }: DataFieldPageProps) {
   let { identifier } = useParams();
   if (identifier === undefined) {
     throw new Error("identifier is undefined");
   }
 
-  const dataField = schema.dataFields[identifier];
-  if (dataField === undefined) {
+  if (!container.datenfelder.has(identifier)) {
     return <NotFoundPage />;
   }
+
+  const dataField = container.datenfelder.get(identifier);
 
   return (
     <div className="container-xxl">
@@ -32,7 +33,7 @@ export function DataFieldPage({ schema }: DataFieldPageProps) {
             <span className="badge rounded-pill text-bg-secondary">
               {dataField.identifier}
             </span>{" "}
-            <DataFieldType type={dataField.input.type} />
+            <DataFieldType type={dataField.feldart} />
           </h6>
         </div>
         <div className="col-12 col-md-3 text-end">
@@ -45,15 +46,13 @@ export function DataFieldPage({ schema }: DataFieldPageProps) {
 
       <dl className="row">
         <dt className="col-sm-3">Versionshinweis</dt>
-        <dd className="col-sm-9">{dataField.versionInfo ?? "-"}</dd>
+        <dd className="col-sm-9">{dataField.versionshinweis ?? "-"}</dd>
 
         <dt className="col-sm-3">Fachlicher Ersteller</dt>
-        <dd className="col-sm-9">{dataField.creator}</dd>
+        <dd className="col-sm-9">{dataField.fachlicherErsteller ?? "-"}</dd>
 
         <dt className="col-sm-3">Bezug</dt>
-        <dd className="col-sm-9">
-          {multilineToHtml(dataField.relatedTo ?? "-")}
-        </dd>
+        <dd className="col-sm-9">{multilineToHtml(dataField.bezug ?? "-")}</dd>
 
         <dt className="col-sm-3">Definition</dt>
         <dd className="col-sm-9">
@@ -62,21 +61,21 @@ export function DataFieldPage({ schema }: DataFieldPageProps) {
 
         <dt className="col-sm-3">Beschreibung</dt>
         <dd className="col-sm-9">
-          {multilineToHtml(dataField.description ?? "-")}
+          {multilineToHtml(dataField.beschreibung ?? "-")}
         </dd>
 
         <dt className="col-sm-3">Bezeichnung Eingabe</dt>
-        <dd className="col-sm-9">{dataField.inputLabel}</dd>
+        <dd className="col-sm-9">{dataField.bezeichnungEingabe}</dd>
         <dt className="col-sm-3">Hilfetext Eingabe</dt>
-        <dd className="col-sm-9">{dataField.inputHint ?? "-"}</dd>
+        <dd className="col-sm-9">{dataField.hilfetextEingabe ?? "-"}</dd>
 
         <dt className="col-sm-3">Bezeichnung Ausgabe</dt>
-        <dd className="col-sm-9">{dataField.outputLabel ?? "-"}</dd>
+        <dd className="col-sm-9">{dataField.bezeichnungAusgabe ?? "-"}</dd>
         <dt className="col-sm-3">Bezeichnung Ausgabe</dt>
-        <dd className="col-sm-9">{dataField.outputHint ?? "-"}</dd>
+        <dd className="col-sm-9">{dataField.hilfetextAusgabe ?? "-"}</dd>
 
         <dt className="col-sm-3">Regeln</dt>
-        <dd className="col-sm-9">{dataField.rules.join(", ") || "-"}</dd>
+        <dd className="col-sm-9">{dataField.regeln.join(", ") || "-"}</dd>
 
         {renderData(dataField)}
       </dl>
@@ -84,42 +83,46 @@ export function DataFieldPage({ schema }: DataFieldPageProps) {
   );
 }
 
-function renderData(dataField: DataField) {
-  switch (dataField.input.type) {
+function renderData(dataField: Datenfeld) {
+  switch (dataField.feldart) {
     case "select": {
-      const { codeListReference } = dataField.input;
+      const { codelisteReferenz } = dataField;
 
       return (
         <>
           <dt className="col-sm-3">Codeliste</dt>
-          <dd className="col-sm-9">{codeListReference.identifier}</dd>
+          <dd className="col-sm-9">{codelisteReferenz?.id}</dd>
 
           <dt className="col-sm-3">Version</dt>
-          <dd className="col-sm-9">{codeListReference.version}</dd>
+          <dd className="col-sm-9">{codelisteReferenz?.genericode.version}</dd>
 
           <dt className="col-sm-3">Canonical URI</dt>
-          <dd className="col-sm-9">{codeListReference.canonicalUri}</dd>
+          <dd className="col-sm-9">
+            {codelisteReferenz?.genericode.canonicalIdentification}
+          </dd>
 
           <dt className="col-sm-3">Canonical Version URI</dt>
-          <dd className="col-sm-9">{codeListReference.canonicalVersionUri}</dd>
+          <dd className="col-sm-9">
+            {codelisteReferenz?.genericode.canonicalVersionUri}
+          </dd>
 
           <dt className="col-sm-3">Inhalt</dt>
-          <dd className="col-sm-9">{dataField.input.content ?? "-"}</dd>
+          <dd className="col-sm-9">{dataField.inhalt ?? "-"}</dd>
         </>
       );
     }
 
-    case "text":
-    case "number":
-    case "integer":
-    case "currency": {
+    case "input": {
       return (
         <>
+          <dt className="col-sm-3">Datentyp</dt>
+          <dd className="col-sm-9">{dataField.datentyp}</dd>
+
           <dt className="col-sm-3">Präzisierung</dt>
-          <dd className="col-sm-9">{dataField.input.constraints ?? "-"}</dd>
+          <dd className="col-sm-9">{dataField.praezisierung ?? "-"}</dd>
 
           <dt className="col-sm-3">Inhalt</dt>
-          <dd className="col-sm-9">{dataField.input.content ?? "-"}</dd>
+          <dd className="col-sm-9">{dataField.inhalt ?? "-"}</dd>
         </>
       );
     }
@@ -128,9 +131,7 @@ function renderData(dataField: DataField) {
       return (
         <>
           <dt className="col-sm-3">Inhalt</dt>
-          <dd className="col-sm-9">
-            {multilineToHtml(dataField.input.content)}
-          </dd>
+          <dd className="col-sm-9">{multilineToHtml(dataField.inhalt)}</dd>
         </>
       );
     }

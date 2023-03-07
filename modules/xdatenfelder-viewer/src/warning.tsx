@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Warning as SchemaWarning } from "xdatenfelder-xml";
+import { Warning as SchemaWarning } from "xdatenfelder-xml/src/v2";
 
 export interface WarningProps {
   warning: SchemaWarning;

@@ -56,6 +56,7 @@ export type Datentyp =
   | "text"
   | "date"
   | "bool"
+  | "num"
   | "num_int"
   | "num_currency"
   | "file"
@@ -66,6 +67,7 @@ export function parseDatentyp(value: string): Datentyp {
     case "text":
     case "date":
     case "bool":
+    case "num":
     case "num_int":
     case "num_currency":
     case "file":
@@ -165,8 +167,8 @@ export interface ElementData extends BaseData {
 }
 
 export interface Datenfeld extends ElementData {
-  feldart: string;
-  datentyp: string;
+  feldart: Feldart;
+  datentyp: Datentyp;
   praezisierung?: string;
   inhalt?: string;
   codelisteReferenz?: CodelisteReferenz;
@@ -214,10 +216,36 @@ export interface SchemaWarnings {
   ruleWarnings: Record<string, Warning[]>;
 }
 
-export interface SchemaContainer {
-  schema: Stammdatenschema;
+export class SchemaContainer {
+  public schema: Stammdatenschema;
 
-  datenfeldgruppen: Table<Datenfeldgruppe>;
-  datenfelder: Table<Datenfeld>;
-  regeln: Table<Regel>;
+  public datenfeldgruppen: Table<Datenfeldgruppe>;
+  public datenfelder: Table<Datenfeld>;
+  public regeln: Table<Regel>;
+
+  constructor(
+    schema: Stammdatenschema,
+    datenfeldgruppen: Table<Datenfeldgruppe>,
+    datenfelder: Table<Datenfeld>,
+    regeln: Table<Regel>
+  ) {
+    this.schema = schema;
+    this.datenfeldgruppen = datenfeldgruppen;
+    this.datenfelder = datenfelder;
+    this.regeln = regeln;
+  }
+
+  public getCodeLists(): CodelisteReferenz[] {
+    const lists: Record<string, CodelisteReferenz> = {};
+
+    Object.values(this.datenfelder.entries()).forEach((datenfeld) => {
+      const { codelisteReferenz } = datenfeld;
+      if (codelisteReferenz) {
+        lists[codelisteReferenz.genericode.canonicalVersionUri] =
+          codelisteReferenz;
+      }
+    });
+
+    return Object.values(lists);
+  }
 }

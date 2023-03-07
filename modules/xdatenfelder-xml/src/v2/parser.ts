@@ -781,7 +781,7 @@ function handleCloseTag(
   }
 }
 
-export class SchemaConverter {
+export class SchemaMessageParser {
   private xmlParser: sax.SAXParser;
   private state: State<unknown> = createRootState();
   private context: Context = {
@@ -845,15 +845,17 @@ export class SchemaConverter {
       "Missing <urn:xoev-de:fim:standard:xdatenfelder_2>"
     );
 
-    const container: SchemaContainer = {
+    const schemaContainer = new SchemaContainer(
       schema,
-      ...this.context,
-    };
+      this.context.datenfeldgruppen,
+      this.context.datenfelder,
+      this.context.regeln
+    );
 
     return {
       messageId,
       createdAt,
-      schemaContainer: container,
+      schemaContainer,
     };
   }
 }

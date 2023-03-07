@@ -2,10 +2,11 @@ import * as React from "react";
 import { createRoot } from "react-dom/client";
 import { Routes, Route, HashRouter, Link, useMatch } from "react-router-dom";
 import {
-  SchemaWarnings,
-  Warning as SchemaWarning,
   SchemaMessage,
-} from "xdatenfelder-xml";
+  Warning as SchemaWarning,
+  SchemaWarnings,
+  SchemaContainer,
+} from "xdatenfelder-xml/src/v2";
 import { Warning } from "./warning";
 import { DataFieldsPage } from "./data-fields-page";
 import { DataFieldPage } from "./data-field-page";
@@ -18,7 +19,7 @@ import { NotFoundPage } from "./not-found-page";
 import { RulePage } from "./rule-page";
 
 interface State {
-  schema: SchemaMessage;
+  container: SchemaContainer;
   warnings: SchemaWarnings;
 }
 
@@ -104,11 +105,12 @@ function UploadPage({ onSchemaUpload }: UploadPageProps) {
     setState({ type: "loading" });
 
     try {
-      const measure = performance.measure("loading");
       const data = await loadFile(files[0]);
-      const parseResult = SchemaMessage.fromString(data);
-      console.log(measure);
-      onSchemaUpload(parseResult);
+      const measure = performance.measure("loading");
+      console.time("parse");
+      const { message, warnings } = SchemaMessage.fromString(data);
+      console.timeEnd("parse");
+      onSchemaUpload({ container: message.schemaContainer, warnings });
     } catch (error: any) {
       console.error(error);
       setState({ type: "error", message: `${error}` });
@@ -180,17 +182,17 @@ type ViewerProps = {
 };
 
 function Viewer({ state }: ViewerProps) {
-  const { schema, warnings } = state;
+  const { container, warnings } = state;
 
   return (
     <>
       <div className="container-fluid px-4 pt-4 border-bottom bg-white">
         <h5>
           <span className="badge rounded-pill text-bg-secondary">
-            {schema.schemaData.identifier}
+            {container.schema.identifier}
           </span>{" "}
-          {schema.schemaData.name}{" "}
-          <small className="text-muted">v{schema.schemaData.version}</small>{" "}
+          {container.schema.name}{" "}
+          <small className="text-muted">v{container.schema.version}</small>{" "}
         </h5>
         <ul className="nav mt-4">
           {renderLink("Schema", "/")}
@@ -198,18 +200,18 @@ function Viewer({ state }: ViewerProps) {
           {renderBadeLink(
             "Datenfeldgrupppen",
             "/groups",
-            Object.keys(schema.dataGroups).length
+            container.datenfeldgruppen.count()
           )}
           {renderBadeLink(
             "Datenfelder",
             "/datafields",
-            Object.keys(schema.dataFields).length
+            container.datenfelder.count()
           )}
-          {renderBadeLink("Regeln", "/rules", Object.keys(schema.rules).length)}
+          {renderBadeLink("Regeln", "/rules", container.regeln.count())}
           {renderBadeLink(
             "Codelisten",
             "/codelists",
-            schema.codeListReferences.length
+            container.getCodeLists().length
           )}
         </ul>
       </div>
@@ -218,28 +220,31 @@ function Viewer({ state }: ViewerProps) {
           <Route path="/" element={<OverviewPage state={state} />}></Route>
           <Route
             path="/preview"
-            element={<PreviewPage schema={schema} />}
+            element={<PreviewPage container={container} />}
           ></Route>
           <Route
             path="/groups"
-            element={<DataGroupsPage schema={schema} />}
+            element={<DataGroupsPage container={container} />}
           ></Route>
           <Route
             path="/datafields"
-            element={<DataFieldsPage schema={schema} />}
+            element={<DataFieldsPage container={container} />}
           ></Route>
           <Route
             path="/datafields/:identifier"
-            element={<DataFieldPage schema={schema} />}
+            element={<DataFieldPage container={container} />}
           ></Route>
-          <Route path="/rules" element={<RulesPage schema={schema} />}></Route>
+          <Route
+            path="/rules"
+            element={<RulesPage container={container} />}
+          ></Route>
           <Route
             path="/rules/:identifier"
-            element={<RulePage schema={schema} />}
+            element={<RulePage container={container} />}
           ></Route>
           <Route
             path="/codelists"
-            element={<CodeListsPage schema={schema} />}
+            element={<CodeListsPage container={container} />}
           ></Route>
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
@@ -290,37 +295,36 @@ type OverviewPageProps = {
 };
 
 function OverviewPage({ state }: OverviewPageProps) {
-  const { schema, warnings } = state;
+  const { container, warnings } = state;
 
   return (
     <div className="container-xxl">
       <h4 className="mb-2">Eigenschaften</h4>
       <dl className="row">
-        <dt className="col-sm-3">Nachrichten-Id</dt>
-        <dd className="col-sm-9">{schema.messageId}</dd>
-
         <dt className="col-sm-3">Id</dt>
-        <dd className="col-sm-9">{schema.schemaData.identifier}</dd>
+        <dd className="col-sm-9">{container.schema.identifier}</dd>
 
         <dt className="col-sm-3">Versionshinweis</dt>
-        <dd className="col-sm-9">{schema.schemaData.versionInfo ?? "-"}</dd>
+        <dd className="col-sm-9">{container.schema.versionshinweis ?? "-"}</dd>
 
         <dt className="col-sm-3">Fachlicher Ersteller</dt>
-        <dd className="col-sm-9">{schema.schemaData.creator}</dd>
+        <dd className="col-sm-9">
+          {container.schema.fachlicherErsteller ?? "-"}
+        </dd>
 
         <dt className="col-sm-3">Bezug</dt>
         <dd className="col-sm-9">
-          {multilineToHtml(schema.schemaData.relatedTo ?? "-")}
+          {multilineToHtml(container.schema.bezug ?? "-")}
         </dd>
 
         <dt className="col-sm-3">Definition</dt>
         <dd className="col-sm-9">
-          {multilineToHtml(schema.schemaData.definition ?? "-")}
+          {multilineToHtml(container.schema.definition ?? "-")}
         </dd>
 
         <dt className="col-sm-3">Beschreibung</dt>
         <dd className="col-sm-9">
-          {multilineToHtml(schema.schemaData.description ?? "-")}
+          {multilineToHtml(container.schema.beschreibung ?? "-")}
         </dd>
       </dl>
 

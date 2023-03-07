@@ -1,26 +1,26 @@
 import * as React from "react";
 import {
-  DataField,
-  DataGroup,
+  Datenfeld,
+  Datenfeldgruppe,
   ElementReference,
-  SchemaMessage,
-} from "xdatenfelder-xml";
+  SchemaContainer,
+} from "xdatenfelder-xml/src/v2";
 import { multilineToHtml } from "./util";
 
 export interface PreviewPageProps {
-  schema: SchemaMessage;
+  container: SchemaContainer;
 }
 
-export function PreviewPage({ schema }: PreviewPageProps) {
+export function PreviewPage({ container }: PreviewPageProps) {
   const [page, setPage] = React.useState<string | null>(null);
 
   function renderContent() {
     if (page === null) {
-      return <Start schema={schema} />;
+      return <Start container={container} />;
     } else {
-      for (const element of schema.schemaData.elements) {
+      for (const element of container.schema.elemente) {
         if (element.identifier === page) {
-          return <Step schema={schema} element={element} />;
+          return <Step container={container} element={element} />;
         }
       }
 
@@ -30,19 +30,19 @@ export function PreviewPage({ schema }: PreviewPageProps) {
 
   return (
     <div className="row">
-      <div className="col-12 col-lg-3">
+      <div className="col-12 col-lg-4 col-xl-3">
         <div className="list-group mt-2 mb-5">
           <NavLink to={null} location={page} onClick={setPage}>
             Start
           </NavLink>
-          {schema.schemaData.elements.map(({ type, identifier }) => {
+          {container.schema.elemente.map(({ type, identifier }) => {
             let label = "";
             if (type === "dataGroup") {
-              const group = schema.dataGroups[identifier];
-              label = group.inputLabel;
+              const group = container.datenfeldgruppen.get(identifier);
+              label = group.bezeichnungEingabe;
             } else {
-              const dataField = schema.dataFields[identifier];
-              label = dataField.inputLabel;
+              const dataField = container.datenfelder.get(identifier);
+              label = dataField.bezeichnungEingabe;
             }
 
             return (
@@ -58,7 +58,7 @@ export function PreviewPage({ schema }: PreviewPageProps) {
           })}
         </div>
       </div>
-      <div className="col-12 col-lg-9">{renderContent()}</div>
+      <div className="col-12 col-lg-8 col-xl-9">{renderContent()}</div>
     </div>
   );
 }
@@ -94,45 +94,45 @@ function NavLink({
   );
 }
 
-function Start({ schema }: { schema: SchemaMessage }) {
+function Start({ container }: { container: SchemaContainer }) {
   return (
     <div>
-      <h3>{schema.schemaData.name}</h3>
-      <p>{schema.schemaData.description}</p>
+      <h3>{container.schema.name}</h3>
+      <p>{container.schema.beschreibung}</p>
     </div>
   );
 }
 
 function Step({
-  schema,
+  container,
   element,
 }: {
-  schema: SchemaMessage;
+  container: SchemaContainer;
   element: ElementReference;
 }) {
   const { type, identifier } = element;
 
   if (type === "dataField") {
-    const dataField = schema.getDataField(identifier);
+    const dataField = container.datenfelder.get(identifier);
 
     return (
       <div>
-        <h2 className="mb-4">{dataField.inputLabel}</h2>
+        <h2 className="mb-4">{dataField.bezeichnungEingabe}</h2>
         <DataFieldSection dataField={dataField} />
       </div>
     );
   } else {
-    const dataGroup = schema.getDataGroup(identifier);
+    const dataGroup = container.datenfeldgruppen.get(identifier);
 
     return (
       <div>
-        <h2 className="mb-4">{dataGroup.inputLabel}</h2>
+        <h2 className="mb-4">{dataGroup.bezeichnungEingabe}</h2>
 
-        {dataGroup.elements.map((element) => {
+        {dataGroup.elemente.map((element) => {
           return (
             <Section
               key={element.identifier}
-              schema={schema}
+              container={container}
               element={element}
             />
           );
@@ -143,24 +143,24 @@ function Step({
 }
 
 function Section({
-  schema,
+  container,
   element,
 }: {
-  schema: SchemaMessage;
+  container: SchemaContainer;
   element: ElementReference;
 }) {
   const { type, identifier } = element;
 
   if (type === "dataField") {
-    const dataField = schema.getDataField(identifier);
+    const dataField = container.datenfelder.get(identifier);
     return <DataFieldSection dataField={dataField} />;
   } else {
-    const dataGroup = schema.getDataGroup(identifier);
-    return <DataGroupSection schema={schema} dataGroup={dataGroup} />;
+    const dataGroup = container.datenfeldgruppen.get(identifier);
+    return <DataGroupSection container={container} dataGroup={dataGroup} />;
   }
 }
 
-function DataFieldSection({ dataField }: { dataField: DataField }) {
+function DataFieldSection({ dataField }: { dataField: Datenfeld }) {
   return (
     <div className="card mb-4">
       <div className="card-header">{dataField.name}</div>
@@ -172,21 +172,21 @@ function DataFieldSection({ dataField }: { dataField: DataField }) {
 }
 
 function DataGroupSection({
-  schema,
+  container,
   dataGroup,
 }: {
-  schema: SchemaMessage;
-  dataGroup: DataGroup;
+  container: SchemaContainer;
+  dataGroup: Datenfeldgruppe;
 }) {
   return (
     <div className="card mb-4">
       <div className="card-header">{dataGroup.name}</div>
       <div className="card-body pb-0">
-        {dataGroup.elements.map((element) => {
+        {dataGroup.elemente.map((element) => {
           return (
             <DataGroupElement
               key={element.identifier}
-              schema={schema}
+              container={container}
               element={element}
               level={1}
             />
@@ -198,24 +198,24 @@ function DataGroupSection({
 }
 
 function DataGroupElement({
-  schema,
+  container,
   element,
   level,
 }: {
-  schema: SchemaMessage;
+  container: SchemaContainer;
   element: ElementReference;
   level: number;
 }) {
   const { type, identifier } = element;
 
   if (type === "dataField") {
-    const dataField = schema.getDataField(identifier);
+    const dataField = container.datenfelder.get(identifier);
     return <DataFieldInput dataField={dataField} />;
   } else {
-    const dataGroup = schema.getDataGroup(identifier);
+    const dataGroup = container.datenfeldgruppen.get(identifier);
     return (
       <DataSubGroupElement
-        schema={schema}
+        container={container}
         dataGroup={dataGroup}
         level={level}
       />
@@ -224,32 +224,32 @@ function DataGroupElement({
 }
 
 function DataSubGroupElement({
-  schema,
+  container,
   dataGroup,
   level,
 }: {
-  schema: SchemaMessage;
-  dataGroup: DataGroup;
+  container: SchemaContainer;
+  dataGroup: Datenfeldgruppe;
   level: number;
 }) {
   let title = undefined;
   if (level === 1) {
-    title = <h3>{dataGroup.inputLabel}</h3>;
+    title = <h3>{dataGroup.bezeichnungEingabe}</h3>;
   } else if (level === 2) {
-    title = <h4>{dataGroup.inputLabel}</h4>;
+    title = <h4>{dataGroup.bezeichnungEingabe}</h4>;
   } else {
-    title = <h5>{dataGroup.inputLabel}</h5>;
+    title = <h5>{dataGroup.bezeichnungEingabe}</h5>;
   }
 
   return (
     <>
       {title}
-      {dataGroup.elements.map((element) => {
+      {dataGroup.elemente.map((element) => {
         return (
           <DataGroupElement
             key={element.identifier}
             element={element}
-            schema={schema}
+            container={container}
             level={level + 1}
           />
         );
@@ -258,7 +258,7 @@ function DataSubGroupElement({
   );
 }
 
-function DataFieldInput({ dataField }: { dataField: DataField }) {
+function DataFieldInput({ dataField }: { dataField: Datenfeld }) {
   const [value, setValue] = React.useState<string>("");
 
   const inputProps = {
@@ -268,14 +268,14 @@ function DataFieldInput({ dataField }: { dataField: DataField }) {
     ) => setValue(event.target.value),
   };
 
-  switch (dataField.input.type) {
+  switch (dataField.feldart) {
     case "select": {
       return (
         <div className="mb-3">
-          <label className="form-label">{dataField.inputLabel}</label>
+          <label className="form-label">{dataField.bezeichnungEingabe}</label>
           <select
             className="form-select"
-            aria-label={dataField.inputLabel}
+            aria-label={dataField.bezeichnungEingabe}
             {...inputProps}
           >
             <option value="1">Beispiel 1</option>
@@ -287,90 +287,115 @@ function DataFieldInput({ dataField }: { dataField: DataField }) {
       );
     }
 
-    case "text": {
-      return (
-        <div className="mb-3">
-          <label className="form-label">{dataField.inputLabel}</label>
-          <input type="text" className="form-control" {...inputProps} />
-          {inputHelp(dataField)}
-        </div>
-      );
-    }
+    case "input": {
+      switch (dataField.datentyp) {
+        case "text": {
+          return (
+            <div className="mb-3">
+              <label className="form-label">
+                {dataField.bezeichnungEingabe}
+              </label>
+              <input type="text" className="form-control" {...inputProps} />
+              {inputHelp(dataField)}
+            </div>
+          );
+        }
 
-    case "number":
-    case "integer":
-    case "currency": {
-      return (
-        <div className="mb-3">
-          <label className="form-label">{dataField.inputLabel}</label>
-          <input type="number" className="form-control" {...inputProps} />
-          {inputHelp(dataField)}
-        </div>
-      );
-    }
+        case "num":
+        case "num_int":
+        case "num_currency": {
+          return (
+            <div className="mb-3">
+              <label className="form-label">
+                {dataField.bezeichnungEingabe}
+              </label>
+              <input type="number" className="form-control" {...inputProps} />
+              {inputHelp(dataField)}
+            </div>
+          );
+        }
 
-    case "bool": {
-      return (
-        <div className="mb-3">
-          <div className="form-check">
-            <input
-              className="form-check-input"
-              type="checkbox"
-              {...inputProps}
-              id={dataField.identifier}
-            />
-            <label className="form-check-label" htmlFor={dataField.identifier}>
-              {dataField.inputLabel}
-            </label>
-          </div>
-          {inputHelp(dataField)}
-        </div>
-      );
-    }
+        case "bool": {
+          return (
+            <div className="mb-3">
+              <div className="form-check">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  {...inputProps}
+                  id={dataField.identifier}
+                />
+                <label
+                  className="form-check-label"
+                  htmlFor={dataField.identifier}
+                >
+                  {dataField.bezeichnungEingabe}
+                </label>
+              </div>
+              {inputHelp(dataField)}
+            </div>
+          );
+        }
 
-    case "file": {
-      return (
-        <div className="mb-3">
-          <label className="form-label">{dataField.inputLabel}</label>
-          <input className="form-control" type="file" {...inputProps} />
-          {inputHelp(dataField)}
-        </div>
-      );
-    }
+        case "file": {
+          return (
+            <div className="mb-3">
+              <label className="form-label">
+                {dataField.bezeichnungEingabe}
+              </label>
+              <input className="form-control" type="file" {...inputProps} />
+              {inputHelp(dataField)}
+            </div>
+          );
+        }
 
-    case "object": {
-      return (
-        <div className="mb-3">
-          <label className="form-label">{dataField.inputLabel}</label>
-          <input className="form-control" type="file" {...inputProps} />
-          {inputHelp(dataField)}
-        </div>
-      );
-    }
+        case "obj": {
+          return (
+            <div className="mb-3">
+              <label className="form-label">
+                {dataField.bezeichnungEingabe}
+              </label>
+              <input className="form-control" type="file" {...inputProps} />
+              {inputHelp(dataField)}
+            </div>
+          );
+        }
 
-    case "date": {
-      return (
-        <div className="mb-3">
-          <label className="form-label">{dataField.inputLabel}</label>
-          <input type="text" className="form-control" {...inputProps} />
-          {inputHelp(dataField)}
-        </div>
-      );
+        case "date": {
+          return (
+            <div className="mb-3">
+              <label className="form-label">
+                {dataField.bezeichnungEingabe}
+              </label>
+              <input type="text" className="form-control" {...inputProps} />
+              {inputHelp(dataField)}
+            </div>
+          );
+        }
+
+        default:
+          console.error(
+            `Unknown datentyp for ${dataField.identifier}: ${dataField.datentyp}`
+          );
+          return <div>Unbekannter Datentyp: {dataField.datentyp}</div>;
+      }
     }
 
     case "label": {
       return (
         <div className="alert alert-info" role="alert">
-          <h5 className="alert-heading">{dataField.inputLabel}</h5>
-          {multilineToHtml(dataField.input.content)}
+          <h5 className="alert-heading">{dataField.bezeichnungEingabe}</h5>
+          {multilineToHtml(dataField.inhalt)}
         </div>
       );
     }
   }
 }
 
-function inputHelp(dataField: DataField) {
+function inputHelp(dataField: Datenfeld) {
   return (
-    <div className="form-text">{multilineToHtml(dataField.inputHint)}</div>
+    <div className="form-text">
+      {multilineToHtml(dataField.hilfetextEingabe)}
+    </div>
   );
 }

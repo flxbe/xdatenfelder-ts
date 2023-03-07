@@ -1,11 +1,11 @@
 import * as React from "react";
-import { SchemaMessage } from "xdatenfelder-xml";
+import { SchemaContainer } from "xdatenfelder-xml/src/v2";
 
 export interface CodeListsPageProps {
-  schema: SchemaMessage;
+  container: SchemaContainer;
 }
 
-export function CodeListsPage({ schema }: CodeListsPageProps) {
+export function CodeListsPage({ container }: CodeListsPageProps) {
   return (
     <div className="container">
       <div className="table-responsive">
@@ -18,11 +18,11 @@ export function CodeListsPage({ schema }: CodeListsPageProps) {
             </tr>
           </thead>
           <tbody>
-            {schema.codeListReferences.map((reference) => (
-              <tr key={reference.canonicalVersionUri}>
-                <th scope="row">{reference.identifier}</th>
-                <td>{reference.version}</td>
-                <td>{reference.canonicalVersionUri}</td>
+            {container.getCodeLists().map((reference) => (
+              <tr key={reference.genericode.canonicalVersionUri}>
+                <th scope="row">{reference.id}</th>
+                <td>{reference.genericode.version}</td>
+                <td>{reference.genericode.canonicalVersionUri}</td>
               </tr>
             ))}
             {}

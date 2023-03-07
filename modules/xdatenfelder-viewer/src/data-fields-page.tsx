@@ -1,13 +1,13 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
-import { SchemaMessage } from "xdatenfelder-xml";
+import { SchemaContainer } from "xdatenfelder-xml/src/v2";
 import { DataFieldType } from "./data-field-type";
 
 type DataFieldsPageProps = {
-  schema: SchemaMessage;
+  container: SchemaContainer;
 };
 
-export function DataFieldsPage({ schema }: DataFieldsPageProps) {
+export function DataFieldsPage({ container }: DataFieldsPageProps) {
   const [types, setTypes] = React.useState<Set<string>>(new Set());
 
   function toggleType(type: string) {
@@ -21,16 +21,14 @@ export function DataFieldsPage({ schema }: DataFieldsPageProps) {
   }
 
   const typeCounter: Record<string, number> = {};
-  for (const dataField of Object.values(schema.dataFields)) {
-    const counter = typeCounter[dataField.input.type] ?? 0;
-    typeCounter[dataField.input.type] = counter + 1;
+  for (const dataField of Object.values(container.datenfelder.entries())) {
+    const counter = typeCounter[dataField.feldart] ?? 0;
+    typeCounter[dataField.feldart] = counter + 1;
   }
 
-  let dataFields = Object.values(schema.dataFields);
+  let dataFields = Object.values(container.datenfelder.entries());
   if (types.size > 0) {
-    dataFields = dataFields.filter((dataField) =>
-      types.has(dataField.input.type)
-    );
+    dataFields = dataFields.filter((dataField) => types.has(dataField.feldart));
   }
 
   return (
@@ -77,11 +75,11 @@ export function DataFieldsPage({ schema }: DataFieldsPageProps) {
                     </h6>
                     <small>
                       <span className="text-muted">Erstellt von</span>{" "}
-                      {dataField.creator ?? "Unbekannt"}
+                      {dataField.fachlicherErsteller ?? "Unbekannt"}
                     </small>
                   </div>
                   <div className="col-12 col-md-auto">
-                    <DataFieldType type={dataField.input.type} />
+                    <DataFieldType type={dataField.feldart} />
                   </div>
                 </div>
               </Link>
