@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "test": "jest",
-    "bench": "ts-node ./benchmarks/v2.ts"
+    "bench": "ts-node ./benchmarks/v2.ts",
+    "combine": "ts-node ./combine.ts"
   },
   "author": "Felix Bernhardt",
   "license": "EUPL-1.2",
