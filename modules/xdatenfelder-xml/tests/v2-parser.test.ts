@@ -38,7 +38,7 @@ describe("Loading a schema from xml", () => {
         {
           type: "dataGroup",
           identifier: "G00000082:1.3",
-          anzahl: "1:1",
+          anzahl: { type: "value", optional: false },
           bezug: undefined,
         },
       ],
@@ -70,7 +70,7 @@ describe("Loading a schema from xml", () => {
           {
             type: "dataField",
             identifier: "F60000227:1.1",
-            anzahl: "1:1",
+            anzahl: { type: "value", optional: false },
             bezug: undefined,
           },
         ],

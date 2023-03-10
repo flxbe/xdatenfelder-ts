@@ -5,7 +5,6 @@ import {
   SchemaMessage,
   Warning as SchemaWarning,
   SchemaWarnings,
-  SchemaContainer,
 } from "xdatenfelder-xml/src/v2";
 import { Warning } from "./warning";
 import { DataFieldsPage } from "./data-fields-page";
@@ -17,20 +16,16 @@ import { multilineToHtml } from "./util";
 import { RulesPage } from "./rules-page";
 import { NotFoundPage } from "./not-found-page";
 import { RulePage } from "./rule-page";
-
-interface State {
-  container: SchemaContainer;
-  warnings: SchemaWarnings;
-}
+import { Project } from "./project";
 
 function Application() {
-  const [state, setState] = React.useState<State | null>(null);
+  const [project, setProject] = React.useState<Project | null>(null);
 
   function renderContent() {
-    if (state !== null) {
-      return <Viewer state={state} />;
+    if (project !== null) {
+      return <Viewer project={project} />;
     } else {
-      return <UploadPage onSchemaUpload={setState} />;
+      return <UploadPage onSchemaUpload={setProject} />;
     }
   }
 
@@ -73,7 +68,7 @@ async function loadFile(file: File): Promise<string> {
 }
 
 interface UploadPageProps {
-  onSchemaUpload: (state: State) => void;
+  onSchemaUpload: (project: Project) => void;
 }
 
 interface ParserError {
@@ -106,11 +101,13 @@ function UploadPage({ onSchemaUpload }: UploadPageProps) {
 
     try {
       const data = await loadFile(files[0]);
-      const measure = performance.measure("loading");
+
       console.time("parse");
       const { message, warnings } = SchemaMessage.fromString(data);
       console.timeEnd("parse");
-      onSchemaUpload({ container: message.schemaContainer, warnings });
+
+      const project = Project.fromSchemaMessage(message, warnings);
+      onSchemaUpload(project);
     } catch (error: any) {
       console.error(error);
       setState({ type: "error", message: `${error}` });
@@ -178,12 +175,11 @@ function UploadPage({ onSchemaUpload }: UploadPageProps) {
 }
 
 type ViewerProps = {
-  state: State;
+  project: Project;
 };
 
-function Viewer({ state }: ViewerProps) {
-  const { container, warnings } = state;
-
+function Viewer({ project }: ViewerProps) {
+  const { container, warnings } = project;
   return (
     <>
       <div className="container-fluid px-4 pt-4 border-bottom bg-white">
@@ -217,7 +213,7 @@ function Viewer({ state }: ViewerProps) {
       </div>
       <div className="container p-4">
         <Routes>
-          <Route path="/" element={<OverviewPage state={state} />}></Route>
+          <Route path="/" element={<OverviewPage project={project} />}></Route>
           <Route
             path="/preview"
             element={<PreviewPage container={container} />}
@@ -291,11 +287,11 @@ function renderLink(name: string, target: string, strict: boolean = true) {
 }
 
 type OverviewPageProps = {
-  state: State;
+  project: Project;
 };
 
-function OverviewPage({ state }: OverviewPageProps) {
-  const { container, warnings } = state;
+function OverviewPage({ project }: OverviewPageProps) {
+  const { container, warnings } = project;
 
   return (
     <div className="container-xxl">

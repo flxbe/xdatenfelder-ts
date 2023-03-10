@@ -1,6 +1,43 @@
 import { ValidationError } from "../errors";
 import { Table } from "../table";
 
+export type Anzahl =
+  | {
+      type: "value";
+      optional: boolean;
+    }
+  | {
+      type: "array";
+      minSize: number;
+      maxSize?: number;
+    };
+
+const AnzahlPattern = /\d+:(\*|\d+)/;
+
+export function parseAnzahl(value: string): Anzahl {
+  if (!AnzahlPattern.test(value)) {
+    throw new ValidationError(`Invalid Anzahl: ${value}`);
+  }
+
+  const [min, max] = value.split(":");
+
+  const minSize = parseInt(min);
+  if (max === "*") {
+    return { type: "array", minSize };
+  } else {
+    const maxSize = parseInt(max);
+    if (maxSize < minSize) {
+      throw new ValidationError(`Invalid Anzahl: ${value}`);
+    }
+
+    if (maxSize > 1) {
+      return { type: "array", minSize, maxSize };
+    } else {
+      return { type: "value", optional: minSize === 0 };
+    }
+  }
+}
+
 export interface GenericodeIdentification {
   version: string;
   canonicalIdentification: string;
@@ -17,7 +54,7 @@ export interface ElementReference {
   type: "dataField" | "dataGroup";
   identifier: string;
   bezug?: string;
-  anzahl: string;
+  anzahl: Anzahl;
 }
 
 export const enum SchemaElementArt {

@@ -31,6 +31,8 @@ import {
   parseAbleitungsmodifikationenRepraesentation,
   parseAbleitungsmodifikationenStruktur,
   GenericodeIdentification,
+  Anzahl,
+  parseAnzahl,
 } from "./schema";
 import { Table } from "../table";
 
@@ -266,7 +268,7 @@ type Element =
 interface StructState {
   type: StateType.Struct;
   parent: SchemaState | DataGroupState;
-  anzahl: Value<string>;
+  anzahl: Value<Anzahl>;
   bezug: Value<string>;
   element: Value<Element>;
 }
@@ -486,7 +488,7 @@ function handleOpenTag(
     case StateType.Struct: {
       switch (tag.local) {
         case "anzahl":
-          return createStringNodeState(state, state.anzahl);
+          return createValueNodeState(state, state.anzahl, parseAnzahl);
         case "bezug":
           return createOptionalStringNodeState(state, state.bezug);
         case "enthaelt":
