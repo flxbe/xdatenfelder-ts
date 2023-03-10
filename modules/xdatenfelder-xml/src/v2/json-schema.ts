@@ -74,7 +74,7 @@ function createFieldDefs(fields: Datenfeld[]) {
 
   for (const field of fields) {
     const def: Record<string, string> = {
-      title: field.bezeichnungEingabe,
+      title: field.bezeichnungEingabe ?? field.name,
     };
 
     switch (field.feldart) {

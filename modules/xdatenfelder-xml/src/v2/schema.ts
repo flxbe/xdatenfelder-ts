@@ -179,7 +179,7 @@ export interface BaseData {
   id: string;
   version?: string;
   name: string;
-  bezeichnungEingabe: string;
+  bezeichnungEingabe?: string;
   bezeichnungAusgabe?: string;
   beschreibung?: string;
   definition?: string;

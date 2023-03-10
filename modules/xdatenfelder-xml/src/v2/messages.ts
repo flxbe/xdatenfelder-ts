@@ -22,14 +22,7 @@ export class SchemaMessage {
   } {
     const parser = new SchemaMessageParser();
     parser.write(value);
-    const { messageId, createdAt, schemaContainer } = parser.finish();
-
-    const warnings: SchemaWarnings = {
-      schemaWarnings: [],
-      dataGroupWarnings: {},
-      dataFieldWarnings: {},
-      ruleWarnings: {},
-    };
+    const { messageId, createdAt, schemaContainer, warnings } = parser.finish();
 
     const message = new SchemaMessage(messageId, createdAt, schemaContainer);
 

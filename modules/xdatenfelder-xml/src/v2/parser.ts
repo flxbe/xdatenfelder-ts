@@ -33,6 +33,8 @@ import {
   GenericodeIdentification,
   Anzahl,
   parseAnzahl,
+  SchemaWarnings,
+  Warning,
 } from "./schema";
 import { Table } from "../table";
 
@@ -40,6 +42,7 @@ export interface ParseResult {
   messageId: string;
   createdAt: Date;
   schemaContainer: SchemaContainer;
+  warnings: SchemaWarnings;
 }
 
 interface Context {
@@ -878,12 +881,158 @@ export class SchemaMessageParser {
       this.context.regeln
     );
 
+    const warnings: SchemaWarnings = {
+      schemaWarnings: collectSchemaWarnings(schema),
+      dataGroupWarnings: collectGroupWarnings(
+        Object.values(schemaContainer.datenfeldgruppen.entries())
+      ),
+      dataFieldWarnings: collectFieldWarnings(
+        Object.values(schemaContainer.datenfelder.entries())
+      ),
+      ruleWarnings: collectRuleWarnings(
+        Object.values(schemaContainer.regeln.entries())
+      ),
+    };
+
     return {
       messageId,
       createdAt,
       schemaContainer,
+      warnings,
     };
   }
+}
+
+function collectSchemaWarnings(schema: Stammdatenschema): Warning[] {
+  return collectBaseWarning(schema);
+}
+
+function collectGroupWarnings(
+  groups: Datenfeldgruppe[]
+): Record<string, Warning[]> {
+  const warnings: Record<string, Warning[]> = {};
+
+  for (const group of groups) {
+    const groupWarnings: Warning[] = collectElementWarnings(group);
+
+    if (groupWarnings.length > 0) {
+      warnings[group.identifier] = groupWarnings;
+    }
+  }
+
+  return warnings;
+}
+
+function collectFieldWarnings(fields: Datenfeld[]): Record<string, Warning[]> {
+  const warnings: Record<string, Warning[]> = {};
+
+  for (const field of fields) {
+    const fieldWarnings: Warning[] = collectElementWarnings(field);
+
+    if (field.praezisierung === undefined) {
+      fieldWarnings.push({
+        type: "missingAttribute",
+        attribute: "praezisierung",
+        identifier: field.identifier,
+      });
+    }
+
+    if (field.inhalt === undefined) {
+      fieldWarnings.push({
+        type: "missingAttribute",
+        attribute: "inhalt",
+        identifier: field.identifier,
+      });
+    }
+
+    if (fieldWarnings.length > 0) {
+      warnings[field.identifier] = fieldWarnings;
+    }
+  }
+
+  return warnings;
+}
+
+function collectRuleWarnings(rules: Regel[]): Record<string, Warning[]> {
+  const warnings: Record<string, Warning[]> = {};
+
+  for (const rule of rules) {
+    const ruleWarnings: Warning[] = collectBaseWarning(rule);
+
+    if (rule.script === undefined) {
+      ruleWarnings.push({
+        type: "missingAttribute",
+        attribute: "script",
+        identifier: rule.identifier,
+      });
+    }
+
+    if (ruleWarnings.length > 0) {
+      warnings[rule.identifier] = ruleWarnings;
+    }
+  }
+
+  return warnings;
+}
+
+function collectElementWarnings(data: ElementData): Warning[] {
+  const warnings = collectBaseWarning(data);
+
+  if (data.hilfetextEingabe === undefined) {
+    warnings.push({
+      type: "missingAttribute",
+      attribute: "hilfetextEingabe",
+      identifier: data.identifier,
+    });
+  }
+
+  if (data.hilfetextAusgabe === undefined) {
+    warnings.push({
+      type: "missingAttribute",
+      attribute: "hilfetextAusgabe",
+      identifier: data.identifier,
+    });
+  }
+
+  return warnings;
+}
+
+function collectBaseWarning(data: BaseData): Warning[] {
+  const warnings: Warning[] = [];
+
+  if (data.bezeichnungEingabe === undefined) {
+    warnings.push({
+      type: "missingAttribute",
+      attribute: "bezeichnungEingabe",
+      identifier: data.identifier,
+    });
+  }
+
+  if (data.beschreibung === undefined) {
+    warnings.push({
+      type: "missingAttribute",
+      attribute: "beschreibung",
+      identifier: data.identifier,
+    });
+  }
+
+  if (data.definition === undefined) {
+    warnings.push({
+      type: "missingAttribute",
+      attribute: "definition",
+      identifier: data.identifier,
+    });
+  }
+
+  if (data.bezug === undefined) {
+    warnings.push({
+      type: "missingAttribute",
+      attribute: "bezug",
+      identifier: data.identifier,
+    });
+  }
+
+  return warnings;
 }
 
 interface BaseContainer {
@@ -933,7 +1082,7 @@ function parseBaseData(container: BaseContainer): BaseData {
     id,
     version,
     name,
-    bezeichnungEingabe: container.bezeichnungEingabe.get() ?? name,
+    bezeichnungEingabe: container.bezeichnungEingabe.get(),
     bezeichnungAusgabe: container.bezeichnungAusgabe.get(),
     beschreibung: container.beschreibung.get(),
     definition: container.definition.get(),
